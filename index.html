@@ -464,18 +464,17 @@
                         <span class="badge" id="yt-status-a" style="font-size:8px; padding:1px 4px; color:#ff8c00; border-color:#ff8c00;">READY</span>
                     </div>
                     <div style="display:flex; gap:4px; align-items:center;">
-                        <input type="text" id="yt-url-a" placeholder="🔗 YouTube URL (e.g. https://youtu.be/Gd9OhYroLN0) or Audio link..." value="https://www.youtube.com/watch?v=Gd9OhYroLN0" style="flex:1; background:#0d0e10; border:1px solid #ff4800; color:#ff8c00; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
-                        <button class="btn btn-te-orange" id="btn-load-yt-a" style="padding:4px 8px; font-size:9.5px; white-space:nowrap; font-weight:bold;">🚀 LOAD YT</button>
+                        <input type="text" id="yt-url-a" onkeydown="if(event.key==='Enter') loadYouTubeOrStreamTrack('a', this.value)" placeholder="🔗 YouTube URL (e.g. https://youtu.be/Gd9OhYroLN0) or Audio link..." value="https://www.youtube.com/watch?v=Gd9OhYroLN0" style="flex:1; background:#0d0e10; border:1px solid #ff4800; color:#ff8c00; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
+                        <button class="btn btn-te-orange" id="btn-load-yt-a" onclick="loadYouTubeOrStreamTrack('a', document.getElementById('yt-url-a').value)" style="padding:4px 8px; font-size:9.5px; white-space:nowrap; font-weight:bold;">🚀 LOAD YT</button>
                     </div>
                     <div style="display:flex; gap:3px; align-items:center; overflow-x:auto; padding-top:2px;">
                         <span style="font-size:8px; color:#888; text-transform:uppercase; font-family:'Space Mono', monospace;">PRESETS:</span>
-                        <button class="btn btn-mini btn-yt-preset" data-deck="a" data-url="https://www.youtube.com/watch?v=Gd9OhYroLN0" data-title="Daft Punk - One More Time" style="font-size:8px; padding:1px 5px;">⚡ Daft Punk</button>
-                        <button class="btn btn-mini btn-yt-preset" data-deck="a" data-url="https://dn710108.ca.archive.org/0/items/hybrid-theory-dolby-atmos-stems-linkin-park/Crawling%20%28DA%20Stem%201%29.mp3" data-title="Linkin Park - Crawling (Stem)" style="font-size:8px; padding:1px 5px;">⚡ Linkin Park Stem</button>
-                        <button class="btn btn-mini btn-yt-preset" data-deck="a" data-url="https://www.youtube.com/watch?v=5SaFTm2bcac" data-title="The Winstons - Amen Brother (Break)" style="font-size:8px; padding:1px 5px;">⚡ Amen Break</button>
-                        <button class="btn btn-mini btn-yt-preset" data-deck="a" data-url="https://www.youtube.com/watch?v=hTWKbfoikeg" data-title="Nirvana - Smells Like Teen Spirit" style="font-size:8px; padding:1px 5px;">⚡ Nirvana</button>
+                        <button class="btn btn-mini btn-yt-preset" onclick="loadPresetTrack('a', 'https://www.youtube.com/watch?v=Gd9OhYroLN0', 'Daft Punk - One More Time')" style="font-size:8px; padding:1px 5px;">⚡ Daft Punk</button>
+                        <button class="btn btn-mini btn-yt-preset" onclick="loadPresetTrack('a', 'https://dn710108.ca.archive.org/0/items/hybrid-theory-dolby-atmos-stems-linkin-park/Crawling%20%28DA%20Stem%201%29.mp3', 'Linkin Park - Crawling (Stem)')" style="font-size:8px; padding:1px 5px;">⚡ Linkin Park Stem</button>
+                        <button class="btn btn-mini btn-yt-preset" onclick="loadPresetTrack('a', 'https://www.youtube.com/watch?v=5SaFTm2bcac', 'The Winstons - Amen Brother (Break)')" style="font-size:8px; padding:1px 5px;">⚡ Amen Break</button>
+                        <button class="btn btn-mini btn-yt-preset" onclick="loadPresetTrack('a', 'https://www.youtube.com/watch?v=hTWKbfoikeg', 'Nirvana - Smells Like Teen Spirit')" style="font-size:8px; padding:1px 5px;">⚡ Nirvana</button>
                     </div>
                 </div>
-
                 <div class="turntable-stage" id="stage-a">
                     <canvas id="turntable-canvas-a" class="turntable-canvas" width="300" height="300"></canvas>
                 </div>
@@ -617,18 +616,17 @@
                         <span class="badge" id="yt-status-b" style="font-size:8px; padding:1px 4px; color:#00ff9d; border-color:#034435;">READY</span>
                     </div>
                     <div style="display:flex; gap:4px; align-items:center;">
-                        <input type="text" id="yt-url-b" placeholder="🔗 YouTube URL (e.g. https://youtu.be/5SaFTm2bcac) or Audio link..." value="https://www.youtube.com/watch?v=5SaFTm2bcac" style="flex:1; background:#0d0e10; border:1px solid #00ff9d; color:#00ff9d; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
-                        <button class="btn btn-te-green" id="btn-load-yt-b" style="padding:4px 8px; font-size:9.5px; white-space:nowrap; font-weight:bold;">🚀 LOAD YT</button>
+                        <input type="text" id="yt-url-b" onkeydown="if(event.key==='Enter') loadYouTubeOrStreamTrack('b', this.value)" placeholder="🔗 YouTube URL (e.g. https://youtu.be/5SaFTm2bcac) or Audio link..." value="https://www.youtube.com/watch?v=5SaFTm2bcac" style="flex:1; background:#0d0e10; border:1px solid #00ff9d; color:#00ff9d; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
+                        <button class="btn btn-te-green" id="btn-load-yt-b" onclick="loadYouTubeOrStreamTrack('b', document.getElementById('yt-url-b').value)" style="padding:4px 8px; font-size:9.5px; white-space:nowrap; font-weight:bold;">🚀 LOAD YT</button>
                     </div>
                     <div style="display:flex; gap:3px; align-items:center; overflow-x:auto; padding-top:2px;">
                         <span style="font-size:8px; color:#888; text-transform:uppercase; font-family:'Space Mono', monospace;">PRESETS:</span>
-                        <button class="btn btn-mini btn-yt-preset" data-deck="b" data-url="https://www.youtube.com/watch?v=5SaFTm2bcac" data-title="The Winstons - Amen Brother (Break)" style="font-size:8px; padding:1px 5px;">⚡ Amen Break</button>
-                        <button class="btn btn-mini btn-yt-preset" data-deck="b" data-url="https://dn710108.ca.archive.org/0/items/hybrid-theory-dolby-atmos-stems-linkin-park/In%20the%20End%20%28DA%20Stem%201%29.mp3" data-title="Linkin Park - In The End (Stem)" style="font-size:8px; padding:1px 5px;">⚡ In The End Stem</button>
-                        <button class="btn btn-mini btn-yt-preset" data-deck="b" data-url="https://www.youtube.com/watch?v=Gd9OhYroLN0" data-title="Daft Punk - One More Time" style="font-size:8px; padding:1px 5px;">⚡ Daft Punk</button>
-                        <button class="btn btn-mini btn-yt-preset" data-deck="b" data-url="https://www.youtube.com/watch?v=fJ9rUzIMcZQ" data-title="Queen - Bohemian Rhapsody" style="font-size:8px; padding:1px 5px;">⚡ Queen</button>
+                        <button class="btn btn-mini btn-yt-preset" onclick="loadPresetTrack('b', 'https://www.youtube.com/watch?v=5SaFTm2bcac', 'The Winstons - Amen Brother (Break)')" style="font-size:8px; padding:1px 5px;">⚡ Amen Break</button>
+                        <button class="btn btn-mini btn-yt-preset" onclick="loadPresetTrack('b', 'https://dn710108.ca.archive.org/0/items/hybrid-theory-dolby-atmos-stems-linkin-park/In%20the%20End%20%28DA%20Stem%201%29.mp3', 'Linkin Park - In The End (Stem)')" style="font-size:8px; padding:1px 5px;">⚡ In The End Stem</button>
+                        <button class="btn btn-mini btn-yt-preset" onclick="loadPresetTrack('b', 'https://www.youtube.com/watch?v=Gd9OhYroLN0', 'Daft Punk - One More Time')" style="font-size:8px; padding:1px 5px;">⚡ Daft Punk</button>
+                        <button class="btn btn-mini btn-yt-preset" onclick="loadPresetTrack('b', 'https://www.youtube.com/watch?v=fJ9rUzIMcZQ', 'Queen - Bohemian Rhapsody')" style="font-size:8px; padding:1px 5px;">⚡ Queen</button>
                     </div>
                 </div>
-
                 <div class="turntable-stage" id="stage-b">
                     <canvas id="turntable-canvas-b" class="turntable-canvas" width="300" height="300"></canvas>
                 </div>
@@ -1668,13 +1666,22 @@ requestAnimationFrame(animationLoop);
 // -------------------------------------------------------------------------
 // YOUTUBE & REMOTE AUDIO STREAM INGESTION ENGINE
 // -------------------------------------------------------------------------
+// -------------------------------------------------------------------------
+// YOUTUBE & REMOTE AUDIO STREAM INGESTION ENGINE
+// -------------------------------------------------------------------------
 function extractYouTubeId(url) {
     if (!url) return null;
     const s = url.trim();
-    if (s.length === 11 && !s.includes('/') && !s.includes('.')) return s;
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    if (s.length === 11 && !s.includes('/') && !s.includes('.') && !s.includes('?')) return s;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([^#\&\?]*).*/;
     const match = s.match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
+}
+
+function loadPresetTrack(deck, url, title) {
+    const inputEl = document.getElementById(`yt-url-${deck}`);
+    if (inputEl) inputEl.value = url;
+    loadYouTubeOrStreamTrack(deck, url, title);
 }
 
 async function loadYouTubeOrStreamTrack(k, inputVal, customTitle) {
