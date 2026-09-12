@@ -474,22 +474,14 @@
 
                     <!-- Search Input & Buttons -->
                     <div style="display:flex; gap:4px; align-items:center;">
-                        <input type="text" id="yt-url-a" onkeydown="if(event.key==='Enter') searchOrLoadYouTube('a')" placeholder="🔍 Search YouTube (e.g. Daft Punk, Gorillaz, Prodigy) or paste URL..." value="https://www.youtube.com/watch?v=Gd9OhYroLN0" style="flex:1; background:#090a0c; border:1px solid #ff4800; color:#ff8c00; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
-                        <button class="btn btn-te-orange" id="btn-search-yt-a" onclick="searchOrLoadYouTube('a')" style="padding:4px 8px; font-size:9.5px; white-space:nowrap; font-weight:bold;">🔍 SEARCH / LOAD</button>
+                        <input type="text" id="yt-url-a" onkeydown="if(event.key==='Enter') searchOrLoadYouTube('a')" placeholder="🔗 Paste YouTube URL or audio stream / track query..." value="https://www.youtube.com/watch?v=Gd9OhYroLN0" style="flex:1; background:#090a0c; border:1px solid #ff4800; color:#ff8c00; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
+                        <button class="btn btn-te-orange" id="btn-search-yt-a" onclick="searchOrLoadYouTube('a')" style="padding:4px 10px; font-size:9.5px; white-space:nowrap; font-weight:bold;">🚀 LOAD YT</button>
                     </div>
 
                     <!-- Live Search Results Tray (Populates dynamically on search) -->
                     <div id="yt-results-a" style="display:none; flex-direction:column; gap:3px; max-height:120px; overflow-y:auto; background:#101214; border:1px solid #ff4800; border-radius:2px; padding:4px;"></div>
 
-                    <!-- Instant Guaranteed Presets -->
-                    <div style="display:flex; gap:3px; align-items:center; overflow-x:auto; padding-top:2px;">
-                        <span style="font-size:8px; color:#888; text-transform:uppercase; font-family:'Space Mono', monospace;">PRESETS:</span>
-                        <button class="btn btn-mini btn-yt-preset" onclick="loadGenrePreset('a', 'daftpunk')" style="font-size:8px; padding:1px 5px;">⚡ Daft Punk (124 BPM)</button>
-                        <button class="btn btn-mini btn-yt-preset" onclick="loadGenrePreset('a', 'amenbreak')" style="font-size:8px; padding:1px 5px;">⚡ Amen Break (138 BPM)</button>
-                        <button class="btn btn-mini btn-yt-preset" onclick="loadGenrePreset('a', 'linkinpark')" style="font-size:8px; padding:1px 5px;">⚡ Linkin Park (Stem)</button>
-                        <button class="btn btn-mini btn-yt-preset" onclick="loadGenrePreset('a', 'prodigy')" style="font-size:8px; padding:1px 5px;">⚡ The Prodigy (130 BPM)</button>
-                        <button class="btn btn-mini btn-yt-preset" onclick="loadGenrePreset('a', 'gorillaz')" style="font-size:8px; padding:1px 5px;">⚡ Gorillaz (100 BPM)</button>
-                    </div>
+
                 </div>
                 <div class="turntable-stage" id="stage-a">
                     <canvas id="turntable-canvas-a" class="turntable-canvas" width="300" height="300"></canvas>
@@ -643,22 +635,14 @@
 
                     <!-- Search Input & Buttons -->
                     <div style="display:flex; gap:4px; align-items:center;">
-                        <input type="text" id="yt-url-b" onkeydown="if(event.key==='Enter') searchOrLoadYouTube('b')" placeholder="🔍 Search YouTube (e.g. Amen Break, Aphex Twin, Jungle) or paste URL..." value="https://www.youtube.com/watch?v=5SaFTm2bcac" style="flex:1; background:#090a0c; border:1px solid #00ff9d; color:#00ff9d; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
-                        <button class="btn btn-te-green" id="btn-search-yt-b" onclick="searchOrLoadYouTube('b')" style="padding:4px 8px; font-size:9.5px; white-space:nowrap; font-weight:bold;">🔍 SEARCH / LOAD</button>
+                        <input type="text" id="yt-url-b" onkeydown="if(event.key==='Enter') searchOrLoadYouTube('b')" placeholder="🔗 Paste YouTube URL or audio stream / track query..." value="https://www.youtube.com/watch?v=5SaFTm2bcac" style="flex:1; background:#090a0c; border:1px solid #00ff9d; color:#00ff9d; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
+                        <button class="btn btn-te-green" id="btn-search-yt-b" onclick="searchOrLoadYouTube('b')" style="padding:4px 10px; font-size:9.5px; white-space:nowrap; font-weight:bold;">🚀 LOAD YT</button>
                     </div>
 
                     <!-- Live Search Results Tray (Populates dynamically on search) -->
                     <div id="yt-results-b" style="display:none; flex-direction:column; gap:3px; max-height:120px; overflow-y:auto; background:#101214; border:1px solid #00ff9d; border-radius:2px; padding:4px;"></div>
 
-                    <!-- Instant Guaranteed Presets -->
-                    <div style="display:flex; gap:3px; align-items:center; overflow-x:auto; padding-top:2px;">
-                        <span style="font-size:8px; color:#888; text-transform:uppercase; font-family:'Space Mono', monospace;">PRESETS:</span>
-                        <button class="btn btn-mini btn-yt-preset" onclick="loadGenrePreset('b', 'amenbreak')" style="font-size:8px; padding:1px 5px;">⚡ Amen Break (138 BPM)</button>
-                        <button class="btn btn-mini btn-yt-preset" onclick="loadGenrePreset('b', 'daftpunk')" style="font-size:8px; padding:1px 5px;">⚡ Daft Punk (124 BPM)</button>
-                        <button class="btn btn-mini btn-yt-preset" onclick="loadGenrePreset('b', 'aphextwin')" style="font-size:8px; padding:1px 5px;">⚡ Aphex Twin (IDM 140)</button>
-                        <button class="btn btn-mini btn-yt-preset" onclick="loadGenrePreset('b', 'chemicalbros')" style="font-size:8px; padding:1px 5px;">⚡ Chemical Bros (128)</button>
-                        <button class="btn btn-mini btn-yt-preset" onclick="loadGenrePreset('b', 'synthwave')" style="font-size:8px; padding:1px 5px;">⚡ Synthwave (120 BPM)</button>
-                    </div>
+
                 </div>
                 <div class="turntable-stage" id="stage-b">
                     <canvas id="turntable-canvas-b" class="turntable-canvas" width="300" height="300"></canvas>
@@ -824,12 +808,6 @@ async function searchOrLoadYouTube(k) {
 
     ensureAudioContext();
 
-    const directId = extractYouTubeId(query);
-    if (directId) {
-        loadYouTubeOrStreamTrack(k, query, `YOUTUBE [${directId}]`);
-        return;
-    }
-
     const statusEl = document.getElementById(`yt-status-${k}`);
     const resultsTray = document.getElementById(`yt-results-${k}`);
     if (statusEl) {
@@ -837,8 +815,19 @@ async function searchOrLoadYouTube(k) {
         statusEl.style.color = '#ffaa00';
     }
 
+    const directId = extractYouTubeId(query);
     const matchedPresets = [];
     const qLower = query.toLowerCase();
+
+    if (directId) {
+        matchedPresets.push({
+            title: `YouTube Video [${directId}]`,
+            ytId: directId,
+            bpm: k === 'a' ? 124 : 138,
+            genre: "YouTube Track",
+            type: k === 'a' ? 'lead' : 'break'
+        });
+    }
 
     for (const [key, preset] of Object.entries(GENRE_PRESETS)) {
         if (preset.title.toLowerCase().includes(qLower) || preset.genre.toLowerCase().includes(qLower) || key.includes(qLower)) {
@@ -846,75 +835,50 @@ async function searchOrLoadYouTube(k) {
         }
     }
 
-    let apiResults = [];
-    try {
-        const pipedUrls = [
-            `https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(query)}&filter=videos`,
-            `https://api.invidious.io/api/v1/search?q=${encodeURIComponent(query)}&type=video`
-        ];
-        for (const pUrl of pipedUrls) {
-            try {
-                const res = await fetch(pUrl, { signal: AbortSignal.timeout(2500) });
-                if (res.ok) {
-                    const data = await res.json();
-                    const items = (data.items || data || []).slice(0, 4);
-                    items.forEach(it => {
-                        const vId = it.url ? it.url.replace('/watch?v=', '') : (it.videoId || it.id);
-                        if (vId) {
-                            apiResults.push({
-                                title: it.title || 'YouTube Track',
-                                ytId: vId,
-                                bpm: 120,
-                                genre: it.uploaderName || it.author || 'YouTube Track',
-                                type: 'lead'
-                            });
-                        }
-                    });
-                    if (apiResults.length > 0) break;
-                }
-            } catch(e) {}
+    // Always ensure at least all presets are available if query is generic
+    if (matchedPresets.length === 0) {
+        for (const [key, preset] of Object.entries(GENRE_PRESETS)) {
+            matchedPresets.push(preset);
         }
-    } catch(err) {}
+    }
 
-    const allResults = [...matchedPresets, ...apiResults];
-
-    if (allResults.length > 0) {
-        if (resultsTray) {
-            resultsTray.style.display = 'flex';
-            resultsTray.innerHTML = `<div style="font-size:8px; color:#aaa; font-weight:bold; margin-bottom:2px;">■ SEARCH RESULTS FOR "${query.toUpperCase().slice(0,18)}":</div>`;
-            
-            allResults.slice(0, 4).forEach(item => {
-                const row = document.createElement('div');
-                row.style.cssText = "display:flex; align-items:center; gap:6px; background:#181a1d; padding:3px 5px; border-radius:1px; cursor:pointer; border:1px solid #333;";
-                row.innerHTML = `
-                    <img src="https://img.youtube.com/vi/${item.ytId}/hqdefault.jpg" style="width:36px; height:26px; object-fit:cover; border-radius:1px;" />
-                    <div style="flex:1; overflow:hidden;">
-                        <div style="font-size:9px; color:#fff; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.title}</div>
-                        <div style="font-size:7.5px; color:#888;">${item.genre}</div>
-                    </div>
-                    <button class="btn btn-mini ${k==='a'?'btn-te-orange':'btn-te-green'}" style="font-size:8px; padding:2px 6px;">LOAD</button>
-                `;
-                row.onclick = () => {
-                    inputEl.value = `https://www.youtube.com/watch?v=${item.ytId}`;
-                    resultsTray.style.display = 'none';
-                    loadCustomTrackData(k, item);
-                };
-                resultsTray.appendChild(row);
-            });
-        }
-        if (statusEl) {
-            statusEl.innerText = `${allResults.length} FOUND`;
-            statusEl.style.color = (k === 'a' ? '#ff8c00' : '#00ff9d');
-        }
-    } else {
-        loadCustomTrackData(k, {
-            title: query.toUpperCase(),
-            ytId: "Gd9OhYroLN0",
-            bpm: k === 'a' ? 124 : 138,
-            genre: "Custom Audio Track",
-            type: k === 'a' ? "lead" : "break"
+    // Display Results Tray with interactive track cards
+    if (resultsTray) {
+        resultsTray.style.display = 'flex';
+        resultsTray.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center; font-size:8.5px; color:#aaa; font-weight:bold; margin-bottom:3px;">
+            <span>■ MATCHING TRACKS FOR "${query.toUpperCase().slice(0,18)}":</span>
+            <span style="cursor:pointer; color:#ff4800;" onclick="document.getElementById('yt-results-${k}').style.display='none'">✖ CLOSE</span>
+        </div>`;
+        
+        matchedPresets.slice(0, 5).forEach(item => {
+            const row = document.createElement('div');
+            row.style.cssText = "display:flex; align-items:center; gap:6px; background:#181a1d; padding:4px 6px; border-radius:1px; cursor:pointer; border:1px solid #383b40; transition:background 0.1s;";
+            row.onmouseover = () => { row.style.background = '#25282d'; };
+            row.onmouseout = () => { row.style.background = '#181a1d'; };
+            row.innerHTML = `
+                <img src="https://img.youtube.com/vi/${item.ytId}/hqdefault.jpg" style="width:40px; height:28px; object-fit:cover; border-radius:1px; border:1px solid ${k==='a'?'#ff4800':'#00ff9d'};" />
+                <div style="flex:1; overflow:hidden;">
+                    <div style="font-size:9.5px; color:#fff; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.title}</div>
+                    <div style="font-size:8px; color:#888;">${item.genre} • ${item.bpm} BPM</div>
+                </div>
+                <button class="btn btn-mini ${k==='a'?'btn-te-orange':'btn-te-green'}" style="font-size:8.5px; padding:3px 8px; font-weight:bold;">🚀 LOAD</button>
+            `;
+            row.onclick = () => {
+                inputEl.value = `https://www.youtube.com/watch?v=${item.ytId}`;
+                resultsTray.style.display = 'none';
+                loadCustomTrackData(k, item);
+            };
+            resultsTray.appendChild(row);
         });
     }
+
+    if (statusEl) {
+        statusEl.innerText = `${matchedPresets.length} FOUND`;
+        statusEl.style.color = (k === 'a' ? '#ff8c00' : '#00ff9d');
+    }
+
+    // Also auto-load the top result immediately
+    loadCustomTrackData(k, matchedPresets[0]);
 }
 window.searchOrLoadYouTube = searchOrLoadYouTube;
 
@@ -1056,19 +1020,23 @@ async function loadCustomTrackData(k, meta) {
         }
     }
 
+    // Compute Peaks & MinPeaks for Waveform Display
     const rawData = d.buffer.getChannelData(0);
-    const peakCount = 800;
-    const step = Math.max(1, Math.floor(rawData.length / peakCount));
-    d.peaks = [];
-    for (let i = 0; i < peakCount; i++) {
-        let maxVal = 0;
-        const start = i * step;
+    const binCount = 400;
+    const step = Math.max(1, Math.floor(rawData.length / binCount));
+    d.peaks = new Float32Array(binCount);
+    d.minPeaks = new Float32Array(binCount);
+    for (let b = 0; b < binCount; b++) {
+        let minVal = 0.0, maxVal = 0.0;
+        const start = b * step;
         const end = Math.min(rawData.length, start + step);
         for (let j = start; j < end; j++) {
-            const abs = Math.abs(rawData[j]);
-            if (abs > maxVal) maxVal = abs;
+            const s = rawData[j];
+            if (s < minVal) minVal = s;
+            if (s > maxVal) maxVal = s;
         }
-        d.peaks.push(maxVal);
+        d.minPeaks[b] = minVal;
+        d.peaks[b] = Math.max(0.1, maxVal);
     }
 
     d.vinylImg = null;
@@ -1830,10 +1798,14 @@ function renderLinearStrip(k) {
 
         for (let b = 0; b < binCount; b++) {
             const bx = b * scaleX;
-            const pMax = d.peaks[b];
-            const pMin = d.minPeaks[b];
+            const pMax = Math.abs(d.peaks[b] || 0.05);
+            const pMin = (d.minPeaks && !isNaN(d.minPeaks[b])) ? d.minPeaks[b] : -pMax;
             let yTop = centerY + pMin * ampScale;
             let yBot = centerY + pMax * ampScale;
+            if (isNaN(yTop) || isNaN(yBot)) {
+                yTop = centerY - pMax * ampScale;
+                yBot = centerY + pMax * ampScale;
+            }
             if (yBot - yTop < 2) {
                 yTop = centerY - 1;
                 yBot = centerY + 1;
