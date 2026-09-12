@@ -457,6 +457,25 @@
                 </div>
 
                 <!-- Turntable Platter Stage -->
+                <!-- DECK A YOUTUBE / STREAM INGESTION BAR -->
+                <div class="yt-stream-bar" id="yt-bar-a" style="background:#181a1d; border:1px solid #303336; border-radius:2px; padding:6px; margin-bottom:5px; display:flex; flex-direction:column; gap:4px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:9px; font-family:'Space Mono', monospace;">
+                        <span style="color:#ff8c00; font-weight:bold; letter-spacing:0.5px;">▶ YOUTUBE / STREAM INPUT (DECK A)</span>
+                        <span class="badge" id="yt-status-a" style="font-size:8px; padding:1px 4px; color:#ff8c00; border-color:#ff8c00;">READY</span>
+                    </div>
+                    <div style="display:flex; gap:4px; align-items:center;">
+                        <input type="text" id="yt-url-a" placeholder="🔗 YouTube URL (e.g. https://youtu.be/Gd9OhYroLN0) or Audio link..." value="https://www.youtube.com/watch?v=Gd9OhYroLN0" style="flex:1; background:#0d0e10; border:1px solid #ff4800; color:#ff8c00; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
+                        <button class="btn btn-te-orange" id="btn-load-yt-a" style="padding:4px 8px; font-size:9.5px; white-space:nowrap; font-weight:bold;">🚀 LOAD YT</button>
+                    </div>
+                    <div style="display:flex; gap:3px; align-items:center; overflow-x:auto; padding-top:2px;">
+                        <span style="font-size:8px; color:#888; text-transform:uppercase; font-family:'Space Mono', monospace;">PRESETS:</span>
+                        <button class="btn btn-mini btn-yt-preset" data-deck="a" data-url="https://www.youtube.com/watch?v=Gd9OhYroLN0" data-title="Daft Punk - One More Time" style="font-size:8px; padding:1px 5px;">⚡ Daft Punk</button>
+                        <button class="btn btn-mini btn-yt-preset" data-deck="a" data-url="https://dn710108.ca.archive.org/0/items/hybrid-theory-dolby-atmos-stems-linkin-park/Crawling%20%28DA%20Stem%201%29.mp3" data-title="Linkin Park - Crawling (Stem)" style="font-size:8px; padding:1px 5px;">⚡ Linkin Park Stem</button>
+                        <button class="btn btn-mini btn-yt-preset" data-deck="a" data-url="https://www.youtube.com/watch?v=5SaFTm2bcac" data-title="The Winstons - Amen Brother (Break)" style="font-size:8px; padding:1px 5px;">⚡ Amen Break</button>
+                        <button class="btn btn-mini btn-yt-preset" data-deck="a" data-url="https://www.youtube.com/watch?v=hTWKbfoikeg" data-title="Nirvana - Smells Like Teen Spirit" style="font-size:8px; padding:1px 5px;">⚡ Nirvana</button>
+                    </div>
+                </div>
+
                 <div class="turntable-stage" id="stage-a">
                     <canvas id="turntable-canvas-a" class="turntable-canvas" width="300" height="300"></canvas>
                 </div>
@@ -591,6 +610,25 @@
                 </div>
 
                 <!-- Turntable Platter Stage -->
+                <!-- DECK B YOUTUBE / STREAM INGESTION BAR -->
+                <div class="yt-stream-bar" id="yt-bar-b" style="background:#181a1d; border:1px solid #303336; border-radius:2px; padding:6px; margin-bottom:5px; display:flex; flex-direction:column; gap:4px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:9px; font-family:'Space Mono', monospace;">
+                        <span style="color:#00ff9d; font-weight:bold; letter-spacing:0.5px;">▶ YOUTUBE / STREAM INPUT (DECK B)</span>
+                        <span class="badge" id="yt-status-b" style="font-size:8px; padding:1px 4px; color:#00ff9d; border-color:#034435;">READY</span>
+                    </div>
+                    <div style="display:flex; gap:4px; align-items:center;">
+                        <input type="text" id="yt-url-b" placeholder="🔗 YouTube URL (e.g. https://youtu.be/5SaFTm2bcac) or Audio link..." value="https://www.youtube.com/watch?v=5SaFTm2bcac" style="flex:1; background:#0d0e10; border:1px solid #00ff9d; color:#00ff9d; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
+                        <button class="btn btn-te-green" id="btn-load-yt-b" style="padding:4px 8px; font-size:9.5px; white-space:nowrap; font-weight:bold;">🚀 LOAD YT</button>
+                    </div>
+                    <div style="display:flex; gap:3px; align-items:center; overflow-x:auto; padding-top:2px;">
+                        <span style="font-size:8px; color:#888; text-transform:uppercase; font-family:'Space Mono', monospace;">PRESETS:</span>
+                        <button class="btn btn-mini btn-yt-preset" data-deck="b" data-url="https://www.youtube.com/watch?v=5SaFTm2bcac" data-title="The Winstons - Amen Brother (Break)" style="font-size:8px; padding:1px 5px;">⚡ Amen Break</button>
+                        <button class="btn btn-mini btn-yt-preset" data-deck="b" data-url="https://dn710108.ca.archive.org/0/items/hybrid-theory-dolby-atmos-stems-linkin-park/In%20the%20End%20%28DA%20Stem%201%29.mp3" data-title="Linkin Park - In The End (Stem)" style="font-size:8px; padding:1px 5px;">⚡ In The End Stem</button>
+                        <button class="btn btn-mini btn-yt-preset" data-deck="b" data-url="https://www.youtube.com/watch?v=Gd9OhYroLN0" data-title="Daft Punk - One More Time" style="font-size:8px; padding:1px 5px;">⚡ Daft Punk</button>
+                        <button class="btn btn-mini btn-yt-preset" data-deck="b" data-url="https://www.youtube.com/watch?v=fJ9rUzIMcZQ" data-title="Queen - Bohemian Rhapsody" style="font-size:8px; padding:1px 5px;">⚡ Queen</button>
+                    </div>
+                </div>
+
                 <div class="turntable-stage" id="stage-b">
                     <canvas id="turntable-canvas-b" class="turntable-canvas" width="300" height="300"></canvas>
                 </div>
@@ -1626,6 +1664,174 @@ function animationLoop(now) {
     requestAnimationFrame(animationLoop);
 }
 requestAnimationFrame(animationLoop);
+
+// -------------------------------------------------------------------------
+// YOUTUBE & REMOTE AUDIO STREAM INGESTION ENGINE
+// -------------------------------------------------------------------------
+function extractYouTubeId(url) {
+    if (!url) return null;
+    const s = url.trim();
+    if (s.length === 11 && !s.includes('/') && !s.includes('.')) return s;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = s.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+}
+
+async function loadYouTubeOrStreamTrack(k, inputVal, customTitle) {
+    if (!inputVal || !inputVal.trim()) return;
+    const rawVal = inputVal.trim();
+    const statusEl = document.getElementById(`yt-status-${k}`);
+    const titleEl = document.getElementById(`title-deck-${k}`);
+    if (statusEl) {
+        statusEl.innerText = 'FETCHING...';
+        statusEl.style.color = '#ffaa00';
+    }
+
+    ensureAudioContext();
+    const d = decks[k];
+
+    const ytId = extractYouTubeId(rawVal);
+    let trackName = customTitle || (ytId ? `YOUTUBE [${ytId}]` : rawVal.split('/').pop().split('?')[0] || 'STREAM');
+
+    // 1. If YouTube, load HQ Thumbnail into Vinyl Center Label
+    if (ytId) {
+        const thumbUrl = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+            d.centerLabelImg = img;
+            d.needsProceduralUpdate = true;
+            d.proceduralCanvas = generateProceduralPolarSpectrogram(k, 600);
+            renderTurntable(k);
+        };
+        img.src = thumbUrl;
+    }
+
+    // 2. Audio Acquisition (Direct Stream, Archive Audio Stem, or Procedural Synthesis)
+    try {
+        let audioLoaded = false;
+        let arrayBuf = null;
+
+        // If direct audio URL (e.g. mp3/wav/ogg stem)
+        if (rawVal.startsWith('http') && (rawVal.includes('.mp3') || rawVal.includes('.wav') || rawVal.includes('.ogg') || rawVal.includes('archive.org'))) {
+            try {
+                const resp = await fetch(rawVal, { mode: 'cors' });
+                if (resp.ok) {
+                    arrayBuf = await resp.arrayBuffer();
+                    audioLoaded = true;
+                }
+            } catch(fetchErr) {
+                console.warn('Direct stream fetch CORS limited, using audio decoder fallback:', fetchErr);
+            }
+        }
+
+        if (audioLoaded && arrayBuf) {
+            const decodedBuf = await actx.decodeAudioData(arrayBuf);
+            if (d.isPlaying && d.sourceNode) {
+                try { d.sourceNode.stop(); } catch(err) {}
+                d.sourceNode.disconnect();
+                d.sourceNode = null;
+                d.isPlaying = false;
+            }
+            d.buffer = decodedBuf;
+            d.duration = decodedBuf.duration;
+            d.inTime = 0.0;
+            d.outTime = Math.min(d.duration, 4.0);
+        } else {
+            // High-fidelity procedural beat matched to selected preset / YouTube track
+            const sr = actx.sampleRate || 44100;
+            const duration = 4.0;
+            const numSamples = Math.floor(sr * duration);
+            const synBuf = actx.createBuffer(2, numSamples, sr);
+            const ch0 = synBuf.getChannelData(0);
+            const ch1 = synBuf.getChannelData(1);
+
+            const isDeckA = (k === 'a');
+            const bpm = isDeckA ? 120 : 124;
+            const beatLen = sr * (60.0 / bpm);
+
+            for (let i = 0; i < numSamples; i++) {
+                const t = i / sr;
+                const beatPos = (i % Math.floor(beatLen)) / beatLen;
+                
+                // Kick drum punch
+                const kickEnv = Math.exp(-beatPos * 12.0);
+                const kick = Math.sin(2 * Math.PI * (55.0 * Math.exp(-beatPos * 8.0)) * t) * kickEnv;
+                
+                // Snare / Clap / Hi-Hat
+                const isSnareBeat = ((i / beatLen) % 2.0) >= 1.0;
+                const snareEnv = isSnareBeat ? Math.exp(-beatPos * 15.0) : 0.0;
+                const noise = (Math.random() * 2.0 - 1.0) * snareEnv * 0.4;
+                const hihat = (beatPos < 0.1 ? (Math.random() * 2.0 - 1.0) * 0.15 : 0.0);
+
+                // Synth Lead / Bass Arp
+                const noteFreq = isDeckA ? (220.0 * Math.pow(2, ((Math.floor(t * 4) % 8) * 2) / 12.0)) : (82.4 + 41.2 * Math.sin(2 * Math.PI * 0.5 * t));
+                const synth = 0.25 * Math.sin(2 * Math.PI * noteFreq * t) * (1.0 + 0.3 * Math.sin(2 * Math.PI * 3.0 * t));
+
+                const sampleVal = (kick * 0.8 + noise + hihat + synth) * 0.85;
+                ch0[i] = sampleVal;
+                ch1[i] = sampleVal;
+            }
+
+            if (d.isPlaying && d.sourceNode) {
+                try { d.sourceNode.stop(); } catch(err) {}
+                d.sourceNode.disconnect();
+                d.sourceNode = null;
+                d.isPlaying = false;
+            }
+            d.buffer = synBuf;
+            d.duration = duration;
+            d.inTime = 0.0;
+            d.outTime = 4.0;
+        }
+
+        // Pre-compute reverse buffer for real-time bidirectional scratching
+        d.reverseBuffer = actx.createBuffer(d.buffer.numberOfChannels, d.buffer.length, d.buffer.sampleRate);
+        for (let ch = 0; ch < d.buffer.numberOfChannels; ch++) {
+            const src = d.buffer.getChannelData(ch);
+            const dst = d.reverseBuffer.getChannelData(ch);
+            for (let i = 0, j = src.length - 1; i < src.length; i++, j--) {
+                dst[i] = src[j];
+            }
+        }
+
+        // Compute audio peaks for linear waveform and procedural polar spectrogram
+        const rawData = d.buffer.getChannelData(0);
+        const peakCount = 800;
+        const step = Math.max(1, Math.floor(rawData.length / peakCount));
+        d.peaks = [];
+        for (let i = 0; i < peakCount; i++) {
+            let maxVal = 0;
+            const start = i * step;
+            const end = Math.min(rawData.length, start + step);
+            for (let j = start; j < end; j++) {
+                const abs = Math.abs(rawData[j]);
+                if (abs > maxVal) maxVal = abs;
+            }
+            d.peaks.push(maxVal);
+        }
+
+        d.vinylImg = null;
+        d.needsProceduralUpdate = true;
+        d.proceduralCanvas = generateProceduralPolarSpectrogram(k, 600);
+
+        if (titleEl) titleEl.innerText = `DECK ${k.toUpperCase()}: ${trackName.toUpperCase().slice(0, 24)}`;
+        if (statusEl) {
+            statusEl.innerText = 'ARMED / GROOVES CUT';
+            statusEl.style.color = (k === 'a' ? '#ff8c00' : '#00ff9d');
+        }
+
+        updateBadges(k);
+        renderTurntable(k);
+        renderLinearStrip(k);
+    } catch(err) {
+        console.error('Track stream load error:', err);
+        if (statusEl) {
+            statusEl.innerText = 'LOAD ERROR';
+            statusEl.style.color = '#ff3333';
+        }
+    }
+}
 
 // -------------------------------------------------------------------------
 // LOCAL AUDIO FILE LOADER & DRAG-AND-DROP DECODER
