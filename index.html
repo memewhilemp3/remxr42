@@ -730,9 +730,20 @@ const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let actx = null;
 
 function ensureAudioContext() {
-    if (!actx) actx = new AudioCtx();
-    if (actx.state === 'suspended') actx.resume();
+    if (!actx) {
+        actx = new AudioCtx();
+    }
+    if (actx && actx.state === 'suspended') {
+        actx.resume().catch(() => {});
+    }
 }
+
+// Global unlock on any user click / touch / key
+['click', 'pointerdown', 'keydown', 'touchstart'].forEach(evt => {
+    window.addEventListener(evt, () => {
+        ensureAudioContext();
+    }, { passive: true });
+});
 
 // =========================================================================
 // IN-BROWSER YOUTUBE SEARCH & MULTI-GENRE AUDIO SPLICER ENGINE
