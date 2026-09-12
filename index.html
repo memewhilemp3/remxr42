@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -444,7 +443,7 @@
             <!-- ------------------------------------------------------------- -->
             <div class="deck-platter-box" id="deck-box-a">
                 <div class="deck-titlebar-a">
-                    <span id="title-deck-a">DECK A: REMXR42 LEAD LOOP A</span>
+                    <span id="title-deck-a">DECK A: REMXR42 LEAD A</span>
                     <div style="display:flex; align-items:center; gap:4px;">
                         <label class="btn btn-mini" style="cursor:pointer; background:#242629; color:#ff8c00; border:1px solid #ff8c00; font-size:8px; padding:1px 5px; border-radius:2px;" title="Open local audio file (MP3/WAV/FLAC/OGG)">
                             📂 OPEN
@@ -457,8 +456,6 @@
                 </div>
 
                 <!-- Turntable Platter Stage -->
-                <!-- DECK A YOUTUBE / STREAM INGESTION BAR -->
-                <!-- DECK A YOUTUBE / STREAM INGESTION BAR -->
                 <!-- DECK A YOUTUBE / STREAM INGESTION BAR -->
                 <div class="yt-stream-bar" id="yt-bar-a" style="background:#181a1d; border:1px solid #ff4800; border-radius:2px; padding:6px; margin-bottom:6px; display:flex; flex-direction:column; gap:5px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5);">
                     <div style="display:flex; justify-content:space-between; align-items:center; font-size:9px; font-family:'Space Mono', monospace;">
@@ -493,7 +490,8 @@
                         <button class="btn btn-mini btn-yt-preset" onclick="loadGenrePreset('a', 'prodigy')" style="font-size:8px; padding:1px 5px;">⚡ The Prodigy (130 BPM)</button>
                         <button class="btn btn-mini btn-yt-preset" onclick="loadGenrePreset('a', 'gorillaz')" style="font-size:8px; padding:1px 5px;">⚡ Gorillaz (100 BPM)</button>
                     </div>
-                </div><div class="turntable-stage" id="stage-a">
+                </div>
+                <div class="turntable-stage" id="stage-a">
                     <canvas id="turntable-canvas-a" class="turntable-canvas" width="300" height="300"></canvas>
                 </div>
 
@@ -614,7 +612,7 @@
             <!-- ------------------------------------------------------------- -->
             <div class="deck-platter-box" id="deck-box-b">
                 <div class="deck-titlebar-b">
-                    <span id="title-deck-b">DECK B: REMXR42 BASS GROOVE B</span>
+                    <span id="title-deck-b">DECK B: REMXR42 BASS B</span>
                     <div style="display:flex; align-items:center; gap:4px;">
                         <label class="btn btn-mini" style="cursor:pointer; background:#242629; color:#00ff9d; border:1px solid #00ff9d; font-size:8px; padding:1px 5px; border-radius:2px;" title="Open local audio file (MP3/WAV/FLAC/OGG)">
                             📂 OPEN
@@ -627,8 +625,6 @@
                 </div>
 
                 <!-- Turntable Platter Stage -->
-                <!-- DECK B YOUTUBE / STREAM INGESTION BAR -->
-                <!-- DECK B YOUTUBE / STREAM INGESTION BAR -->
                 <!-- DECK B YOUTUBE / STREAM INGESTION BAR -->
                 <div class="yt-stream-bar" id="yt-bar-b" style="background:#181a1d; border:1px solid #00ff9d; border-radius:2px; padding:6px; margin-bottom:6px; display:flex; flex-direction:column; gap:5px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5);">
                     <div style="display:flex; justify-content:space-between; align-items:center; font-size:9px; font-family:'Space Mono', monospace;">
@@ -663,7 +659,8 @@
                         <button class="btn btn-mini btn-yt-preset" onclick="loadGenrePreset('b', 'chemicalbros')" style="font-size:8px; padding:1px 5px;">⚡ Chemical Bros (128)</button>
                         <button class="btn btn-mini btn-yt-preset" onclick="loadGenrePreset('b', 'synthwave')" style="font-size:8px; padding:1px 5px;">⚡ Synthwave (120 BPM)</button>
                     </div>
-                </div><div class="turntable-stage" id="stage-b">
+                </div>
+                <div class="turntable-stage" id="stage-b">
                     <canvas id="turntable-canvas-b" class="turntable-canvas" width="300" height="300"></canvas>
                 </div>
 
@@ -738,7 +735,6 @@ function ensureAudioContext() {
 }
 
 // =========================================================================
-// =========================================================================
 // IN-BROWSER YOUTUBE SEARCH & MULTI-GENRE AUDIO SPLICER ENGINE
 // =========================================================================
 const GENRE_PRESETS = {
@@ -810,7 +806,6 @@ function extractYouTubeId(url) {
 }
 window.extractYouTubeId = extractYouTubeId;
 
-// Search YouTube via fast public endpoints with curated fallbacks
 async function searchOrLoadYouTube(k) {
     const inputEl = document.getElementById(`yt-url-${k}`);
     const query = inputEl ? inputEl.value.trim() : '';
@@ -818,14 +813,12 @@ async function searchOrLoadYouTube(k) {
 
     ensureAudioContext();
 
-    // If direct YouTube link or video ID:
     const directId = extractYouTubeId(query);
     if (directId) {
         loadYouTubeOrStreamTrack(k, query, `YOUTUBE [${directId}]`);
         return;
     }
 
-    // Otherwise, perform live keyword search
     const statusEl = document.getElementById(`yt-status-${k}`);
     const resultsTray = document.getElementById(`yt-results-${k}`);
     if (statusEl) {
@@ -836,14 +829,12 @@ async function searchOrLoadYouTube(k) {
     const matchedPresets = [];
     const qLower = query.toLowerCase();
 
-    // 1. Search known presets database
     for (const [key, preset] of Object.entries(GENRE_PRESETS)) {
         if (preset.title.toLowerCase().includes(qLower) || preset.genre.toLowerCase().includes(qLower) || key.includes(qLower)) {
             matchedPresets.push(preset);
         }
     }
 
-    // 2. Query Invidious / Piped API for live YouTube index hits
     let apiResults = [];
     try {
         const pipedUrls = [
@@ -905,7 +896,6 @@ async function searchOrLoadYouTube(k) {
             statusEl.style.color = (k === 'a' ? '#ff8c00' : '#00ff9d');
         }
     } else {
-        // Fallback: Generate custom track named after query
         loadCustomTrackData(k, {
             title: query.toUpperCase(),
             ytId: "Gd9OhYroLN0",
@@ -935,7 +925,6 @@ function loadPresetTrack(deck, url, title) {
 }
 window.loadPresetTrack = loadPresetTrack;
 
-// High-Fidelity Multi-Genre Audio & Spectrogram Generator
 async function loadCustomTrackData(k, meta) {
     ensureAudioContext();
     const d = decks[k];
@@ -1002,7 +991,6 @@ async function loadCustomTrackData(k, meta) {
         let kick = 0, snare = 0, hihat = 0, bass = 0, synth = 0;
 
         if (trackType === 'break' || meta.title.includes('Amen') || meta.title.includes('Prodigy')) {
-            // Jungle / Amen Break 138-160 BPM
             const isKickStep = (barPos < 0.1 || (barPos > 0.48 && barPos < 0.58) || (barPos > 0.72 && barPos < 0.8));
             if (isKickStep) {
                 const kEnv = Math.exp(-beatPos * 14.0);
@@ -1016,18 +1004,15 @@ async function loadCustomTrackData(k, meta) {
             hihat = (Math.random() * 2.0 - 1.0) * 0.12 * Math.exp(-(beatPos % 0.25) * 30.0);
             bass = 0.35 * Math.sin(2 * Math.PI * (55 + 20 * Math.sin(2 * Math.PI * 0.5 * t)) * t);
         } else if (trackType === 'lead' || meta.title.includes('Daft')) {
-            // French House / Disco Groove 124 BPM
             const kEnv = Math.exp(-beatPos * 12.0);
             kick = Math.sin(2 * Math.PI * (54.0 * Math.exp(-beatPos * 8.0)) * t) * kEnv;
             const isClap = ((i / beatLen) % 2.0) >= 1.0;
             snare = isClap ? (Math.random() * 2.0 - 1.0) * Math.exp(-beatPos * 14.0) * 0.45 : 0.0;
             hihat = ((beatPos > 0.45 && beatPos < 0.6) ? (Math.random() * 2.0 - 1.0) * 0.18 : 0.0);
-            // Daft Funk Chord
-            const chord = [261.63, 329.63, 392.00, 523.25]; // C Maj
+            const chord = [261.63, 329.63, 392.00, 523.25];
             const root = chord[Math.floor(t * 2) % chord.length];
             synth = 0.25 * (Math.sin(2 * Math.PI * root * t) + 0.5 * Math.sin(2 * Math.PI * root * 2 * t)) * (1.0 + 0.2 * Math.sin(2 * Math.PI * 4.0 * t));
         } else {
-            // Bass / Stem Groove
             const kEnv = Math.exp(-beatPos * 10.0);
             kick = Math.sin(2 * Math.PI * (50.0 * Math.exp(-beatPos * 6.0)) * t) * kEnv;
             bass = 0.4 * Math.sin(2 * Math.PI * 82.4 * t) * (1.0 + 0.4 * Math.sin(2 * Math.PI * 2.0 * t));
@@ -1051,7 +1036,6 @@ async function loadCustomTrackData(k, meta) {
     d.inTime = 0.0;
     d.outTime = 4.0;
 
-    // Reverse buffer for bidirectional scratching
     d.reverseBuffer = actx.createBuffer(2, numSamples, sr);
     for (let ch = 0; ch < 2; ch++) {
         const src = d.buffer.getChannelData(ch);
@@ -1061,7 +1045,6 @@ async function loadCustomTrackData(k, meta) {
         }
     }
 
-    // Audio peaks for waveform and polar spectrogram
     const rawData = d.buffer.getChannelData(0);
     const peakCount = 800;
     const step = Math.max(1, Math.floor(rawData.length / peakCount));
@@ -1091,7 +1074,6 @@ async function loadCustomTrackData(k, meta) {
     renderTurntable(k);
     renderLinearStrip(k);
 
-    // Auto-trigger playback so the user immediately hears the track!
     playDeckSlice(k, 0.0);
 }
 window.loadCustomTrackData = loadCustomTrackData;
@@ -1101,7 +1083,6 @@ async function loadYouTubeOrStreamTrack(k, inputVal, customTitle) {
     const rawVal = inputVal.trim();
     const ytId = extractYouTubeId(rawVal);
     
-    // Check if preset key matches
     if (GENRE_PRESETS[rawVal.toLowerCase()]) {
         loadGenrePreset(k, rawVal.toLowerCase());
         return;
@@ -1117,6 +1098,909 @@ async function loadYouTubeOrStreamTrack(k, inputVal, customTitle) {
     });
 }
 window.loadYouTubeOrStreamTrack = loadYouTubeOrStreamTrack;
+
+
+
+const decks = {
+    a: {
+        id: 'a',
+        uri: "",
+        vinylUri: "",
+        linearUri: "",
+        thumbUri: "",
+        name: "REMXR42 LEAD A",
+        vinylImg: null,
+        proceduralCanvas: null,
+        needsProceduralUpdate: true,
+        thumbImg: null,
+        linearImg: null,
+        buffer: null,
+        reverseBuffer: null,
+        peaks: null,
+        minPeaks: null,
+        duration: 0,
+        inTime: 0.0,
+        outTime: 4.0,
+        hotCues: [null, null, null, null],
+        setHotCueMode: false,
+        loop: true,
+        reverse: false,
+        pitch: 1.0,
+        rotationAngle: 0,
+        rotationSpeed: (33.33 / 60) * 2 * Math.PI,
+        sourceNode: null,
+        gainNode: null,
+        eqLow: null,
+        eqMid: null,
+        eqHigh: null,
+        scratchGain: null,
+        isPlaying: false,
+        isScratching: false,
+        wasPlayingBeforeScratch: false,
+        scratchAudioPos: 0,
+        lastScratchAngle: 0,
+        lastScratchTime: 0,
+        scratchVelocity: 0,
+        playStartTime: 0,
+        dragTarget: null,
+        ttCanvas: document.getElementById('turntable-canvas-a'),
+        linCanvas: document.getElementById('linear-canvas-a'),
+        scratchLed: document.getElementById('scratch-led-a'),
+        color: '#ff4800',
+        wedgeColor: 'rgba(255, 72, 0, 0.32)'
+    },
+    b: {
+        id: 'b',
+        uri: "",
+        vinylUri: "",
+        linearUri: "",
+        thumbUri: "",
+        name: "REMXR42 BASS B",
+        vinylImg: null,
+        proceduralCanvas: null,
+        needsProceduralUpdate: true,
+        thumbImg: null,
+        linearImg: null,
+        buffer: null,
+        reverseBuffer: null,
+        peaks: null,
+        minPeaks: null,
+        duration: 0,
+        inTime: 0.0,
+        outTime: 4.0,
+        hotCues: [null, null, null, null],
+        setHotCueMode: false,
+        loop: true,
+        reverse: false,
+        pitch: 1.0,
+        rotationAngle: 0,
+        rotationSpeed: (33.33 / 60) * 2 * Math.PI,
+        sourceNode: null,
+        gainNode: null,
+        eqLow: null,
+        eqMid: null,
+        eqHigh: null,
+        scratchGain: null,
+        isPlaying: false,
+        isScratching: false,
+        wasPlayingBeforeScratch: false,
+        scratchAudioPos: 0,
+        lastScratchAngle: 0,
+        lastScratchTime: 0,
+        scratchVelocity: 0,
+        playStartTime: 0,
+        dragTarget: null,
+        ttCanvas: document.getElementById('turntable-canvas-b'),
+        linCanvas: document.getElementById('linear-canvas-b'),
+        scratchLed: document.getElementById('scratch-led-b'),
+        color: '#00ff9d',
+        wedgeColor: 'rgba(0, 255, 157, 0.32)'
+    }
+};
+
+let masterCrossfader = 0.5;
+let viewMode = 'hybrid';
+
+// -------------------------------------------------------------------------
+// AUDIO GRAPH SETUP & BUFFER INVERSION
+// -------------------------------------------------------------------------
+function base64ToArrayBuffer(dataUri) {
+    try {
+        const idx = dataUri.indexOf(',');
+        const b64 = idx >= 0 ? dataUri.slice(idx + 1) : dataUri;
+        const bin = atob(b64);
+        const len = bin.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = bin.charCodeAt(i);
+        }
+        return bytes.buffer;
+    } catch(e) {
+        console.warn('Base64 decode error:', e);
+        return null;
+    }
+}
+
+async function initDeck(k) {
+    const d = decks[k];
+    
+    // Auto-load default initial track into deck
+    const defaultPreset = (k === 'a') ? 'daftpunk' : 'amenbreak';
+    loadCustomTrackData(k, GENRE_PRESETS[defaultPreset]);
+
+    updateBadges(k);
+    renderTurntable(k);
+    renderLinearStrip(k);
+}
+
+function setupAudioGraph(k) {
+    const d = decks[k];
+    ensureAudioContext();
+
+    d.eqLow = actx.createBiquadFilter();
+    d.eqLow.type = 'lowshelf';
+    d.eqLow.frequency.value = 250;
+    d.eqLow.gain.value = parseFloat(document.getElementById(`eq-low-${k}`).value);
+
+    d.eqMid = actx.createBiquadFilter();
+    d.eqMid.type = 'peaking';
+    d.eqMid.frequency.value = 1500;
+    d.eqMid.gain.value = parseFloat(document.getElementById(`eq-mid-${k}`).value);
+
+    d.eqHigh = actx.createBiquadFilter();
+    d.eqHigh.type = 'highshelf';
+    d.eqHigh.frequency.value = 4000;
+    d.eqHigh.gain.value = parseFloat(document.getElementById(`eq-high-${k}`).value);
+
+    d.gainNode = actx.createGain();
+    const xfGain = (k === 'a') ? Math.cos(masterCrossfader * Math.PI / 2) : Math.sin(masterCrossfader * Math.PI / 2);
+    d.gainNode.gain.value = xfGain;
+
+    d.scratchGain = actx.createGain();
+    d.scratchGain.gain.value = 1.0;
+
+    d.eqLow.connect(d.eqMid);
+    d.eqMid.connect(d.eqHigh);
+    d.eqHigh.connect(d.gainNode);
+    d.gainNode.connect(actx.destination);
+    d.scratchGain.connect(d.eqLow);
+}
+
+function updateBadges(k) {
+    const d = decks[k];
+    const len = Math.max(0, d.outTime - d.inTime);
+    const mainBadge = document.getElementById(`badge-${k}-info`);
+    if (mainBadge) mainBadge.innerText = `${d.inTime.toFixed(1)}s - ${d.outTime.toFixed(1)}s (${len.toFixed(1)}s)`;
+    const inBadge = document.getElementById(`time-in-${k}`);
+    if (inBadge) inBadge.innerText = `${d.inTime.toFixed(1)}s`;
+    const outBadge = document.getElementById(`time-out-${k}`);
+    if (outBadge) outBadge.innerText = `${d.outTime.toFixed(1)}s`;
+}
+
+function playNeedleDrop(k) {
+    if (!actx || !decks[k].buffer) return;
+    ensureAudioContext();
+    const osc = actx.createOscillator();
+    const g = actx.createGain();
+    osc.frequency.setValueAtTime(95, actx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(32, actx.currentTime + 0.035);
+    g.gain.setValueAtTime(0.35, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.04);
+    osc.connect(g);
+    g.connect(decks[k].scratchGain || actx.destination);
+    osc.start();
+    osc.stop(actx.currentTime + 0.045);
+}
+
+function playScratchGrain(k, audioPos, velocity) {
+    const d = decks[k];
+    if (!d.buffer || !actx) return;
+    ensureAudioContext();
+
+    const speed = Math.abs(velocity);
+    if (speed < 0.08) return;
+
+    const rate = Math.min(3.8, Math.max(0.18, speed));
+    const grainDur = 0.065;
+    const now = actx.currentTime;
+
+    const src = actx.createBufferSource();
+    const g = actx.createGain();
+
+    if (velocity >= 0) {
+        src.buffer = d.buffer;
+        src.playbackRate.value = rate * d.pitch;
+        const offset = Math.max(0, Math.min(d.duration - grainDur, audioPos));
+        src.start(now, offset, grainDur);
+    } else {
+        src.buffer = d.reverseBuffer;
+        src.playbackRate.value = rate * d.pitch;
+        const revOffset = Math.max(0, Math.min(d.duration - grainDur, d.duration - audioPos));
+        src.start(now, revOffset, grainDur);
+    }
+
+    const vol = Math.min(1.0, Math.max(0.1, speed * 0.85));
+    g.gain.setValueAtTime(0.001, now);
+    g.gain.linearRampToValueAtTime(vol, now + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.001, now + grainDur);
+
+    src.connect(g);
+    g.connect(d.scratchGain);
+
+    src.onended = () => {
+        src.disconnect();
+        g.disconnect();
+    };
+}
+
+// -------------------------------------------------------------------------
+// PROCEDURAL 2D POLAR SPECTROGRAM GENERATOR (CLIENT-SIDE HTML5 CANVAS)
+// -------------------------------------------------------------------------
+function generateProceduralPolarSpectrogram(k, size) {
+    const d = decks[k];
+    const offCanvas = document.createElement('canvas');
+    offCanvas.width = size;
+    offCanvas.height = size;
+    const octx = offCanvas.getContext('2d');
+    const cx = size / 2;
+    const cy = size / 2;
+    const rDisc = size * 0.49;
+    const rLabel = size * 0.35;
+    const rInner = rLabel + 2;
+    const rOuter = rDisc - 3;
+
+    // 1. Dark Basalt Vinyl Disc Base
+    octx.fillStyle = '#101215';
+    octx.beginPath();
+    octx.arc(cx, cy, rDisc, 0, 2 * Math.PI);
+    octx.fill();
+
+    // 2. Compute Polar Time-Frequency Spectrogram Grid
+    const numSlices = 220;
+    const numFreqs = 22;
+    const peaks = d.peaks;
+    const hasPeaks = peaks && peaks.length > 0;
+
+    for (let i = 0; i < numSlices; i++) {
+        const u = i / numSlices;
+        const a0 = u * 2 * Math.PI - Math.PI / 2;
+        const a1 = ((i + 1.1) / numSlices) * 2 * Math.PI - Math.PI / 2;
+
+        let baseAmp = 0.45;
+        if (hasPeaks) {
+            const pIdx = Math.floor(u * peaks.length);
+            baseAmp = Math.abs(peaks[pIdx] || 0.25);
+        } else {
+            const beat = (u * 8) % 1.0;
+            const kick = beat < 0.2 ? Math.exp(-beat * 12) : 0.0;
+            const bass = 0.35 * (1 + Math.sin(u * 32 * Math.PI));
+            const snare = ((u * 8) % 2.0 > 1.0 && beat < 0.15) ? 0.6 : 0.0;
+            baseAmp = Math.min(1.0, kick * 0.8 + bass * 0.3 + snare * 0.4 + 0.15);
+        }
+
+        for (let f = 0; f < numFreqs; f++) {
+            const v = f / numFreqs;
+            const r0 = rInner + v * (rOuter - rInner);
+            const r1 = rInner + ((f + 1.1) / numFreqs) * (rOuter - rInner);
+
+            let fEnergy = baseAmp;
+            if (f < 5) {
+                fEnergy *= (1.25 - v * 0.5);
+            } else if (f < 14) {
+                const harmonic = Math.sin(u * 48 * Math.PI + f * 1.3);
+                fEnergy *= (0.7 + 0.5 * Math.abs(harmonic));
+            } else {
+                fEnergy *= (0.35 + 0.65 * Math.sin(u * 96 * Math.PI));
+            }
+            fEnergy = Math.max(0.02, Math.min(1.0, fEnergy));
+
+            octx.beginPath();
+            octx.arc(cx, cy, r1, a0, a1, false);
+            octx.arc(cx, cy, r0, a1, a0, true);
+            octx.closePath();
+
+            let color;
+            if (k === 'a') {
+                if (fEnergy < 0.2) color = `rgba(10, 18, 48, ${0.4 + fEnergy})`;
+                else if (fEnergy < 0.4) {
+                    const t = (fEnergy - 0.2) / 0.2;
+                    color = `rgba(0, ${Math.floor(110 + t * 110)}, ${Math.floor(200 + t * 55)}, ${0.75 + t * 0.25})`;
+                } else if (fEnergy < 0.65) {
+                    const t = (fEnergy - 0.4) / 0.25;
+                    color = `rgba(${Math.floor(t * 180)}, 255, ${Math.floor(100 - t * 90)}, 0.95)`;
+                } else if (fEnergy < 0.85) {
+                    const t = (fEnergy - 0.65) / 0.2;
+                    color = `rgba(255, ${Math.floor(220 - t * 140)}, 0, 1.0)`;
+                } else {
+                    const t = (fEnergy - 0.85) / 0.15;
+                    color = `rgba(255, ${Math.floor(120 + t * 135)}, ${Math.floor(t * 240)}, 1.0)`;
+                }
+            } else {
+                if (fEnergy < 0.2) color = `rgba(15, 10, 35, ${0.4 + fEnergy})`;
+                else if (fEnergy < 0.4) {
+                    const t = (fEnergy - 0.2) / 0.2;
+                    color = `rgba(${Math.floor(80 + t * 80)}, 20, ${Math.floor(160 + t * 70)}, ${0.75 + t * 0.25})`;
+                } else if (fEnergy < 0.65) {
+                    const t = (fEnergy - 0.4) / 0.25;
+                    color = `rgba(${Math.floor(180 + t * 60)}, ${Math.floor(40 + t * 100)}, 120, 0.95)`;
+                } else if (fEnergy < 0.85) {
+                    const t = (fEnergy - 0.65) / 0.2;
+                    color = `rgba(255, ${Math.floor(140 + t * 90)}, 40, 1.0)`;
+                } else {
+                    color = `rgba(255, 255, 180, 1.0)`;
+                }
+            }
+
+            octx.fillStyle = color;
+            octx.fill();
+        }
+    }
+
+    // 3. Micro-grooves spiral overlay
+    octx.lineWidth = 0.5;
+    for (let g = 0; g < 40; g++) {
+        const r = rInner + (g / 40) * (rOuter - rInner);
+        octx.strokeStyle = (g % 4 === 0) ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.22)';
+        octx.beginPath();
+        octx.arc(cx, cy, r, 0, 2 * Math.PI);
+        octx.stroke();
+    }
+
+    // 4. Anisotropic Specular Sheen
+    const sheenGrad = octx.createLinearGradient(0, 0, size, size);
+    sheenGrad.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
+    sheenGrad.addColorStop(0.45, 'transparent');
+    sheenGrad.addColorStop(0.55, 'transparent');
+    sheenGrad.addColorStop(1, 'rgba(255, 255, 255, 0.12)');
+    octx.fillStyle = sheenGrad;
+    octx.beginPath();
+    octx.arc(cx, cy, rDisc, 0, 2 * Math.PI);
+    octx.fill();
+
+    // 5. Authentic Center Label Disc
+    octx.save();
+    octx.beginPath();
+    octx.arc(cx, cy, rLabel, 0, 2 * Math.PI);
+    octx.clip();
+
+    if (d.centerLabelImg && d.centerLabelImg.complete && d.centerLabelImg.naturalWidth > 0) {
+        octx.drawImage(d.centerLabelImg, cx - rLabel, cy - rLabel, rLabel * 2, rLabel * 2);
+        octx.fillStyle = (k === 'a') ? 'rgba(255, 72, 0, 0.25)' : 'rgba(0, 255, 157, 0.25)';
+        octx.fillRect(cx - rLabel, cy - rLabel, rLabel * 2, rLabel * 2);
+    } else {
+        octx.fillStyle = '#eae7de';
+        octx.fill();
+        octx.fillStyle = (k === 'a') ? '#ff4800' : '#0a3d31';
+        octx.beginPath();
+        octx.moveTo(cx, cy);
+        octx.arc(cx, cy, rLabel * 0.88, -0.4, 0.4);
+        octx.closePath();
+        octx.fill();
+    }
+    octx.restore();
+
+    // Label Border & Rings
+    octx.strokeStyle = '#22252a';
+    octx.lineWidth = 2;
+    octx.beginPath();
+    octx.arc(cx, cy, rLabel, 0, 2 * Math.PI);
+    octx.stroke();
+
+    octx.strokeStyle = 'rgba(255,255,255,0.4)';
+    octx.lineWidth = 1;
+    octx.beginPath();
+    octx.arc(cx, cy, rLabel * 0.88, 0, 2 * Math.PI);
+    octx.stroke();
+
+    // Typography on Center Label
+    octx.fillStyle = '#ffffff';
+    octx.shadowColor = '#000000';
+    octx.shadowBlur = 4;
+    octx.font = 'bold 9px monospace';
+    octx.textAlign = 'center';
+    octx.fillText('remxr42', cx, cy - rLabel * 0.55);
+    octx.fillStyle = (k === 'a') ? '#ffaa00' : '#00ff9d';
+    octx.font = '7.5px monospace';
+    octx.fillText(`SIDE ${k.toUpperCase()} // 33 RPM`, cx, cy + rLabel * 0.65);
+    octx.shadowBlur = 0;
+
+    // Spindle hole
+    octx.fillStyle = '#101215';
+    octx.beginPath();
+    octx.arc(cx, cy, 14, 0, 2 * Math.PI);
+    octx.fill();
+    octx.strokeStyle = '#555';
+    octx.lineWidth = 1.5;
+    octx.stroke();
+
+    return offCanvas;
+}
+// -------------------------------------------------------------------------
+// TURNTABLE 60 FPS RENDERER (CIRCULAR SPECTROGRAM + ANGULAR SLICE WEDGE)
+// -------------------------------------------------------------------------
+function renderTurntable(k) {
+    const d = decks[k];
+    const cv = d.ttCanvas;
+    if (!cv) return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    const cx = w / 2;
+    const cy = h / 2;
+    const platterRadius = w * 0.48;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Outer Turntable Metal Platter Rim
+    ctx.fillStyle = '#1c1f24';
+    ctx.beginPath();
+    ctx.arc(cx, cy, platterRadius, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.strokeStyle = d.isScratching ? '#ff0055' : '#666e77';
+    ctx.lineWidth = d.isScratching ? 4 : 3;
+    ctx.stroke();
+
+    // Spinning Vinyl Record Body
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(d.rotationAngle);
+
+    const rDisc = platterRadius * 0.94;
+    const rLabel = platterRadius * 0.35;
+
+    // 1. Draw Circular Polar Spectrogram onto Vinyl Record Body
+    // Priority A: High-resolution STFT-computed polar spectrogram PNG from Python engine
+    let drewVinylImg = false;
+    if (d.vinylImg && d.vinylImg.complete && d.vinylImg.naturalWidth > 0) {
+        try {
+            ctx.drawImage(d.vinylImg, -rDisc, -rDisc, rDisc * 2, rDisc * 2);
+            drewVinylImg = true;
+        } catch(e) {
+            drewVinylImg = false;
+        }
+    }
+
+    // Priority B: Procedural 2D Polar Spectrogram Engine (Client-side HTML5 Canvas at 60 FPS)
+    // Maps 220 angular time slices (360 deg) x 22 radial frequency bins (bass to treble)
+    if (!drewVinylImg) {
+        if (!d.proceduralCanvas || d.needsProceduralUpdate) {
+            d.proceduralCanvas = generateProceduralPolarSpectrogram(k, 600);
+            d.needsProceduralUpdate = false;
+        }
+        if (d.proceduralCanvas) {
+            ctx.drawImage(d.proceduralCanvas, -rDisc, -rDisc, rDisc * 2, rDisc * 2);
+        }
+    }
+
+    // 2. Center Label & Backlit CRT Thumbnail Display
+    const rThumb = rLabel * 0.52;
+    if (!drewVinylImg) {
+        // Center label disc in Teenage Engineering warm bone matte finish
+        ctx.fillStyle = '#eae7de';
+        ctx.beginPath();
+        ctx.arc(0, 0, rLabel, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.strokeStyle = '#1e2022';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Concentric hairline calibrated rings
+        ctx.strokeStyle = '#beb6af';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, 0, rLabel * 0.88, 0, 2 * Math.PI);
+        ctx.stroke();
+        ctx.strokeStyle = '#cdc9be';
+        ctx.beginPath();
+        ctx.arc(0, 0, rLabel * 0.76, 0, 2 * Math.PI);
+        ctx.stroke();
+
+        // Accent indicator block (Safety Orange for Deck A, Racing Green for Deck B)
+        ctx.fillStyle = (k === 'a') ? '#ff4800' : '#0a3d31';
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.arc(0, 0, rLabel * 0.85, 1.2 * Math.PI, 1.4 * Math.PI);
+        ctx.closePath();
+        ctx.fill();
+
+        // Technical typography
+        ctx.fillStyle = '#1e2022';
+        ctx.font = 'bold 8px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('remxr42', 0, -rLabel * 0.60);
+        ctx.fillStyle = '#505255';
+        ctx.font = '6.5px monospace';
+        ctx.fillText(k === 'a' ? 'SIDE A / 33 RPM' : 'SIDE B / 33 RPM', 0, rLabel * 0.72);
+
+        // Center Backlit Amber CRT Display Window
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(0, 0, rThumb, 0, 2 * Math.PI);
+        ctx.clip();
+
+        let drewThumb = false;
+        if (d.thumbImg && d.thumbImg.complete && d.thumbImg.naturalWidth > 0) {
+            try {
+                ctx.drawImage(d.thumbImg, -rThumb, -rThumb, rThumb * 2, rThumb * 2);
+                drewThumb = true;
+            } catch(e) {
+                drewThumb = false;
+            }
+        }
+        if (!drewThumb) {
+            ctx.fillStyle = '#0e0b07';
+            ctx.fillRect(-rThumb, -rThumb, rThumb * 2, rThumb * 2);
+            ctx.fillStyle = '#ff8c00';
+            ctx.font = 'bold 9px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(k === 'a' ? 'DECK A' : 'DECK B', 0, -4);
+            ctx.fillStyle = '#cc7000';
+            ctx.font = '7px monospace';
+            ctx.fillText('33 RPM', 0, 7);
+        }
+        ctx.restore();
+
+        // Amber bezel ring around thumbnail window
+        ctx.strokeStyle = '#ff8c00';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, rThumb, 0, 2 * Math.PI);
+        ctx.stroke();
+
+        // Center Spindle Hole & Brass Grommet
+        ctx.fillStyle = '#111';
+        ctx.beginPath();
+        ctx.arc(0, 0, 5, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.strokeStyle = '#c5a059';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    } else {
+        // When drewVinylImg is true, the center label is already composited on the vinyl disc.
+        // If a separate thumbImg is loaded, overlay it into the thumbnail window
+        if (d.thumbImg && d.thumbImg.complete && d.thumbImg.naturalWidth > 0) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(0, 0, rThumb, 0, 2 * Math.PI);
+            ctx.clip();
+            try {
+                ctx.drawImage(d.thumbImg, -rThumb, -rThumb, rThumb * 2, rThumb * 2);
+            } catch(e) {}
+            ctx.restore();
+
+            ctx.strokeStyle = '#ff8c00';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(0, 0, rThumb, 0, 2 * Math.PI);
+            ctx.stroke();
+        }
+    }
+
+    ctx.restore();
+
+    // Angular Splicing Pie Wedge Overlay
+    if (d.duration > 0) {
+        const angleIn = (d.inTime / d.duration) * 2 * Math.PI - Math.PI / 2 + d.rotationAngle;
+        const angleOut = (d.outTime / d.duration) * 2 * Math.PI - Math.PI / 2 + d.rotationAngle;
+        const rInner = platterRadius * 0.32;
+        const rOuter = platterRadius * 0.92;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, rOuter, angleIn, angleOut, false);
+        ctx.arc(cx, cy, rInner, angleOut, angleIn, true);
+        ctx.closePath();
+        ctx.fillStyle = d.wedgeColor;
+        ctx.fill();
+
+        ctx.strokeStyle = (k === 'a') ? '#00ff66' : '#ffcc00';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(cx + rInner * Math.cos(angleIn), cy + rInner * Math.sin(angleIn));
+        ctx.lineTo(cx + rOuter * Math.cos(angleIn), cy + rOuter * Math.sin(angleIn));
+        ctx.stroke();
+
+        ctx.strokeStyle = '#ff3366';
+        ctx.beginPath();
+        ctx.moveTo(cx + rInner * Math.cos(angleOut), cy + rInner * Math.sin(angleOut));
+        ctx.lineTo(cx + rOuter * Math.cos(angleOut), cy + rOuter * Math.sin(angleOut));
+        ctx.stroke();
+
+        const hInX = cx + (rOuter + 6) * Math.cos(angleIn);
+        const hInY = cy + (rOuter + 6) * Math.sin(angleIn);
+        ctx.fillStyle = '#00ff66';
+        ctx.beginPath();
+        ctx.arc(hInX, hInY, 5, 0, 2 * Math.PI);
+        ctx.fill();
+
+        const hOutX = cx + (rOuter + 6) * Math.cos(angleOut);
+        const hOutY = cy + (rOuter + 6) * Math.sin(angleOut);
+        ctx.fillStyle = '#ff3366';
+        ctx.beginPath();
+        ctx.arc(hOutX, hOutY, 5, 0, 2 * Math.PI);
+        ctx.fill();
+
+        // Hot Cues
+        const hcColors = ['#00e5ff', '#ffff00', '#ff00aa', '#ffaa00'];
+        d.hotCues.forEach((hcTime, idx) => {
+            if (hcTime !== null) {
+                const aHc = (hcTime / d.duration) * 2 * Math.PI - Math.PI / 2 + d.rotationAngle;
+                ctx.strokeStyle = hcColors[idx];
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(cx + rInner * Math.cos(aHc), cy + rInner * Math.sin(aHc));
+                ctx.lineTo(cx + rOuter * Math.cos(aHc), cy + rOuter * Math.sin(aHc));
+                ctx.stroke();
+            }
+        });
+
+        // Stylus / Needle Playhead
+        let curPos = d.inTime;
+        if (d.isScratching) {
+            curPos = d.scratchAudioPos;
+        } else if (d.isPlaying) {
+            const elapsed = (actx.currentTime - d.playStartTime) * d.pitch;
+            const sliceLen = d.outTime - d.inTime;
+            curPos = d.inTime + (elapsed % sliceLen);
+        }
+
+        const playAngle = (curPos / d.duration) * 2 * Math.PI - Math.PI / 2 + d.rotationAngle;
+        ctx.strokeStyle = d.isScratching ? '#ff0055' : '#ffffff';
+        ctx.lineWidth = d.isScratching ? 3 : 2;
+        ctx.beginPath();
+        ctx.moveTo(cx + (rInner - 4) * Math.cos(playAngle), cy + (rInner - 4) * Math.sin(playAngle));
+        ctx.lineTo(cx + (rOuter + 6) * Math.cos(playAngle), cy + (rOuter + 6) * Math.sin(playAngle));
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    // Center Spindle
+    ctx.fillStyle = '#111';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 6, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.strokeStyle = '#c5a059';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+}
+
+// -------------------------------------------------------------------------
+// REAL-TIME AUDIO WAVEFORM & LINEAR STRIP RENDERER
+// -------------------------------------------------------------------------
+function renderLinearStrip(k) {
+    const d = decks[k];
+    const cv = d.linCanvas;
+    if (!cv || cv.style.display === 'none') return;
+    const ctx = cv.getContext('2d');
+    const w = cv.width;
+    const h = cv.height;
+    const centerY = h / 2;
+
+    // 1. Dark Technical Background
+    ctx.fillStyle = '#0a0c0e';
+    ctx.fillRect(0, 0, w, h);
+
+    // 2. Technical Grid Lines
+    ctx.strokeStyle = '#181b20';
+    ctx.lineWidth = 1;
+    for (let gx = 0; gx < w; gx += 40) {
+        ctx.beginPath();
+        ctx.moveTo(gx, 0); ctx.lineTo(gx, h);
+        ctx.stroke();
+    }
+    ctx.strokeStyle = '#252932';
+    ctx.beginPath();
+    ctx.moveTo(0, centerY); ctx.lineTo(w, centerY);
+    ctx.stroke();
+
+    // 3. Spectral Backdrop (if spectrogram image is loaded)
+    if (d.linearImg && d.linearImg.complete) {
+        ctx.save();
+        ctx.globalAlpha = 0.28;
+        ctx.drawImage(d.linearImg, 0, 0, w, h);
+        ctx.restore();
+    }
+
+    // 4. Draw True Audio Waveform Peaks
+    const waveColor = (k === 'a') ? '#ff8c00' : '#00ff9d';
+    const coreColor = (k === 'a') ? '#ffe28a' : '#d4fff0';
+    const shadowColor = (k === 'a') ? 'rgba(255, 140, 0, 0.45)' : 'rgba(0, 255, 157, 0.45)';
+
+    if (d.peaks && d.peaks.length > 0) {
+        const binCount = d.peaks.length;
+        const scaleX = w / binCount;
+        const ampScale = centerY - 4;
+
+        ctx.save();
+        ctx.shadowColor = shadowColor;
+        ctx.shadowBlur = 3;
+
+        for (let b = 0; b < binCount; b++) {
+            const bx = b * scaleX;
+            const pMax = d.peaks[b];
+            const pMin = d.minPeaks[b];
+            let yTop = centerY + pMin * ampScale;
+            let yBot = centerY + pMax * ampScale;
+            if (yBot - yTop < 2) {
+                yTop = centerY - 1;
+                yBot = centerY + 1;
+            }
+
+            // Glow outer bar
+            ctx.fillStyle = waveColor;
+            ctx.fillRect(bx, yTop, Math.max(1, scaleX - 0.5), yBot - yTop);
+
+            // Bright core line
+            if (yBot - yTop > 8) {
+                ctx.fillStyle = coreColor;
+                ctx.fillRect(bx, yTop + 2, Math.max(1, scaleX - 0.5), yBot - yTop - 4);
+            }
+        }
+        ctx.restore();
+    } else {
+        // Fallback procedural waveform before audio decodes
+        ctx.save();
+        ctx.fillStyle = (k === 'a') ? 'rgba(255,140,0,0.55)' : 'rgba(0,255,157,0.55)';
+        for (let bx = 0; bx < w; bx += 3) {
+            const p = 0.35 * Math.sin(bx * 0.08) * Math.cos(bx * 0.03) + 0.18 * Math.sin(bx * 0.2);
+            const yH = Math.abs(p) * (centerY - 6) + 2;
+            ctx.fillRect(bx, centerY - yH, 2, yH * 2);
+        }
+        ctx.restore();
+    }
+
+    // 5. Inactive Region Dimming & Active Splicing Region
+    if (d.duration > 0) {
+        const inX = Math.max(0, Math.min(w, (d.inTime / d.duration) * w));
+        const outX = Math.max(0, Math.min(w, (d.outTime / d.duration) * w));
+
+        // Dark dimming on inactive sections
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.62)';
+        ctx.fillRect(0, 0, inX, h);
+        ctx.fillRect(outX, 0, w - outX, h);
+
+        // Active loop slice tint
+        ctx.fillStyle = d.wedgeColor;
+        ctx.fillRect(inX, 0, outX - inX, h);
+
+        // IN border & flag
+        ctx.strokeStyle = '#00ff66';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(inX, 0); ctx.lineTo(inX, h);
+        ctx.stroke();
+
+        ctx.fillStyle = '#00ff66';
+        ctx.fillRect(Math.max(0, inX - 1), 0, 20, 11);
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 8px monospace';
+        ctx.fillText('IN', inX + 3, 9);
+
+        // OUT border & flag
+        ctx.strokeStyle = '#ff3366';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(outX, 0); ctx.lineTo(outX, h);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ff3366';
+        ctx.fillRect(Math.max(0, outX - 20), 0, 20, 11);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 8px monospace';
+        ctx.fillText('OUT', outX - 18, 9);
+
+        // Hot Cues
+        const hcColors = ['#00e5ff', '#ffff00', '#ff00aa', '#ffaa00'];
+        d.hotCues.forEach((hcTime, idx) => {
+            if (hcTime !== null) {
+                const hcX = (hcTime / d.duration) * w;
+                ctx.strokeStyle = hcColors[idx];
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(hcX, 0); ctx.lineTo(hcX, h);
+                ctx.stroke();
+
+                ctx.fillStyle = hcColors[idx];
+                ctx.fillRect(hcX - 6, h - 10, 12, 10);
+                ctx.fillStyle = '#000';
+                ctx.font = 'bold 8px monospace';
+                ctx.fillText(`C${idx+1}`, hcX - 5, h - 2);
+            }
+        });
+
+        // 6. Playhead Stylus Needle
+        let curPos = d.inTime;
+        if (d.isScratching) {
+            curPos = d.scratchAudioPos;
+        } else if (d.isPlaying) {
+            const elapsed = (actx.currentTime - d.playStartTime) * d.pitch;
+            const sliceLen = Math.max(0.05, d.outTime - d.inTime);
+            curPos = d.inTime + (elapsed % sliceLen);
+        }
+
+        const playX = Math.max(0, Math.min(w, (curPos / d.duration) * w));
+        ctx.strokeStyle = d.isScratching ? '#ff0055' : '#ffffff';
+        ctx.lineWidth = d.isScratching ? 2.5 : 2;
+        ctx.shadowColor = d.isScratching ? '#ff0055' : '#ffffff';
+        ctx.shadowBlur = 6;
+        ctx.beginPath();
+        ctx.moveTo(playX, 0); ctx.lineTo(playX, h);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Diamond playhead indicator at top and bottom
+        ctx.fillStyle = d.isScratching ? '#ff0055' : '#ffffff';
+        ctx.beginPath();
+        ctx.arc(playX, 4, 3, 0, 2 * Math.PI);
+        ctx.arc(playX, h - 4, 3, 0, 2 * Math.PI);
+        ctx.fill();
+    }
+}
+
+function setupLinearInteraction(k) {
+    const d = decks[k];
+    const cv = d.linCanvas;
+    if (!cv) return;
+
+    let isDragging = false;
+
+    function handleSeek(e) {
+        if (!d.duration) return;
+        const rect = cv.getBoundingClientRect();
+        const clientX = (e.clientX !== undefined) ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+        const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
+        const seekTime = (x / rect.width) * d.duration;
+
+        d.scratchAudioPos = seekTime;
+        d.inTime = Math.min(seekTime, Math.max(0, d.outTime - 0.1));
+        playScratchGrain(k, seekTime, 1.0);
+        updateBadges(k);
+        renderTurntable(k);
+        renderLinearStrip(k);
+    }
+
+    cv.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        handleSeek(e);
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (isDragging) handleSeek(e);
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (isDragging) {
+            isDragging = false;
+            if (d.isPlaying) {
+                playDeckSlice(k, d.scratchAudioPos);
+            }
+        }
+    });
+}
+
+// -------------------------------------------------------------------------
+// 60 FPS ANIMATION LOOP
+// -------------------------------------------------------------------------
+let lastFrameTime = performance.now();
+function animationLoop(now) {
+    const dt = (now - lastFrameTime) / 1000.0;
+    lastFrameTime = now;
+
+    ['a', 'b'].forEach(k => {
+        const d = decks[k];
+        if (d.isPlaying && !d.isScratching) {
+            d.rotationAngle += d.rotationSpeed * d.pitch * dt * (d.reverse ? -1 : 1);
+            d.rotationAngle %= (2 * Math.PI);
+        }
+        renderTurntable(k);
+        renderLinearStrip(k);
+    });
+
+    requestAnimationFrame(animationLoop);
+}
+requestAnimationFrame(animationLoop);
 
 // -------------------------------------------------------------------------
 // LOCAL AUDIO FILE LOADER & DRAG-AND-DROP DECODER
@@ -1363,8 +2247,13 @@ function setupTurntableInteraction(k) {
 // -------------------------------------------------------------------------
 function playDeckSlice(k, startOffset = null) {
     const d = decks[k];
-    if (!d.buffer) return;
+    if (!d.buffer) {
+        // If empty, auto load default track
+        loadGenrePreset(k, k === 'a' ? 'daftpunk' : 'amenbreak');
+        return;
+    }
     ensureAudioContext();
+    if (!d.eqLow) setupAudioGraph(k);
 
     if (d.sourceNode) {
         try { d.sourceNode.stop(); } catch(e) {}
