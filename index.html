@@ -458,14 +458,25 @@
 
                 <!-- Turntable Platter Stage -->
                 <!-- DECK A YOUTUBE / STREAM INGESTION BAR -->
-                <div class="yt-stream-bar" id="yt-bar-a" style="background:#181a1d; border:1px solid #303336; border-radius:2px; padding:6px; margin-bottom:5px; display:flex; flex-direction:column; gap:4px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5);">
+                <!-- DECK A YOUTUBE / STREAM INGESTION BAR -->
+                <div class="yt-stream-bar" id="yt-bar-a" style="background:#181a1d; border:1px solid #ff4800; border-radius:2px; padding:6px; margin-bottom:6px; display:flex; flex-direction:column; gap:5px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5);">
                     <div style="display:flex; justify-content:space-between; align-items:center; font-size:9px; font-family:'Space Mono', monospace;">
-                        <span style="color:#ff8c00; font-weight:bold; letter-spacing:0.5px;">▶ YOUTUBE / STREAM INPUT (DECK A)</span>
-                        <span class="badge" id="yt-status-a" style="font-size:8px; padding:1px 4px; color:#ff8c00; border-color:#ff8c00;">READY</span>
+                        <span style="color:#ff8c00; font-weight:bold; letter-spacing:0.5px;">▶ YOUTUBE & AUDIO INGESTION (DECK A)</span>
+                        <span class="badge" id="yt-status-a" style="font-size:8.5px; padding:2px 6px; color:#ff8c00; border-color:#ff4800; background:#100d08;">READY</span>
                     </div>
+                    
+                    <!-- Backlit Amber LCD Preview Monitor -->
+                    <div id="yt-lcd-a" style="display:flex; align-items:center; gap:8px; background:#0d0e10; border:1px solid #383b40; border-radius:2px; padding:4px 6px;">
+                        <img id="yt-thumb-a" src="https://img.youtube.com/vi/Gd9OhYroLN0/hqdefault.jpg" style="width:48px; height:36px; object-fit:cover; border:1px solid #ff4800; border-radius:1px; background:#000;" />
+                        <div style="display:flex; flex-direction:column; gap:2px; overflow:hidden;">
+                            <span id="yt-title-a" style="color:#ff8c00; font-family:'Space Mono', monospace; font-size:9.5px; font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">DAFT PUNK - ONE MORE TIME</span>
+                            <span id="yt-meta-a" style="color:#888; font-family:'Space Mono', monospace; font-size:8px;">ID: Gd9OhYroLN0 • 120 BPM STEREO</span>
+                        </div>
+                    </div>
+
                     <div style="display:flex; gap:4px; align-items:center;">
-                        <input type="text" id="yt-url-a" onkeydown="if(event.key==='Enter') loadYouTubeOrStreamTrack('a', this.value)" placeholder="🔗 YouTube URL (e.g. https://youtu.be/Gd9OhYroLN0) or Audio link..." value="https://www.youtube.com/watch?v=Gd9OhYroLN0" style="flex:1; background:#0d0e10; border:1px solid #ff4800; color:#ff8c00; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
-                        <button class="btn btn-te-orange" id="btn-load-yt-a" onclick="loadYouTubeOrStreamTrack('a', document.getElementById('yt-url-a').value)" style="padding:4px 8px; font-size:9.5px; white-space:nowrap; font-weight:bold;">🚀 LOAD YT</button>
+                        <input type="text" id="yt-url-a" onkeydown="if(event.key==='Enter') loadYouTubeOrStreamTrack('a', this.value)" placeholder="🔗 Paste YouTube URL or Audio link..." value="https://www.youtube.com/watch?v=Gd9OhYroLN0" style="flex:1; background:#090a0c; border:1px solid #ff4800; color:#ff8c00; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
+                        <button class="btn btn-te-orange" id="btn-load-yt-a" onclick="loadYouTubeOrStreamTrack('a', document.getElementById('yt-url-a').value)" style="padding:4px 10px; font-size:10px; white-space:nowrap; font-weight:bold;">🚀 LOAD YT</button>
                     </div>
                     <div style="display:flex; gap:3px; align-items:center; overflow-x:auto; padding-top:2px;">
                         <span style="font-size:8px; color:#888; text-transform:uppercase; font-family:'Space Mono', monospace;">PRESETS:</span>
@@ -474,8 +485,7 @@
                         <button class="btn btn-mini btn-yt-preset" onclick="loadPresetTrack('a', 'https://www.youtube.com/watch?v=5SaFTm2bcac', 'The Winstons - Amen Brother (Break)')" style="font-size:8px; padding:1px 5px;">⚡ Amen Break</button>
                         <button class="btn btn-mini btn-yt-preset" onclick="loadPresetTrack('a', 'https://www.youtube.com/watch?v=hTWKbfoikeg', 'Nirvana - Smells Like Teen Spirit')" style="font-size:8px; padding:1px 5px;">⚡ Nirvana</button>
                     </div>
-                </div>
-                <div class="turntable-stage" id="stage-a">
+                </div><div class="turntable-stage" id="stage-a">
                     <canvas id="turntable-canvas-a" class="turntable-canvas" width="300" height="300"></canvas>
                 </div>
 
@@ -610,14 +620,25 @@
 
                 <!-- Turntable Platter Stage -->
                 <!-- DECK B YOUTUBE / STREAM INGESTION BAR -->
-                <div class="yt-stream-bar" id="yt-bar-b" style="background:#181a1d; border:1px solid #303336; border-radius:2px; padding:6px; margin-bottom:5px; display:flex; flex-direction:column; gap:4px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5);">
+                <!-- DECK B YOUTUBE / STREAM INGESTION BAR -->
+                <div class="yt-stream-bar" id="yt-bar-b" style="background:#181a1d; border:1px solid #00ff9d; border-radius:2px; padding:6px; margin-bottom:6px; display:flex; flex-direction:column; gap:5px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5);">
                     <div style="display:flex; justify-content:space-between; align-items:center; font-size:9px; font-family:'Space Mono', monospace;">
-                        <span style="color:#00ff9d; font-weight:bold; letter-spacing:0.5px;">▶ YOUTUBE / STREAM INPUT (DECK B)</span>
-                        <span class="badge" id="yt-status-b" style="font-size:8px; padding:1px 4px; color:#00ff9d; border-color:#034435;">READY</span>
+                        <span style="color:#00ff9d; font-weight:bold; letter-spacing:0.5px;">▶ YOUTUBE & AUDIO INGESTION (DECK B)</span>
+                        <span class="badge" id="yt-status-b" style="font-size:8.5px; padding:2px 6px; color:#00ff9d; border-color:#034435; background:#021a14;">READY</span>
                     </div>
+
+                    <!-- Backlit Mint LCD Preview Monitor -->
+                    <div id="yt-lcd-b" style="display:flex; align-items:center; gap:8px; background:#0d0e10; border:1px solid #383b40; border-radius:2px; padding:4px 6px;">
+                        <img id="yt-thumb-b" src="https://img.youtube.com/vi/5SaFTm2bcac/hqdefault.jpg" style="width:48px; height:36px; object-fit:cover; border:1px solid #00ff9d; border-radius:1px; background:#000;" />
+                        <div style="display:flex; flex-direction:column; gap:2px; overflow:hidden;">
+                            <span id="yt-title-b" style="color:#00ff9d; font-family:'Space Mono', monospace; font-size:9.5px; font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">THE WINSTONS - AMEN BROTHER</span>
+                            <span id="yt-meta-b" style="color:#888; font-family:'Space Mono', monospace; font-size:8px;">ID: 5SaFTm2bcac • 124 BPM STEREO</span>
+                        </div>
+                    </div>
+
                     <div style="display:flex; gap:4px; align-items:center;">
-                        <input type="text" id="yt-url-b" onkeydown="if(event.key==='Enter') loadYouTubeOrStreamTrack('b', this.value)" placeholder="🔗 YouTube URL (e.g. https://youtu.be/5SaFTm2bcac) or Audio link..." value="https://www.youtube.com/watch?v=5SaFTm2bcac" style="flex:1; background:#0d0e10; border:1px solid #00ff9d; color:#00ff9d; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
-                        <button class="btn btn-te-green" id="btn-load-yt-b" onclick="loadYouTubeOrStreamTrack('b', document.getElementById('yt-url-b').value)" style="padding:4px 8px; font-size:9.5px; white-space:nowrap; font-weight:bold;">🚀 LOAD YT</button>
+                        <input type="text" id="yt-url-b" onkeydown="if(event.key==='Enter') loadYouTubeOrStreamTrack('b', this.value)" placeholder="🔗 Paste YouTube URL or Audio link..." value="https://www.youtube.com/watch?v=5SaFTm2bcac" style="flex:1; background:#090a0c; border:1px solid #00ff9d; color:#00ff9d; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
+                        <button class="btn btn-te-green" id="btn-load-yt-b" onclick="loadYouTubeOrStreamTrack('b', document.getElementById('yt-url-b').value)" style="padding:4px 10px; font-size:10px; white-space:nowrap; font-weight:bold;">🚀 LOAD YT</button>
                     </div>
                     <div style="display:flex; gap:3px; align-items:center; overflow-x:auto; padding-top:2px;">
                         <span style="font-size:8px; color:#888; text-transform:uppercase; font-family:'Space Mono', monospace;">PRESETS:</span>
@@ -626,8 +647,7 @@
                         <button class="btn btn-mini btn-yt-preset" onclick="loadPresetTrack('b', 'https://www.youtube.com/watch?v=Gd9OhYroLN0', 'Daft Punk - One More Time')" style="font-size:8px; padding:1px 5px;">⚡ Daft Punk</button>
                         <button class="btn btn-mini btn-yt-preset" onclick="loadPresetTrack('b', 'https://www.youtube.com/watch?v=fJ9rUzIMcZQ', 'Queen - Bohemian Rhapsody')" style="font-size:8px; padding:1px 5px;">⚡ Queen</button>
                     </div>
-                </div>
-                <div class="turntable-stage" id="stage-b">
+                </div><div class="turntable-stage" id="stage-b">
                     <canvas id="turntable-canvas-b" class="turntable-canvas" width="300" height="300"></canvas>
                 </div>
 
@@ -727,8 +747,12 @@ async function loadYouTubeOrStreamTrack(k, inputVal, customTitle) {
     const rawVal = inputVal.trim();
     const statusEl = document.getElementById(`yt-status-${k}`);
     const titleEl = document.getElementById(`title-deck-${k}`);
+    const thumbImgEl = document.getElementById(`yt-thumb-${k}`);
+    const titleLcdEl = document.getElementById(`yt-title-${k}`);
+    const metaLcdEl = document.getElementById(`yt-meta-${k}`);
+
     if (statusEl) {
-        statusEl.innerText = 'FETCHING...';
+        statusEl.innerText = 'ARMING...';
         statusEl.style.color = '#ffaa00';
     }
 
@@ -738,26 +762,45 @@ async function loadYouTubeOrStreamTrack(k, inputVal, customTitle) {
     const ytId = extractYouTubeId(rawVal);
     let trackName = customTitle || (ytId ? `YOUTUBE [${ytId}]` : rawVal.split('/').pop().split('?')[0] || 'STREAM');
 
-    // 1. If YouTube, load HQ Thumbnail into Vinyl Center Label
+    // 1. Update LCD Thumbnail & Center Platter Label
     if (ytId) {
         const thumbUrl = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+        if (thumbImgEl) thumbImgEl.src = thumbUrl;
+        if (titleLcdEl) titleLcdEl.innerText = trackName.toUpperCase().slice(0, 26);
+        if (metaLcdEl) metaLcdEl.innerText = `ID: ${ytId} • 120 BPM STEREO`;
+
         const img = new Image();
         img.crossOrigin = "anonymous";
         img.onload = () => {
             d.centerLabelImg = img;
+            d.vinylImg = null;
             d.needsProceduralUpdate = true;
             d.proceduralCanvas = generateProceduralPolarSpectrogram(k, 600);
             renderTurntable(k);
         };
+        img.onerror = () => {
+            // If CORS blocked on anonymous, load standard image
+            const img2 = new Image();
+            img2.onload = () => {
+                d.centerLabelImg = img2;
+                d.vinylImg = null;
+                d.needsProceduralUpdate = true;
+                d.proceduralCanvas = generateProceduralPolarSpectrogram(k, 600);
+                renderTurntable(k);
+            };
+            img2.src = thumbUrl;
+        };
         img.src = thumbUrl;
+    } else {
+        if (titleLcdEl) titleLcdEl.innerText = trackName.toUpperCase().slice(0, 26);
+        if (metaLcdEl) metaLcdEl.innerText = `STREAM AUDIO • 120 BPM`;
     }
 
-    // 2. Audio Acquisition (Direct Stream, Archive Audio Stem, or High-Fidelity Audio Synthesis)
+    // 2. Audio Acquisition & Procedural Audio Splicer
     try {
         let audioLoaded = false;
         let arrayBuf = null;
 
-        // If direct audio URL (e.g. mp3/wav/ogg stem)
         if (rawVal.startsWith('http') && (rawVal.includes('.mp3') || rawVal.includes('.wav') || rawVal.includes('.ogg') || rawVal.includes('archive.org'))) {
             try {
                 const resp = await fetch(rawVal, { mode: 'cors' });
@@ -766,7 +809,7 @@ async function loadYouTubeOrStreamTrack(k, inputVal, customTitle) {
                     audioLoaded = true;
                 }
             } catch(fetchErr) {
-                console.warn('Direct stream fetch CORS limited, using audio decoder fallback:', fetchErr);
+                console.warn('Direct stream fetch CORS limited, using synthesized groove:', fetchErr);
             }
         }
 
@@ -783,7 +826,6 @@ async function loadYouTubeOrStreamTrack(k, inputVal, customTitle) {
             d.inTime = 0.0;
             d.outTime = Math.min(d.duration, 4.0);
         } else {
-            // High-fidelity procedural beat matched to selected preset / YouTube track
             const sr = actx.sampleRate || 44100;
             const duration = 4.0;
             const numSamples = Math.floor(sr * duration);
@@ -799,21 +841,21 @@ async function loadYouTubeOrStreamTrack(k, inputVal, customTitle) {
                 const t = i / sr;
                 const beatPos = (i % Math.floor(beatLen)) / beatLen;
                 
-                // Kick drum punch
+                // Kick drum
                 const kickEnv = Math.exp(-beatPos * 12.0);
                 const kick = Math.sin(2 * Math.PI * (55.0 * Math.exp(-beatPos * 8.0)) * t) * kickEnv;
                 
-                // Snare / Clap / Hi-Hat
+                // Snare & Hi-Hat
                 const isSnareBeat = ((i / beatLen) % 2.0) >= 1.0;
                 const snareEnv = isSnareBeat ? Math.exp(-beatPos * 15.0) : 0.0;
-                const noise = (Math.random() * 2.0 - 1.0) * snareEnv * 0.4;
-                const hihat = (beatPos < 0.1 ? (Math.random() * 2.0 - 1.0) * 0.15 : 0.0);
+                const noise = (Math.random() * 2.0 - 1.0) * snareEnv * 0.45;
+                const hihat = (beatPos < 0.1 ? (Math.random() * 2.0 - 1.0) * 0.18 : 0.0);
 
-                // Synth Lead / Bass Arp
+                // Synth Lead / Bass Arpeggio
                 const noteFreq = isDeckA ? (220.0 * Math.pow(2, ((Math.floor(t * 4) % 8) * 2) / 12.0)) : (82.4 + 41.2 * Math.sin(2 * Math.PI * 0.5 * t));
-                const synth = 0.25 * Math.sin(2 * Math.PI * noteFreq * t) * (1.0 + 0.3 * Math.sin(2 * Math.PI * 3.0 * t));
+                const synth = 0.3 * Math.sin(2 * Math.PI * noteFreq * t) * (1.0 + 0.3 * Math.sin(2 * Math.PI * 3.0 * t));
 
-                const sampleVal = (kick * 0.8 + noise + hihat + synth) * 0.85;
+                const sampleVal = (kick * 0.85 + noise + hihat + synth) * 0.88;
                 ch0[i] = sampleVal;
                 ch1[i] = sampleVal;
             }
@@ -830,7 +872,7 @@ async function loadYouTubeOrStreamTrack(k, inputVal, customTitle) {
             d.outTime = 4.0;
         }
 
-        // Pre-compute reverse buffer for real-time bidirectional scratching
+        // Reverse Buffer for scratching
         d.reverseBuffer = actx.createBuffer(d.buffer.numberOfChannels, d.buffer.length, d.buffer.sampleRate);
         for (let ch = 0; ch < d.buffer.numberOfChannels; ch++) {
             const src = d.buffer.getChannelData(ch);
@@ -840,7 +882,7 @@ async function loadYouTubeOrStreamTrack(k, inputVal, customTitle) {
             }
         }
 
-        // Compute audio peaks for linear waveform and procedural polar spectrogram
+        // Compute Peaks
         const rawData = d.buffer.getChannelData(0);
         const peakCount = 800;
         const step = Math.max(1, Math.floor(rawData.length / peakCount));
@@ -860,7 +902,7 @@ async function loadYouTubeOrStreamTrack(k, inputVal, customTitle) {
         d.needsProceduralUpdate = true;
         d.proceduralCanvas = generateProceduralPolarSpectrogram(k, 600);
 
-        if (titleEl) titleEl.innerText = `DECK ${k.toUpperCase()}: ${trackName.toUpperCase().slice(0, 24)}`;
+        if (titleEl) titleEl.innerText = `DECK ${k.toUpperCase()}: ${trackName.toUpperCase().slice(0, 22)}`;
         if (statusEl) {
             statusEl.innerText = 'ARMED / GROOVES CUT';
             statusEl.style.color = (k === 'a' ? '#ff8c00' : '#00ff9d');
@@ -869,6 +911,9 @@ async function loadYouTubeOrStreamTrack(k, inputVal, customTitle) {
         updateBadges(k);
         renderTurntable(k);
         renderLinearStrip(k);
+
+        // Auto play loop slice preview
+        playDeckSlice(k, 0.0);
     } catch(err) {
         console.error('Track stream load error:', err);
         if (statusEl) {
@@ -1209,9 +1254,9 @@ function generateProceduralPolarSpectrogram(k, size) {
     octx.arc(cx, cy, rDisc, 0, 2 * Math.PI);
     octx.fill();
 
-    // 2. Compute Polar Time-Frequency Spectrogram Grid (Angular Time x Radial Frequency)
-    const numSlices = 220; // 220 angular time slices around the circle
-    const numFreqs = 22;   // 22 radial frequency bands from low bass to high treble
+    // 2. Compute Polar Time-Frequency Spectrogram Grid
+    const numSlices = 220;
+    const numFreqs = 22;
     const peaks = d.peaks;
     const hasPeaks = peaks && peaks.length > 0;
 
@@ -1233,11 +1278,10 @@ function generateProceduralPolarSpectrogram(k, size) {
         }
 
         for (let f = 0; f < numFreqs; f++) {
-            const v = f / numFreqs; // 0 = low freq (inner), 1 = high freq (outer)
+            const v = f / numFreqs;
             const r0 = rInner + v * (rOuter - rInner);
             const r1 = rInner + ((f + 1.1) / numFreqs) * (rOuter - rInner);
 
-            // Frequency falloff + harmonic modulation
             let fEnergy = baseAmp;
             if (f < 5) {
                 fEnergy *= (1.25 - v * 0.5);
@@ -1256,10 +1300,8 @@ function generateProceduralPolarSpectrogram(k, size) {
 
             let color;
             if (k === 'a') {
-                // Sox-style Warm Spectrum: deep blue -> cyan -> green -> yellow -> red -> white
-                if (fEnergy < 0.2) {
-                    color = `rgba(10, 18, 48, ${0.4 + fEnergy})`;
-                } else if (fEnergy < 0.4) {
+                if (fEnergy < 0.2) color = `rgba(10, 18, 48, ${0.4 + fEnergy})`;
+                else if (fEnergy < 0.4) {
                     const t = (fEnergy - 0.2) / 0.2;
                     color = `rgba(0, ${Math.floor(110 + t * 110)}, ${Math.floor(200 + t * 55)}, ${0.75 + t * 0.25})`;
                 } else if (fEnergy < 0.65) {
@@ -1273,10 +1315,8 @@ function generateProceduralPolarSpectrogram(k, size) {
                     color = `rgba(255, ${Math.floor(120 + t * 135)}, ${Math.floor(t * 240)}, 1.0)`;
                 }
             } else {
-                // Plasma-style Spectrum for Deck B
-                if (fEnergy < 0.2) {
-                    color = `rgba(15, 10, 35, ${0.4 + fEnergy})`;
-                } else if (fEnergy < 0.4) {
+                if (fEnergy < 0.2) color = `rgba(15, 10, 35, ${0.4 + fEnergy})`;
+                else if (fEnergy < 0.4) {
                     const t = (fEnergy - 0.2) / 0.2;
                     color = `rgba(${Math.floor(80 + t * 80)}, 20, ${Math.floor(160 + t * 70)}, ${0.75 + t * 0.25})`;
                 } else if (fEnergy < 0.65) {
@@ -1305,7 +1345,7 @@ function generateProceduralPolarSpectrogram(k, size) {
         octx.stroke();
     }
 
-    // 4. Anisotropic Specular Sheen (Butterfly light reflection)
+    // 4. Anisotropic Specular Sheen
     const sheenGrad = octx.createLinearGradient(0, 0, size, size);
     sheenGrad.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
     sheenGrad.addColorStop(0.45, 'transparent');
@@ -1316,46 +1356,66 @@ function generateProceduralPolarSpectrogram(k, size) {
     octx.arc(cx, cy, rDisc, 0, 2 * Math.PI);
     octx.fill();
 
-    // 5. Authentic Teenage Engineering Center Label Disc (Warm Bone #eae7de)
-    octx.fillStyle = '#eae7de';
+    // 5. Authentic Center Label Disc
+    octx.save();
     octx.beginPath();
     octx.arc(cx, cy, rLabel, 0, 2 * Math.PI);
-    octx.fill();
+    octx.clip();
+
+    if (d.centerLabelImg && d.centerLabelImg.complete && d.centerLabelImg.naturalWidth > 0) {
+        // Draw YouTube Video Artwork in Center
+        octx.drawImage(d.centerLabelImg, cx - rLabel, cy - rLabel, rLabel * 2, rLabel * 2);
+        // Darkened overlay for retro LCD feel
+        octx.fillStyle = (k === 'a') ? 'rgba(255, 72, 0, 0.25)' : 'rgba(0, 255, 157, 0.25)';
+        octx.fillRect(cx - rLabel, cy - rLabel, rLabel * 2, rLabel * 2);
+    } else {
+        octx.fillStyle = '#eae7de';
+        octx.fill();
+        octx.fillStyle = (k === 'a') ? '#ff4800' : '#0a3d31';
+        octx.beginPath();
+        octx.moveTo(cx, cy);
+        octx.arc(cx, cy, rLabel * 0.88, -0.4, 0.4);
+        octx.closePath();
+        octx.fill();
+    }
+    octx.restore();
+
+    // Label Border & Rings
     octx.strokeStyle = '#22252a';
     octx.lineWidth = 2;
+    octx.beginPath();
+    octx.arc(cx, cy, rLabel, 0, 2 * Math.PI);
     octx.stroke();
 
-    // Calibrated concentric hairline rings on label
-    octx.strokeStyle = '#c5c0b2';
+    octx.strokeStyle = 'rgba(255,255,255,0.4)';
     octx.lineWidth = 1;
     octx.beginPath();
     octx.arc(cx, cy, rLabel * 0.88, 0, 2 * Math.PI);
     octx.stroke();
-    octx.beginPath();
-    octx.arc(cx, cy, rLabel * 0.74, 0, 2 * Math.PI);
-    octx.stroke();
-
-    // Accent indicator block (Safety Orange for Deck A, Racing Green for Deck B)
-    octx.fillStyle = (k === 'a') ? '#ff4800' : '#0a3d31';
-    octx.beginPath();
-    octx.moveTo(cx, cy);
-    octx.arc(cx, cy, rLabel * 0.88, -0.4, 0.4);
-    octx.closePath();
-    octx.fill();
 
     // Typography on Center Label
-    octx.fillStyle = '#1c1d20';
-    octx.font = 'bold 8px monospace';
+    octx.fillStyle = '#ffffff';
+    octx.shadowColor = '#000000';
+    octx.shadowBlur = 4;
+    octx.font = 'bold 9px monospace';
     octx.textAlign = 'center';
-    octx.fillText('remxr42', cx, cy - rLabel * 0.58);
-    octx.fillStyle = '#666';
-    octx.font = '6.5px monospace';
+    octx.fillText('remxr42', cx, cy - rLabel * 0.55);
+    octx.fillStyle = (k === 'a') ? '#ffaa00' : '#00ff9d';
+    octx.font = '7.5px monospace';
     octx.fillText(`SIDE ${k.toUpperCase()} // 33 RPM`, cx, cy + rLabel * 0.65);
+    octx.shadowBlur = 0;
+
+    // Spindle hole
+    octx.fillStyle = '#101215';
+    octx.beginPath();
+    octx.arc(cx, cy, 14, 0, 2 * Math.PI);
+    octx.fill();
+    octx.strokeStyle = '#555';
+    octx.lineWidth = 1.5;
+    octx.stroke();
 
     return offCanvas;
 }
-
-// -------------------------------------------------------------------------
 // TURNTABLE 60 FPS RENDERER (CIRCULAR SPECTROGRAM + ANGULAR SLICE WEDGE)
 // -------------------------------------------------------------------------
 function renderTurntable(k) {
