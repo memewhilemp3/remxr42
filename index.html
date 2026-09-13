@@ -1704,46 +1704,84 @@ function playNeedleDrop(k) {
 }
 window.playNeedleDrop = playNeedleDrop;
 
-// 14. Scratch Audio Grain Player
+// 14. Tactile Vinyl Scratch Audio Grain Player (PCM Granular Scrub & Resonant Friction Chirp)
 function playScratchGrain(k, audioPos, velocity) {
     const d = decks[k];
-    if (!d.buffer || !actx) return;
     ensureAudioContext();
+    if (!actx) return;
 
     const speed = Math.abs(velocity);
-    if (speed < 0.08) return;
+    if (speed < 0.04) return;
 
-    const rate = Math.min(3.8, Math.max(0.18, speed));
-    const grainDur = 0.065;
     const now = actx.currentTime;
+    const grainDur = 0.075;
+    const rate = Math.min(4.0, Math.max(0.18, speed * 0.9));
 
-    const src = actx.createBufferSource();
-    const g = actx.createGain();
+    // If audio buffer exists, play scrubbed slice from buffer
+    if (d.buffer) {
+        const src = actx.createBufferSource();
+        const g = actx.createGain();
 
-    if (velocity >= 0) {
-        src.buffer = d.buffer;
-        src.playbackRate.value = rate * d.pitch;
-        const offset = Math.max(0, Math.min(d.duration - grainDur, audioPos));
-        src.start(now, offset, grainDur);
+        if (velocity >= 0) {
+            src.buffer = d.buffer;
+            src.playbackRate.value = rate * d.pitch;
+            const offset = Math.max(0, Math.min(d.duration - grainDur, audioPos));
+            src.start(now, offset, grainDur);
+        } else {
+            src.buffer = d.reverseBuffer || d.buffer;
+            src.playbackRate.value = rate * d.pitch;
+            const revOffset = Math.max(0, Math.min(d.duration - grainDur, d.duration - audioPos));
+            src.start(now, revOffset, grainDur);
+        }
+
+        const vol = Math.min(1.0, Math.max(0.20, speed * 0.75));
+        g.gain.setValueAtTime(0.001, now);
+        g.gain.linearRampToValueAtTime(vol, now + 0.008);
+        g.gain.exponentialRampToValueAtTime(0.001, now + grainDur);
+
+        src.connect(g);
+        g.connect(d.scratchGain || actx.destination);
+
+        src.onended = () => {
+            try {
+                src.disconnect();
+                g.disconnect();
+            } catch(e) {}
+        };
     } else {
-        src.buffer = d.reverseBuffer || d.buffer;
-        src.playbackRate.value = rate * d.pitch;
-        const revOffset = Math.max(0, Math.min(d.duration - grainDur, d.duration - audioPos));
-        src.start(now, revOffset, grainDur);
+        // Tactile vinyl surface friction & pitch scrub chirp fallback
+        const osc = actx.createOscillator();
+        const g = actx.createGain();
+        const filter = actx.createBiquadFilter();
+        
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(350 + speed * 750, now);
+        filter.Q.value = 2.8;
+
+        osc.type = 'sawtooth';
+        const baseFreq = (velocity >= 0 ? 110 : 160) + speed * 150;
+        osc.frequency.setValueAtTime(baseFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(Math.max(40, baseFreq * 0.5), now + grainDur);
+
+        const vol = Math.min(0.5, Math.max(0.08, speed * 0.40));
+        g.gain.setValueAtTime(0.001, now);
+        g.gain.linearRampToValueAtTime(vol, now + 0.008);
+        g.gain.exponentialRampToValueAtTime(0.001, now + grainDur);
+
+        osc.connect(filter);
+        filter.connect(g);
+        g.connect(d.scratchGain || actx.destination);
+
+        osc.start(now);
+        osc.stop(now + grainDur + 0.01);
+        osc.onended = () => {
+            try {
+                osc.disconnect();
+                filter.disconnect();
+                g.disconnect();
+            } catch(e) {}
+        };
     }
-
-    const vol = Math.min(1.0, Math.max(0.1, speed * 0.85));
-    g.gain.setValueAtTime(0.001, now);
-    g.gain.linearRampToValueAtTime(vol, now + 0.012);
-    g.gain.exponentialRampToValueAtTime(0.001, now + grainDur);
-
-    src.connect(g);
-    g.connect(d.scratchGain || actx.destination);
-
-    src.onended = () => {
-        src.disconnect();
-        g.disconnect();
-    };
 }
 window.playScratchGrain = playScratchGrain;
 
@@ -2028,8 +2066,8 @@ function downloadDeckFullTrackAsWav(k) {
         return;
     }
     const titleEl = document.getElementById(`yt-title-${k}`);
-    const trackTitle = (titleEl ? titleEl.innerText : d.name) || `Track_${k.toUpperCase()}`;
-    const word = getFirstCleanWord(trackTitle, `Deck${k.toUpperCase()}`);
+    const trackTitle = (d.buffer && d.buffer.title) || (titleEl ? titleEl.innerText : d.name) || `Track_${k.toUpperCase()}`;
+    const trackDetail = getCleanTrackDetail(trackTitle, `Deck_${k.toUpperCase()}`);
 
     const blob = audioBufferToWavBlob(d.buffer, 0, d.duration);
     if (!blob) return;
@@ -2037,7 +2075,7 @@ function downloadDeckFullTrackAsWav(k) {
     const a = document.createElement('a');
     a.style.display = 'none';
     a.href = url;
-    a.download = `remxr42_deck_${k}_${word}_full.wav`;
+    a.download = `remxr42_deck_${k}_${trackDetail}_full.wav`;
     document.body.appendChild(a);
     a.click();
     setTimeout(() => {
@@ -2054,8 +2092,8 @@ function downloadDeckFullTrackAsMp3(k) {
         return;
     }
     const titleEl = document.getElementById(`yt-title-${k}`);
-    const trackTitle = (titleEl ? titleEl.innerText : d.name) || `Track_${k.toUpperCase()}`;
-    const word = getFirstCleanWord(trackTitle, `Deck${k.toUpperCase()}`);
+    const trackTitle = (d.buffer && d.buffer.title) || (titleEl ? titleEl.innerText : d.name) || `Track_${k.toUpperCase()}`;
+    const trackDetail = getCleanTrackDetail(trackTitle, `Deck_${k.toUpperCase()}`);
 
     const blob = audioBufferToMp3Blob(d.buffer, 0, d.duration, 192);
     if (!blob) return;
@@ -2063,7 +2101,7 @@ function downloadDeckFullTrackAsMp3(k) {
     const a = document.createElement('a');
     a.style.display = 'none';
     a.href = url;
-    a.download = `remxr42_deck_${k}_${word}_full.mp3`;
+    a.download = `remxr42_deck_${k}_${trackDetail}_full.mp3`;
     document.body.appendChild(a);
     a.click();
     setTimeout(() => {
@@ -2079,13 +2117,17 @@ function downloadDeckSliceAsWav(k) {
         alert('No audio loaded in deck to export.');
         return;
     }
+    const titleEl = document.getElementById(`yt-title-${k}`);
+    const trackTitle = (d.buffer && d.buffer.title) || (titleEl ? titleEl.innerText : d.name) || `Track_${k.toUpperCase()}`;
+    const trackDetail = getCleanTrackDetail(trackTitle, `Deck_${k.toUpperCase()}`);
+
     const blob = audioBufferToWavBlob(d.buffer, d.inTime, d.outTime);
     if (!blob) return;
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.style.display = 'none';
     a.href = url;
-    a.download = `remxr42_deck_${k}_${d.inTime.toFixed(2)}s_${d.outTime.toFixed(2)}s.wav`;
+    a.download = `remxr42_deck_${k}_${trackDetail}_slice_${d.inTime.toFixed(2)}s_${d.outTime.toFixed(2)}s.wav`;
     document.body.appendChild(a);
     a.click();
     setTimeout(() => {
@@ -2095,6 +2137,16 @@ function downloadDeckSliceAsWav(k) {
 }
 window.downloadDeckSliceAsWav = downloadDeckSliceAsWav;
 
+// Clean track detail for single deck downloads (preserves readable track title / artist)
+function getCleanTrackDetail(title, fallback = 'TRACK') {
+    if (!title) return fallback;
+    const cleaned = title.replace(/^[\[\(\{■▶⚡📂 ]+/, '').trim();
+    const sanitized = cleaned.replace(/[^a-zA-Z0-9_\-\.]+/g, '_').replace(/^_+|_+$/g, '');
+    return sanitized.length > 0 ? sanitized : fallback;
+}
+window.getCleanTrackDetail = getCleanTrackDetail;
+
+// First clean word for merged master mix downloads (Deck A first word + Deck B first word)
 function getFirstCleanWord(title, fallback = 'TRACK') {
     if (!title) return fallback;
     const cleaned = title.replace(/^[\[\(\{■▶⚡📂 ]+/, '').trim();
@@ -2177,9 +2229,13 @@ function downloadBlob(blob, filename) {
 }
 
 // Export Individual Deck Waveform (JPEG / SVG)
+// Export Individual Deck Waveform (JPEG / SVG) with Track Detail
 function exportDeckWaveform(k, format = 'jpg') {
     const d = decks[k];
-    const trackTitle = (document.getElementById(`yt-title-${k}`) ? document.getElementById(`yt-title-${k}`).innerText : d.name) || `DECK ${k.toUpperCase()}`;
+    const rawTitle = (d.buffer && d.buffer.title) || (document.getElementById(`yt-title-${k}`) ? document.getElementById(`yt-title-${k}`).innerText : d.name) || `DECK_${k.toUpperCase()}`;
+    const trackDetail = getCleanTrackDetail(rawTitle, `Deck_${k.toUpperCase()}`);
+    const baseFileName = `remxr42_deck_${k}_${trackDetail}_waveform`;
+
     const primaryColor = (k === 'a') ? '#ff7a29' : '#6cb4ee';
     const midColor     = '#f8c548';
     const hiColor      = '#b388ff';
@@ -2199,27 +2255,21 @@ function exportDeckWaveform(k, format = 'jpg') {
         for (let x = 0; x < w; x += 40) {
             svg += `<line x1="${x}" y1="36" x2="${x}" y2="${h}" />`;
         }
-        svg += `<line x1="0" y1="${centerY}" x2="${w}" y2="${centerY}" stroke="#252932"/>
+        svg += `<line x1="0" y1="${centerY}" x2="${w}" y2="${centerY}" stroke="#22262c" stroke-width="1"/>
     </g>
-    <!-- Header Typography -->
-    <rect x="0" y="0" width="${w}" height="36" fill="#121518"/>
-    <text x="16" y="23" fill="${primaryColor}" font-family="'Space Mono', monospace" font-size="12" font-weight="bold">■ REMXR42 • DECK ${k.toUpperCase()}: ${trackTitle.replace(/&/g, '&amp;')}</text>
-    <text x="${w - 16}" y="23" text-anchor="end" fill="#888888" font-family="'Space Mono', monospace" font-size="10.5">LOOP: ${d.inTime.toFixed(2)}s - ${d.outTime.toFixed(2)}s (${(d.outTime - d.inTime).toFixed(2)}s) • TOTAL: ${d.duration.toFixed(2)}s</text>
-    <!-- Sliced Loop Region Highlight -->`;
+    <!-- Header Bar with Track Detail -->
+    <rect x="0" y="0" width="${w}" height="36" fill="#121418"/>
+    <text x="14" y="23" fill="#ffffff" font-family="'Space Mono', monospace" font-size="12" font-weight="bold">■ REMXR42 • DECK ${k.toUpperCase()} [${trackDetail.toUpperCase()}] WAVEFORM</text>
+    <text x="${w - 18}" y="23" fill="${primaryColor}" font-family="'Space Mono', monospace" font-size="11" font-weight="bold" text-anchor="end">DUR: ${d.duration.toFixed(1)}s • IN: ${d.inTime.toFixed(1)}s • OUT: ${d.outTime.toFixed(1)}s</text>
 
-        if (d.duration > 0) {
-            const inX = (d.inTime / d.duration) * w;
-            const outX = (d.outTime / d.duration) * w;
-            svg += `<rect x="${inX}" y="36" width="${Math.max(2, outX - inX)}" height="${h - 36}" fill="${primaryColor}" fill-opacity="0.20"/>
-            <line x1="${inX}" y1="36" x2="${inX}" y2="${h}" stroke="#00ff9d" stroke-width="2.5"/>
-            <line x1="${outX}" y1="36" x2="${outX}" y2="${h}" stroke="#ff2244" stroke-width="2.5"/>
-            <rect x="${inX}" y="36" width="22" height="14" fill="#00ff9d"/>
-            <text x="${inX + 3}" y="47" fill="#000" font-family="'Space Mono', monospace" font-size="8.5" font-weight="bold">IN</text>
-            <rect x="${outX - 26}" y="36" width="26" height="14" fill="#ff2244"/>
-            <text x="${outX - 23}" y="47" fill="#fff" font-family="'Space Mono', monospace" font-size="8.5" font-weight="bold">OUT</text>`;
-        }
+    <!-- Loop Region Highlight -->
+    <rect x="${((d.inTime / d.duration) * w).toFixed(1)}" y="36" width="${(((d.outTime - d.inTime) / d.duration) * w).toFixed(1)}" height="${h - 36}" fill="${primaryColor}" opacity="0.12"/>
+    <line x1="${((d.inTime / d.duration) * w).toFixed(1)}" y1="36" x2="${((d.inTime / d.duration) * w).toFixed(1)}" y2="${h}" stroke="#00ff9d" stroke-width="2.5"/>
+    <line x1="${((d.outTime / d.duration) * w).toFixed(1)}" y1="36" x2="${((d.outTime / d.duration) * w).toFixed(1)}" y2="${h}" stroke="#ff2244" stroke-width="2.5"/>
 
-        svg += `<g fill="${primaryColor}">`;
+    <!-- Waveform Peaks -->
+    <g fill="${primaryColor}">`;
+
         if (d.peaks && d.peaks.length > 0) {
             const binCount = d.peaks.length;
             const scaleX = w / binCount;
@@ -2234,75 +2284,75 @@ function exportDeckWaveform(k, format = 'jpg') {
                     yBot = centerY + pMax * ampScale;
                 }
                 const barH = Math.max(2, yBot - yTop);
-                svg += `<rect x="${bx.toFixed(1)}" y="${yTop.toFixed(1)}" width="${Math.max(lineweight, scaleX).toFixed(1)}" height="${barH.toFixed(1)}" />`;
+                svg += `<rect x="${bx.toFixed(1)}" y="${yTop.toFixed(1)}" width="${Math.max(lineweight, scaleX).toFixed(1)}" height="${barH.toFixed(1)}"/>`;
             }
         }
-        svg += `</g>
-</svg>`;
-        const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-        downloadBlob(blob, `remxr42_deck_${k}_${trackTitle.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0,20)}_waveform.svg`);
+        svg += `</g></svg>`;
+
+        const blob = new Blob([svg], { type: 'image/svg+xml' });
+        downloadBlob(blob, `${baseFileName}.svg`);
         return;
     }
 
-    // JPEG Export via Offscreen Canvas
+    // JPEG High-Definition Waveform Export
     const canvas = document.createElement('canvas');
     canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext('2d');
 
-    // Background
     ctx.fillStyle = '#0a0c0e';
     ctx.fillRect(0, 0, w, h);
 
-    // Grid
+    // Grid lines
     ctx.strokeStyle = '#181b20';
     ctx.lineWidth = 1;
     for (let x = 0; x < w; x += 40) {
         ctx.beginPath();
-        ctx.moveTo(x, 36); ctx.lineTo(x, h);
+        ctx.moveTo(x, 36);
+        ctx.lineTo(x, h);
         ctx.stroke();
     }
-    ctx.strokeStyle = '#252932';
+    ctx.strokeStyle = '#22262c';
     ctx.beginPath();
-    ctx.moveTo(0, centerY); ctx.lineTo(w, centerY);
+    ctx.moveTo(0, centerY);
+    ctx.lineTo(w, centerY);
     ctx.stroke();
 
-    // Header Bar
-    ctx.fillStyle = '#121518';
+    // Header
+    ctx.fillStyle = '#121418';
     ctx.fillRect(0, 0, w, 36);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12px "Space Mono", monospace';
+    ctx.fillText(`■ REMXR42 • DECK ${k.toUpperCase()} [${trackDetail.toUpperCase()}] WAVEFORM`, 14, 23);
 
     ctx.fillStyle = primaryColor;
-    ctx.font = 'bold 12px "Space Mono", monospace';
-    ctx.fillText(`■ REMXR42 • DECK ${k.toUpperCase()}: ${trackTitle.toUpperCase()}`, 16, 23);
+    ctx.textAlign = 'right';
+    ctx.fillText(`DUR: ${d.duration.toFixed(1)}s • IN: ${d.inTime.toFixed(1)}s • OUT: ${d.outTime.toFixed(1)}s`, w - 18, 23);
+    ctx.textAlign = 'left';
 
-    ctx.fillStyle = '#888888';
-    ctx.font = '10px "Space Mono", monospace';
-    const subInfo = `LOOP: ${d.inTime.toFixed(2)}s - ${d.outTime.toFixed(2)}s (${(d.outTime - d.inTime).toFixed(2)}s) • TOTAL: ${d.duration.toFixed(2)}s • 44.1kHz`;
-    ctx.fillText(subInfo, w - ctx.measureText(subInfo).width - 16, 23);
-
-    // Loop Region Highlight
+    // Loop Region
     if (d.duration > 0) {
         const inX = (d.inTime / d.duration) * w;
         const outX = (d.outTime / d.duration) * w;
-
-        ctx.fillStyle = (k === 'a') ? 'rgba(255, 122, 41, 0.22)' : 'rgba(108, 180, 238, 0.20)';
+        ctx.fillStyle = (k === 'a') ? 'rgba(255, 122, 41, 0.12)' : 'rgba(108, 180, 238, 0.12)';
         ctx.fillRect(inX, 36, Math.max(2, outX - inX), h - 36);
 
-        ctx.fillStyle = '#00ff9d';
-        ctx.fillRect(inX - lineweight / 2, 36, lineweight, h - 36);
-        ctx.fillRect(inX, 36, 22, 14);
-        ctx.fillStyle = '#000000';
-        ctx.font = 'bold 8.5px "Space Mono", monospace';
-        ctx.fillText('IN', inX + 3, 47);
+        ctx.strokeStyle = '#00ff9d';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(inX, 36);
+        ctx.lineTo(inX, h);
+        ctx.stroke();
 
-        ctx.fillStyle = '#ff2244';
-        ctx.fillRect(outX - lineweight / 2, 36, lineweight, h - 36);
-        ctx.fillRect(outX - 26, 36, 26, 14);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillText('OUT', outX - 23, 47);
+        ctx.strokeStyle = '#ff2244';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(outX, 36);
+        ctx.lineTo(outX, h);
+        ctx.stroke();
     }
 
-    // Waveform Peaks with 4-Color Layers & 2.5px Lineweight
+    // Waveform Peaks with 2.5px Lineweight
     if (d.peaks && d.peaks.length > 0) {
         const binCount = d.peaks.length;
         const scaleX = w / binCount;
@@ -2346,7 +2396,7 @@ function exportDeckWaveform(k, format = 'jpg') {
     }
 
     canvas.toBlob(blob => {
-        downloadBlob(blob, `remxr42_deck_${k}_${trackTitle.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0,20)}_waveform.jpg`);
+        downloadBlob(blob, `${baseFileName}.jpg`);
     }, 'image/jpeg', 0.95);
 }
 window.exportDeckWaveform = exportDeckWaveform;
@@ -2573,11 +2623,12 @@ function exportCombinedWaveform(format = 'jpg') {
 window.exportCombinedWaveform = exportCombinedWaveform;
 
 // Export High-Resolution Circular Vinyl Spectrograph (PNG)
+// Export High-Resolution Circular Vinyl Spectrograph with Track Detail (PNG / JPEG / SVG)
 function exportCircularSpectrogram(k, format = 'png') {
     const d = decks[k];
-    const title = (d.buffer && d.buffer.title) || document.getElementById(`title-deck-${k}`)?.innerText || `Deck_${k.toUpperCase()}`;
-    const cleanWord = getFirstCleanWord(title, `Deck_${k.toUpperCase()}`);
-    const baseFileName = `remxr42_${cleanWord}_circular_spectrograph`;
+    const rawTitle = (d.buffer && d.buffer.title) || document.getElementById(`yt-title-${k}`)?.innerText || document.getElementById(`title-deck-${k}`)?.innerText || `Deck_${k.toUpperCase()}`;
+    const trackDetail = getCleanTrackDetail(rawTitle, `Deck_${k.toUpperCase()}`);
+    const baseFileName = `remxr42_deck_${k}_${trackDetail}_circular_spectrograph`;
 
     const exportSize = 1200;
     const canvas = document.createElement('canvas');
@@ -2615,7 +2666,7 @@ function exportCircularSpectrogram(k, format = 'png') {
         }
     }
 
-    // 3. Render High-Resolution Polar Micro-Groove Spectrograph
+    // 3. Render High-Resolution Simon Dixon Pitch Spiral Spectrograph
     const spectroCanvas = generateProceduralPolarSpectrogram(k, exportSize * 0.90);
     const rPlatter = exportSize * 0.45;
     ctx.drawImage(spectroCanvas, cx - rPlatter, cy - rPlatter, rPlatter * 2, rPlatter * 2);
@@ -2653,29 +2704,32 @@ function exportCircularSpectrogram(k, format = 'png') {
 
     // 5. Technical Telemetry Overlay Header
     ctx.fillStyle = '#101316';
-    ctx.fillRect(20, 20, 460, 62);
+    ctx.fillRect(20, 20, 520, 64);
     ctx.strokeStyle = (k === 'a') ? '#ff7a29' : '#6cb4ee';
-    ctx.strokeRect(20, 20, 460, 62);
+    ctx.strokeRect(20, 20, 520, 64);
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 13px "Space Mono", monospace';
     ctx.textAlign = 'left';
-    ctx.fillText(`■ REMXR42 • DECK ${k.toUpperCase()} POLAR PHONOGRAM`, 34, 42);
+    ctx.fillText(`■ REMXR42 • DECK ${k.toUpperCase()} [${trackDetail.toUpperCase()}]`, 34, 42);
 
-    ctx.fillStyle = (k === 'a') ? '#f8c548' : '#6cb4ee';
+    ctx.fillStyle = (k === 'a') ? '#ff954d' : '#6cb4ee';
     ctx.font = 'bold 10px "Space Mono", monospace';
-    ctx.fillText(`TITLE: ${title.toUpperCase().slice(0, 32)} • DUR: ${d.duration.toFixed(1)}s`, 34, 62);
+    ctx.fillText(`TITLE: ${rawTitle.toUpperCase().slice(0, 36)} • DUR: ${d.duration.toFixed(1)}s`, 34, 62);
 
+    const mime = (format === 'jpg' || format === 'jpeg') ? 'image/jpeg' : 'image/png';
+    const ext = (format === 'jpg' || format === 'jpeg') ? 'jpg' : 'png';
     canvas.toBlob(blob => {
-        downloadBlob(blob, `${baseFileName}.png`);
-    }, 'image/png');
+        downloadBlob(blob, `${baseFileName}.${ext}`);
+    }, mime, 0.95);
 }
 window.exportCircularSpectrogram = exportCircularSpectrogram;
 
 // Export Master Mixed Polar Vinyl Artwork (PNG)
+// Export Master Mixed Polar Vinyl Artwork with First Words of Both Tracks (PNG / JPEG)
 function exportCombinedCircularSpectrogram(format = 'png') {
-    const titleA = (decks.a.buffer && decks.a.buffer.title) || document.getElementById('title-deck-a')?.innerText || 'Deck A';
-    const titleB = (decks.b.buffer && decks.b.buffer.title) || document.getElementById('title-deck-b')?.innerText || 'Deck B';
+    const titleA = (decks.a.buffer && decks.a.buffer.title) || document.getElementById('yt-title-a')?.innerText || document.getElementById('title-deck-a')?.innerText || 'Deck A';
+    const titleB = (decks.b.buffer && decks.b.buffer.title) || document.getElementById('yt-title-b')?.innerText || document.getElementById('title-deck-b')?.innerText || 'Deck B';
     const wordA = getFirstCleanWord(titleA, 'DeckA');
     const wordB = getFirstCleanWord(titleB, 'DeckB');
     const baseFileName = `remxr42_${wordA}_${wordB}_master_polar_mix`;
@@ -2702,14 +2756,14 @@ function exportCombinedCircularSpectrogram(format = 'png') {
 
     // Draw Deck A with gainA opacity
     ctx.save();
-    ctx.globalAlpha = Math.max(0.3, gainA);
+    ctx.globalAlpha = Math.max(0.25, gainA);
     ctx.drawImage(spectroA, cx - rPlatter, cy - rPlatter, rPlatter * 2, rPlatter * 2);
     ctx.restore();
 
     // Draw Deck B with screen blend & gainB opacity
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
-    ctx.globalAlpha = Math.max(0.3, gainB);
+    ctx.globalAlpha = Math.max(0.25, gainB);
     ctx.drawImage(spectroB, cx - rPlatter, cy - rPlatter, rPlatter * 2, rPlatter * 2);
     ctx.restore();
 
@@ -2729,28 +2783,30 @@ function exportCombinedCircularSpectrogram(format = 'png') {
     ctx.fillText('MASTER MIX', cx, cy - 8);
     ctx.fillStyle = '#f8c548';
     ctx.font = 'bold 10px "Space Mono", monospace';
-    ctx.fillText(`${(gainA*100).toFixed(0)}% A / ${(gainB*100).toFixed(0)}% B`, cx, cy + 10);
+    ctx.fillText(`${(gainA*100).toFixed(0)}% ${wordA.toUpperCase()} / ${(gainB*100).toFixed(0)}% ${wordB.toUpperCase()}`, cx, cy + 10);
 
     // Header
     ctx.fillStyle = '#101316';
-    ctx.fillRect(20, 20, 480, 64);
+    ctx.fillRect(20, 20, 560, 64);
     ctx.strokeStyle = '#f8c548';
-    ctx.strokeRect(20, 20, 480, 64);
+    ctx.strokeRect(20, 20, 560, 64);
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 13px "Space Mono", monospace';
     ctx.textAlign = 'left';
-    ctx.fillText('■ REMXR42 • COMBINED MASTER POLAR PHONOGRAM', 34, 42);
+    ctx.fillText(`■ REMXR42 • MASTER POLAR MIX [${wordA.toUpperCase()} + ${wordB.toUpperCase()}]`, 34, 42);
 
     ctx.fillStyle = '#ff7a29';
     ctx.font = 'bold 9.5px "Space Mono", monospace';
-    ctx.fillText(`A: ${titleA.slice(0, 18)} (${(gainA*100).toFixed(0)}%)`, 34, 62);
+    ctx.fillText(`A: ${titleA.slice(0, 22)} (${(gainA*100).toFixed(0)}%)`, 34, 62);
     ctx.fillStyle = '#6cb4ee';
-    ctx.fillText(`B: ${titleB.slice(0, 18)} (${(gainB*100).toFixed(0)}%)`, 240, 62);
+    ctx.fillText(`B: ${titleB.slice(0, 22)} (${(gainB*100).toFixed(0)}%)`, 280, 62);
 
+    const mime = (format === 'jpg' || format === 'jpeg') ? 'image/jpeg' : 'image/png';
+    const ext = (format === 'jpg' || format === 'jpeg') ? 'jpg' : 'png';
     canvas.toBlob(blob => {
-        downloadBlob(blob, `${baseFileName}.png`);
-    }, 'image/png');
+        downloadBlob(blob, `${baseFileName}.${ext}`);
+    }, mime, 0.95);
 }
 window.exportCombinedCircularSpectrogram = exportCombinedCircularSpectrogram;
 
@@ -3180,6 +3236,7 @@ function stopDeckSlice(k) {
 window.stopDeckSlice = stopDeckSlice;
 
 // 19. Turntable Mouse & Touch Scratching
+// 19. Interactive Turntable Platter Manipulation (Mouse / Touch Drag & Vinyl Scratch)
 function setupTurntableInteraction(k) {
     const d = decks[k];
     const cv = d.ttCanvas;
@@ -3191,10 +3248,10 @@ function setupTurntableInteraction(k) {
 
     function getAngle(e) {
         const rect = cv.getBoundingClientRect();
-        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-        const x = clientX - rect.left - cv.width / 2;
-        const y = clientY - rect.top - cv.height / 2;
+        const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
+        const clientY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
+        const x = clientX - rect.left - rect.width / 2;
+        const y = clientY - rect.top - rect.height / 2;
         return Math.atan2(y, x);
     }
 
@@ -3202,18 +3259,30 @@ function setupTurntableInteraction(k) {
         ensureAudioContext();
         isDragging = true;
         d.isScratching = true;
+        d.wasPlayingBeforeScratch = d.isPlaying;
+
+        // Pause background audio buffer so scratch grain is dominant & crisp
+        if (d.isPlaying && d.sourceNode) {
+            try { d.sourceNode.stop(); } catch(err) {}
+            try { d.sourceNode.disconnect(); } catch(err) {}
+            d.sourceNode = null;
+        }
+
         lastAngle = getAngle(e);
         lastTime = performance.now();
         d.angularVelocity = 0;
         const led = document.getElementById(`scratch-led-${k}`);
         if (led) led.classList.add('active');
+
+        // Tactile needle contact drop sound
+        playNeedleDrop(k);
     }
 
     function onMove(e) {
         if (!isDragging) return;
         const angle = getAngle(e);
         const now = performance.now();
-        const dt = Math.max(1, now - lastTime) / 1000;
+        const dt = Math.max(0.001, (now - lastTime) / 1000);
         let delta = angle - lastAngle;
 
         while (delta > Math.PI) delta -= 2 * Math.PI;
@@ -3226,6 +3295,8 @@ function setupTurntableInteraction(k) {
         if (d.duration > 0) {
             d.playbackPosition = (d.playbackPosition + delta * 0.5 + d.duration) % d.duration;
             playScratchGrain(k, d.playbackPosition, velocity);
+        } else {
+            playScratchGrain(k, 0, velocity);
         }
 
         lastAngle = angle;
@@ -3240,6 +3311,12 @@ function setupTurntableInteraction(k) {
         d.isScratching = false;
         const led = document.getElementById(`scratch-led-${k}`);
         if (led) led.classList.remove('active');
+
+        // Resume playback if it was playing before scratching
+        if (d.wasPlayingBeforeScratch && d.isPlaying) {
+            playDeckSlice(k, d.playbackPosition);
+        }
+        d.wasPlayingBeforeScratch = false;
     }
 
     cv.addEventListener('mousedown', onDown);
