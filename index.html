@@ -1616,8 +1616,22 @@ function downloadDeckSliceAsWav(k) {
 }
 window.downloadDeckSliceAsWav = downloadDeckSliceAsWav;
 
+function getFirstCleanWord(title, fallback = 'TRACK') {
+    if (!title) return fallback;
+    const cleaned = title.replace(/^[\[\(\{■▶⚡📂 ]+/, '').trim();
+    const words = cleaned.split(/[\s\-_\/]+/);
+    const first = words[0] ? words[0].replace(/[^a-zA-Z0-9]/g, '') : '';
+    return first.length > 0 ? first : fallback;
+}
+window.getFirstCleanWord = getFirstCleanWord;
+
 function downloadMasterMixAsWav() {
     ensureAudioContext();
+    const titleA = (document.getElementById('yt-title-a') ? document.getElementById('yt-title-a').innerText : decks.a.name) || 'Lead';
+    const titleB = (document.getElementById('yt-title-b') ? document.getElementById('yt-title-b').innerText : decks.b.name) || 'Bass';
+    const wordA = getFirstCleanWord(titleA, 'DeckA');
+    const wordB = getFirstCleanWord(titleB, 'DeckB');
+
     const durA = decks.a.buffer ? decks.a.duration : 0;
     const durB = decks.b.buffer ? decks.b.duration : 0;
     const maxDur = Math.max(durA, durB, 4.0);
@@ -1654,7 +1668,7 @@ function downloadMasterMixAsWav() {
     const a = document.createElement('a');
     a.style.display = 'none';
     a.href = url;
-    a.download = `remxr42_master_mix.wav`;
+    a.download = `remxr42_${wordA}_${wordB}_master.wav`;
     document.body.appendChild(a);
     a.click();
     setTimeout(() => {
@@ -1852,6 +1866,9 @@ window.exportDeckWaveform = exportDeckWaveform;
 function exportCombinedWaveform(format = 'jpg') {
     const titleA = (document.getElementById('yt-title-a') ? document.getElementById('yt-title-a').innerText : decks.a.name) || 'DECK A LEAD';
     const titleB = (document.getElementById('yt-title-b') ? document.getElementById('yt-title-b').innerText : decks.b.name) || 'DECK B BASS';
+    const wordA = getFirstCleanWord(titleA, 'DeckA');
+    const wordB = getFirstCleanWord(titleB, 'DeckB');
+    const baseFileName = `remxr42_${wordA}_${wordB}_master_waveform`;
 
     const w = 1400;
     const h = 420;
@@ -1881,10 +1898,10 @@ function exportCombinedWaveform(format = 'jpg') {
     <rect x="${w - 240}" y="12" width="220" height="20" fill="#051c14" stroke="#00ff9d" rx="2"/>
     <text x="${w - 230}" y="26" fill="#00ff9d" font-family="'Space Mono', monospace" font-size="9" font-weight="bold">DECK B: ${titleB.replace(/&/g, '&amp;').slice(0, 18)}</text>
 
-    <!-- Translucent Overlay Waveforms with Screen Blending -->
-    <g style="mix-blend-mode: screen; opacity: 0.72;" fill="#ff8c00">`;
+    <!-- Translucent Overlay Waveforms (Deck A Reduced Opacity 0.42 for High Transparency) -->
+    <g style="mix-blend-mode: screen; opacity: 0.42;" fill="#ff8c00">`;
 
-        // Deck A Waveform
+        // Deck A Waveform (Translucent Amber)
         const dA = decks.a;
         if (dA.peaks && dA.peaks.length > 0) {
             const scaleX = w / dA.peaks.length;
@@ -1898,9 +1915,9 @@ function exportCombinedWaveform(format = 'jpg') {
             }
         }
         svg += `</g>
-    <g style="mix-blend-mode: screen; opacity: 0.72;" fill="#00ff9d">`;
+    <g style="mix-blend-mode: screen; opacity: 0.75;" fill="#00ff9d">`;
 
-        // Deck B Waveform
+        // Deck B Waveform (Mint)
         const dB = decks.b;
         if (dB.peaks && dB.peaks.length > 0) {
             const scaleX = w / dB.peaks.length;
@@ -1916,11 +1933,11 @@ function exportCombinedWaveform(format = 'jpg') {
         svg += `</g>
 </svg>`;
         const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
-        downloadBlob(blob, `remxr42_combined_master_waveform.svg`);
+        downloadBlob(blob, `${baseFileName}.svg`);
         return;
     }
 
-    // Combined JPEG Export via Canvas with Screen Opacity Blending
+    // Combined JPEG Export via Canvas
     const canvas = document.createElement('canvas');
     canvas.width = w;
     canvas.height = h;
@@ -1968,10 +1985,10 @@ function exportCombinedWaveform(format = 'jpg') {
     ctx.fillStyle = '#00ff9d';
     ctx.fillText(`DECK B: ${titleB.toUpperCase().slice(0, 18)}`, w - 230, 26);
 
-    // Draw Deck A in Translucent Amber Layer
+    // Draw Deck A in Translucent Amber Layer (Reduced Opacity 0.42 for Clear See-Through)
     ctx.save();
     ctx.globalCompositeOperation = 'screen';
-    ctx.fillStyle = 'rgba(255, 140, 0, 0.75)';
+    ctx.fillStyle = 'rgba(255, 140, 0, 0.42)';
 
     const dA = decks.a;
     if (dA.peaks && dA.peaks.length > 0) {
@@ -1990,7 +2007,7 @@ function exportCombinedWaveform(format = 'jpg') {
         }
     }
 
-    // Draw Deck B in Translucent Mint Layer (Blends into luminous Gold where overlapping)
+    // Draw Deck B in Translucent Mint Layer (0.75 Opacity)
     ctx.fillStyle = 'rgba(0, 255, 157, 0.75)';
     const dB = decks.b;
     if (dB.peaks && dB.peaks.length > 0) {
@@ -2011,13 +2028,13 @@ function exportCombinedWaveform(format = 'jpg') {
     ctx.restore();
 
     canvas.toBlob(blob => {
-        downloadBlob(blob, `remxr42_combined_master_waveform.jpg`);
+        downloadBlob(blob, `${baseFileName}.jpg`);
     }, 'image/jpeg', 0.95);
 }
 window.exportCombinedWaveform = exportCombinedWaveform;
 
 
-// 17. Linear Waveform Visualizer Strip Renderer with Tactile IN/OUT Handles
+// 17. Linear Waveform Visualizer Strip Renderer with Tactile IN/OUT Tag-Dots/Pegs
 function renderLinearStrip(k) {
     const d = decks[k];
     const cv = d.linCanvas;
@@ -2084,45 +2101,68 @@ function renderLinearStrip(k) {
         ctx.restore();
     }
 
-    // 4. Shaded Active Loop Region
+    // 4. Shaded Active Loop Region & Tactile Tag-Dots / Pegs (Green for IN, Red for OUT)
     if (d.duration > 0) {
         const inX = (d.inTime / d.duration) * w;
         const outX = (d.outTime / d.duration) * w;
 
-        ctx.fillStyle = (k === 'a') ? 'rgba(255, 72, 0, 0.28)' : 'rgba(0, 255, 157, 0.25)';
+        // Loop Shading
+        ctx.fillStyle = (k === 'a') ? 'rgba(255, 72, 0, 0.24)' : 'rgba(0, 255, 157, 0.22)';
         ctx.fillRect(inX, 0, Math.max(2, outX - inX), h);
 
-        // Splice IN Marker Line & Flag Tab
-        ctx.fillStyle = '#ff4800';
-        ctx.fillRect(inX - 1.5, 0, 3, h);
+        // SPLICE IN: Green Line & Green Tactile Tag-Dot Pegs
+        ctx.fillStyle = '#00ff9d';
+        ctx.fillRect(inX - 1, 0, 2, h);
 
+        // Top Green IN Peg
         ctx.beginPath();
-        ctx.moveTo(inX, 0);
-        ctx.lineTo(inX + 18, 0);
-        ctx.lineTo(inX + 18, 14);
-        ctx.lineTo(inX + 8, 14);
-        ctx.lineTo(inX, 10);
-        ctx.closePath();
+        ctx.arc(inX, 5, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = '#00ff9d';
         ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 8.5px "Space Mono", monospace';
-        ctx.fillText('IN', inX + 3, 10);
-
-        // Splice OUT Marker Line & Flag Tab
-        ctx.fillStyle = '#ff0055';
-        ctx.fillRect(outX - 1.5, 0, 3, h);
-
+        ctx.strokeStyle = '#021a14';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        // White Center Core
         ctx.beginPath();
-        ctx.moveTo(outX, 0);
-        ctx.lineTo(outX - 22, 0);
-        ctx.lineTo(outX - 22, 14);
-        ctx.lineTo(outX - 8, 14);
-        ctx.lineTo(outX, 10);
-        ctx.closePath();
-        ctx.fill();
+        ctx.arc(inX, 5, 1.8, 0, 2 * Math.PI);
         ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 8.5px "Space Mono", monospace';
-        ctx.fillText('OUT', outX - 20, 10);
+        ctx.fill();
+
+        // Bottom Green IN Peg
+        ctx.beginPath();
+        ctx.arc(inX, h - 5, 3.8, 0, 2 * Math.PI);
+        ctx.fillStyle = '#00ff9d';
+        ctx.fill();
+        ctx.strokeStyle = '#021a14';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        // SPLICE OUT: Red Line & Red Tactile Tag-Dot Pegs
+        ctx.fillStyle = '#ff2244';
+        ctx.fillRect(outX - 1, 0, 2, h);
+
+        // Top Red OUT Peg
+        ctx.beginPath();
+        ctx.arc(outX, 5, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = '#ff2244';
+        ctx.fill();
+        ctx.strokeStyle = '#1a0206';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        // White Center Core
+        ctx.beginPath();
+        ctx.arc(outX, 5, 1.8, 0, 2 * Math.PI);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+
+        // Bottom Red OUT Peg
+        ctx.beginPath();
+        ctx.arc(outX, h - 5, 3.8, 0, 2 * Math.PI);
+        ctx.fillStyle = '#ff2244';
+        ctx.fill();
+        ctx.strokeStyle = '#1a0206';
+        ctx.lineWidth = 1;
+        ctx.stroke();
     }
 
     // 5. Playhead Scrubber Position
