@@ -977,17 +977,54 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
     octx.arc(cx, cy, rDisc, 0, 2 * Math.PI);
     octx.fill();
 
-    // 2. High-Density Constant-Q Polar Spectrograph (540 Time Slices x 64 Pitch Micro-Grooves)
-    const numSlices = 540;
-    const numFreqs = 64;
-    const angleStep = (2 * Math.PI) / numSlices;
-    const radStep = (rOuter - rInner) / numFreqs;
+    // 2. Physical Outer Rim & Strobe Calibration Dots
+    octx.strokeStyle = '#22252a';
+    octx.lineWidth = 1.5;
+    octx.stroke();
 
-    // Use track-specific seed for unique composition & harmonic ribbons
+    const numStrobes = 120;
+    for (let s = 0; s < numStrobes; s++) {
+        const rad = (s / numStrobes) * 2 * Math.PI;
+        const rStrobe = rDisc - 1.5;
+        octx.fillStyle = (s % 4 === 0) ? ((k === 'a') ? '#ff7a29' : '#6cb4ee') : 'rgba(255,255,255,0.2)';
+        octx.fillRect(cx + rStrobe * Math.cos(rad) - 1, cy + rStrobe * Math.sin(rad) - 1, 2, 2);
+    }
+
+    // 3. Simon Dixon & Gerhard Widmer 12-Tone Chromatic Pitch Class Radial Rays
+    // (Shepard-Dixon-Widmer Pitch Spiral Coordinate Grid)
+    const pitchNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    for (let p = 0; p < 12; p++) {
+        const angle = (p / 12) * 2 * Math.PI - Math.PI / 2;
+        const cosA = Math.cos(angle);
+        const sinA = Math.sin(angle);
+        const isTonic = (p % 3 === 0);
+
+        octx.strokeStyle = isTonic 
+            ? ((k === 'a') ? 'rgba(255, 122, 41, 0.25)' : 'rgba(108, 180, 238, 0.25)')
+            : 'rgba(255, 255, 255, 0.08)';
+        octx.lineWidth = isTonic ? 1.0 : 0.5;
+        octx.beginPath();
+        octx.moveTo(cx + (rInner + 2) * cosA, cy + (rInner + 2) * sinA);
+        octx.lineTo(cx + (rOuter - 4) * cosA, cy + (rOuter - 4) * sinA);
+        octx.stroke();
+
+        // Subtle Pitch Class Notation Labels etched near the inner ring
+        if (size >= 400) {
+            octx.fillStyle = isTonic 
+                ? ((k === 'a') ? '#ff954d' : '#8ec8f6')
+                : 'rgba(255, 255, 255, 0.35)';
+            octx.font = `bold ${Math.max(8, Math.floor(size * 0.016))}px "Space Mono", monospace`;
+            octx.textAlign = 'center';
+            octx.textBaseline = 'middle';
+            const rText = rInner + 10;
+            octx.fillText(pitchNames[p], cx + rText * cosA, cy + rText * sinA);
+        }
+    }
+
+    // 4. Track Audio Data & Harmonic Structure
     const seed = (d && d.trackSeed) ? d.trackSeed : ((k === 'a') ? 1576587381 : 2837669395);
     const rootPitch = seed % 12;
-    const progressionType = (seed >> 4) % 4; // 4 distinct chord progressions
-    
+    const progressionType = (seed >> 4) % 4;
     const chordCycles = [
         [0, 9, 5, 7],
         [0, 8, 3, 10],
@@ -1004,31 +1041,40 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
     const tempoBpm = 110 + (seed % 40);
     const beatMultiplier = Math.round(tempoBpm / 2);
 
-    for (let i = 0; i < numSlices; i++) {
-        const u = i / numSlices; // Time [0, 1] across entire track duration
-        const a0 = u * 2 * Math.PI - Math.PI / 2;
-        const a1 = a0 + angleStep * 1.30; // Overlap for continuous antialiased grooves
+    // 5. Dixon & Widmer Archimedean Pitch Spiral Generation
+    // Spiral winds across full duration (36 continuous octave revolutions)
+    const numRevs = 36;
+    const numSteps = 2880; // High resolution continuous polyline ribbon
 
-        let baseAmp = 0.70;
+    // Etched Concentric Vinyl Micro-Groove Background Texture
+    octx.lineWidth = 0.5;
+    for (let r = rInner; r <= rOuter; r += 2.5) {
+        octx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
+        octx.beginPath();
+        octx.arc(cx, cy, r, 0, 2 * Math.PI);
+        octx.stroke();
+    }
+
+    // Continuous Spiral Path Rendering
+    for (let i = 0; i < numSteps; i++) {
+        const t0 = i / numSteps;
+        const t1 = (i + 1) / numSteps;
+
+        const theta0 = t0 * numRevs * 2 * Math.PI - Math.PI / 2;
+        const theta1 = t1 * numRevs * 2 * Math.PI - Math.PI / 2;
+
+        const r0 = rInner + t0 * (rOuter - rInner);
+        const r1 = rInner + t1 * (rOuter - rInner);
+
+        // Calculate Audio Amplitude & Pitch Energy at normalized time t0
+        let baseAmp = 0.68;
         if (hasPeaks) {
-            const pIdx = Math.floor(u * peaks.length);
+            const pIdx = Math.floor(t0 * peaks.length);
             baseAmp = Math.max(0.20, Math.min(1.0, Math.abs(peaks[pIdx] || 0.65)));
         }
 
-        // Structural Compositional Model (Nicholas Rougeux orbital ribbons)
-        const chordIdx = Math.floor(u * 16) % roots.length;
-        const currentRoot = roots[chordIdx];
-        const phraseTime = (u * 8) % 1.0;
-        const melodyPitch = (currentRoot + Math.floor(Math.sin(phraseTime * Math.PI * 2 + (seed % 7)) * 5 + 7)) % 12;
-
-        const beat16 = (u * beatMultiplier) % 1.0;
-        const isKick = (beat16 < 0.18 && (Math.floor(u * beatMultiplier) % 4 === 0));
-        const isSnare = (beat16 < 0.18 && (Math.floor(u * beatMultiplier) % 8 === 4));
-        const isHiHat = (beat16 < 0.25 && (Math.floor(u * beatMultiplier) % 2 === 1));
-
-        // Real PCM spectral extraction if audio buffer is loaded
         if (hasPcm) {
-            const centerIdx = Math.floor(u * rawData.length);
+            const centerIdx = Math.floor(t0 * rawData.length);
             const winSize = 256;
             let sumSq = 0;
             const startS = Math.max(0, centerIdx - winSize / 2);
@@ -1040,126 +1086,59 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
             baseAmp = 0.35 * baseAmp + 0.65 * pcmRms;
         }
 
-        for (let f = 0; f < numFreqs; f++) {
-            const v = f / numFreqs; // Logarithmic frequency [0, 1] from 20Hz to 20kHz
-            const semitone = f % 12;
-            const octave = Math.floor(f / 12);
-            const r0 = rInner + f * radStep;
-            const r1 = rInner + (f + 1.25) * radStep;
+        // Harmonic Musical Structure
+        const chordIdx = Math.floor(t0 * 16) % roots.length;
+        const currentRoot = roots[chordIdx];
+        const phraseTime = (t0 * 8) % 1.0;
+        const melodyPitch = (currentRoot + Math.floor(Math.sin(phraseTime * Math.PI * 2 + (seed % 7)) * 5 + 7)) % 12;
 
-            let energy = 0.18;
-            let freqBand = 'low'; // 'low', 'mid', 'high'
+        const beat16 = (t0 * beatMultiplier) % 1.0;
+        const isKick = (beat16 < 0.18 && (Math.floor(t0 * beatMultiplier) % 4 === 0));
+        const isSnare = (beat16 < 0.18 && (Math.floor(t0 * beatMultiplier) % 8 === 4));
 
-            if (f < 14) {
-                // Sub-Bass & Kick Dynamics (Inner Grooves: 20Hz - 200Hz)
-                freqBand = 'low';
-                const bassHit = isKick ? 1.0 : 0.50;
-                const rootMatch = (semitone === currentRoot % 12) ? 0.70 : 0.20;
-                energy = Math.max(energy, baseAmp * (bassHit * (1.30 - v * 1.8) + rootMatch));
-            } else if (f < 44) {
-                // Melodic Ribbons, Vocal Formants & Chords (Mid Grooves: 160Hz - 4kHz)
-                freqBand = 'mid';
-                const isTriad = (semitone === currentRoot || semitone === (currentRoot + 4)%12 || semitone === (currentRoot + 7)%12);
-                const chordPad = isTriad ? (0.75 + 0.25 * Math.sin(u * 32 * Math.PI + octave + (seed % 3))) : 0.20;
+        // Pitch Spiral Angle to Pitch Class Mapping
+        const anglePitch = Math.floor((((theta0 + Math.PI / 2) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI)) / (Math.PI / 6)) % 12;
+        const isHarmonicMatch = (anglePitch === currentRoot || anglePitch === (currentRoot + 4) % 12 || anglePitch === (currentRoot + 7) % 12 || anglePitch === melodyPitch);
 
-                const isMelody = (semitone === melodyPitch && (octave === 2 || octave === 3));
-                const melodyRibbon = isMelody ? (0.95 + 0.05 * Math.sin(phraseTime * Math.PI * 6)) : 0.0;
+        let energy = baseAmp * (0.35 + (isKick ? 0.45 : 0.0) + (isSnare ? 0.35 : 0.0) + (isHarmonicMatch ? 0.30 : 0.05));
+        energy = Math.max(0.12, Math.min(1.0, energy));
 
-                const snareSnap = isSnare ? (0.90 * (1.0 - Math.abs(f - 24) / 18)) : 0.0;
-                const isOvertone = (semitone === (melodyPitch + 7) % 12 && octave >= 2);
-                const overtone = isOvertone ? 0.60 : 0.0;
+        // Physical Anisotropic Reflection Sheen
+        const sheen = 0.88 + 0.12 * Math.pow(Math.cos(theta0 * 2), 4);
+        energy = Math.min(1.0, energy * sheen);
 
-                energy = Math.max(energy, baseAmp * (chordPad + melodyRibbon + snareSnap + overtone));
-            } else {
-                // High Air, Transient Sparkle & Cymbals (Outer Grooves: 4kHz - 20kHz)
-                freqBand = 'high';
-                const hatEnergy = isHiHat ? (0.82 + 0.18 * Math.sin(u * beatMultiplier * Math.PI)) : 0.25;
-                const airShimmer = 0.42 + 0.35 * Math.sin(u * 64 * Math.PI + f * 0.85);
-                energy = Math.max(energy, baseAmp * (hatEnergy + airShimmer));
-            }
+        // Ribbon Width modulated by energy
+        const ribbonWidth = Math.max(1.0, 0.8 + energy * 3.6);
 
-            // Anisotropic Physical Vinyl Reflection Sheen (Two-lobed specular highlights)
-            const sheenAngle = a0 + Math.PI / 4;
-            const sheen = 0.85 + 0.15 * Math.pow(Math.cos(sheenAngle * 2), 4);
-            energy = Math.min(1.0, energy * sheen);
-
-            octx.beginPath();
-            octx.arc(cx, cy, r1, a0, a1, false);
-            octx.arc(cx, cy, r0, a1, a0, true);
-            octx.closePath();
-
-            // 4-COLOR HARMONIC PALETTE SYSTEM:
-            // 1. Deck A Base: Terracotta Orange (#ff7a29 / #cf4a18)
-            // 2. Deck B Base: Faded Sky Blue (#6cb4ee / #5fa8e0)
-            // 3. Shared Mid-Range Layer: Warm Amber Gold (#f8c548 / #ffd166)
-            // 4. Shared High-Frequency Layer: Electric Violet / Soft Orchid (#b388ff / #c084fc)
-            let fillStyle;
-            if (freqBand === 'low') {
-                if (k === 'a') {
-                    // Deck A Terracotta Orange
-                    const t = Math.min(1.0, energy * 1.2);
-                    fillStyle = `rgba(${Math.floor(180 + t * 75)}, ${Math.floor(70 + t * 50)}, ${Math.floor(20 + t * 20)}, ${0.75 + energy * 0.25})`;
-                } else {
-                    // Deck B Faded Sky Blue
-                    const t = Math.min(1.0, energy * 1.2);
-                    fillStyle = `rgba(${Math.floor(70 + t * 40)}, ${Math.floor(140 + t * 45)}, ${Math.floor(210 + t * 45)}, ${0.75 + energy * 0.25})`;
-                }
-            } else if (freqBand === 'mid') {
-                // Shared Warm Amber Gold Band (#f8c548)
-                const t = Math.min(1.0, energy * 1.15);
-                fillStyle = `rgba(${Math.floor(235 + t * 20)}, ${Math.floor(180 + t * 40)}, ${Math.floor(60 + t * 40)}, ${0.80 + energy * 0.20})`;
-            } else {
-                // Shared Electric Violet / Soft Orchid Band (#b388ff)
-                const t = Math.min(1.0, energy * 1.2);
-                fillStyle = `rgba(${Math.floor(165 + t * 50)}, ${Math.floor(125 + t * 50)}, ${Math.floor(240 + t * 15)}, ${0.85 + energy * 0.15})`;
-            }
-
-            // High energy peak flares
-            if (energy > 0.92) {
-                fillStyle = (k === 'a') ? 'rgba(255, 250, 220, 0.98)' : 'rgba(235, 245, 255, 0.98)';
-            }
-
-            octx.fillStyle = fillStyle;
-            octx.fill();
+        // Monochromatic Color Gradation:
+        // Deck A: Strictly Tangerine / Terracotta Orange
+        // Deck B: Strictly Faded Sky Blue
+        let strokeColor;
+        if (k === 'a') {
+            const r = Math.min(255, Math.floor(180 + energy * 75));
+            const g = Math.min(255, Math.floor(70 + energy * 55));
+            const b = Math.min(255, Math.floor(18 + energy * 25));
+            const a = Math.min(1.0, 0.60 + energy * 0.40);
+            strokeColor = (energy > 0.92) ? 'rgba(255, 242, 230, 0.98)' : `rgba(${r}, ${g}, ${b}, ${a})`;
+        } else {
+            const r = Math.min(255, Math.floor(60 + energy * 50));
+            const g = Math.min(255, Math.floor(135 + energy * 50));
+            const b = Math.min(255, Math.floor(210 + energy * 45));
+            const a = Math.min(1.0, 0.60 + energy * 0.40);
+            strokeColor = (energy > 0.92) ? 'rgba(235, 248, 255, 0.98)' : `rgba(${r}, ${g}, ${b}, ${a})`;
         }
-    }
 
-    // 3. Etched Concentric Vinyl Micro-Groove Lathe Lines (Physical Disc Texture)
-    octx.lineWidth = 0.55;
-    for (let r = rInner; r <= rOuter; r += 2.2) {
-        const groovePhase = Math.sin(r * 0.9);
-        octx.strokeStyle = `rgba(255, 255, 255, ${0.06 + 0.03 * groovePhase})`;
+        const x0 = cx + r0 * Math.cos(theta0);
+        const y0 = cy + r0 * Math.sin(theta0);
+        const x1 = cx + r1 * Math.cos(theta1);
+        const y1 = cy + r1 * Math.sin(theta1);
+
+        octx.strokeStyle = strokeColor;
+        octx.lineWidth = ribbonWidth;
+        octx.lineCap = 'round';
         octx.beginPath();
-        octx.arc(cx, cy, r, 0, 2 * Math.PI);
-        octx.stroke();
-    }
-
-    // 4. Subtle Concentric Frequency Band Rings (SUB, MID, HI) in Shared Palette
-    const rSub = rInner + 14 * radStep;
-    const rMid = rInner + 44 * radStep;
-    octx.lineWidth = 1.0;
-    octx.strokeStyle = (k === 'a') ? 'rgba(255, 122, 41, 0.50)' : 'rgba(108, 180, 238, 0.50)';
-    octx.beginPath();
-    octx.arc(cx, cy, rSub, 0, 2 * Math.PI);
-    octx.stroke();
-
-    octx.strokeStyle = 'rgba(248, 197, 72, 0.55)'; // Warm Amber Mid Ring
-    octx.beginPath();
-    octx.arc(cx, cy, rMid, 0, 2 * Math.PI);
-    octx.stroke();
-
-    // 5. 12 Radial Hour / Beat Division Ticks around the Perimeter
-    for (let h = 0; h < 12; h++) {
-        const rad = (h / 12) * 2 * Math.PI - Math.PI / 2;
-        const x1 = cx + (rOuter - 6) * Math.cos(rad);
-        const y1 = cy + (rOuter - 6) * Math.sin(rad);
-        const x2 = cx + rOuter * Math.cos(rad);
-        const y2 = cy + rOuter * Math.sin(rad);
-        octx.strokeStyle = (h % 3 === 0) ? '#ffffff' : 'rgba(255,255,255,0.4)';
-        octx.lineWidth = (h % 3 === 0) ? 1.5 : 0.8;
-        octx.beginPath();
-        octx.moveTo(x1, y1);
-        octx.lineTo(x2, y2);
+        octx.moveTo(x0, y0);
+        octx.lineTo(x1, y1);
         octx.stroke();
     }
 
@@ -1168,6 +1147,12 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
     octx.beginPath();
     octx.arc(cx, cy, rLabel, 0, 2 * Math.PI);
     octx.fill();
+
+    octx.strokeStyle = (k === 'a') ? '#ff7a29' : '#6cb4ee';
+    octx.lineWidth = 1.5;
+    octx.beginPath();
+    octx.arc(cx, cy, rLabel, 0, 2 * Math.PI);
+    octx.stroke();
 
     return offCanvas;
 }
@@ -1781,9 +1766,9 @@ function renderTurntable(k) {
     // =========================================================================
     ctx.save();
     ctx.font = '9px "Space Mono", monospace';
-    const codeColor = (k === 'a') ? 'rgba(255, 140, 0, 0.20)' : 'rgba(0, 255, 157, 0.20)';
+    const codeColor = (k === 'a') ? 'rgba(255, 140, 0, 0.20)' : 'rgba(108, 180, 238, 0.20)';
     const commentColor = 'rgba(120, 130, 140, 0.20)';
-    const accentColor = (k === 'a') ? 'rgba(255, 72, 0, 0.24)' : 'rgba(0, 255, 200, 0.24)';
+    const accentColor = (k === 'a') ? 'rgba(255, 72, 0, 0.24)' : 'rgba(95, 168, 224, 0.24)';
 
     const tOffset = (performance.now() * 0.02) % 200;
     const dur = d.duration > 0 ? d.duration : 0;
