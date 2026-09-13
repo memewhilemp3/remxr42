@@ -1,7 +1,8 @@
 """
-remxr42 Local YouTube Audio Streaming Proxy Server
+remxr42 YouTube Audio Streaming & MP3/WAV Proxy Server
 Enables 100% full-length YouTube track streaming, vinyl turntable scratching,
 waveform generation, and lossless WAV/MP3 exporting in the browser.
+Compatible with Render.com, HuggingFace Spaces, and Local execution.
 """
 
 import os
@@ -19,7 +20,6 @@ except ImportError:
 
 PORT = int(os.environ.get("PORT", 8542))
 
-# Robust path resolution to project directory
 CANDIDATE_DIRS = [
     os.path.dirname(os.path.abspath(__file__)),
     r"C:\Users\paula\.gemini\antigravity\scratch\circular_vinyl_dj_console",
@@ -34,6 +34,52 @@ def find_valid_doc_root():
     return os.path.dirname(os.path.abspath(__file__))
 
 STATIC_DIR = find_valid_doc_root()
+
+# YouTube client extraction profiles (ordered by cloud bypass reliability)
+CLIENT_PROFILES = [
+    ['android', 'tv_embedded', 'web_safari', 'mweb'],
+    ['android'],
+    ['tv_embedded'],
+    ['ios', 'android'],
+    ['mweb']
+]
+
+def extract_yt_info_with_fallback(yt_url, is_search=False, query_str=""):
+    """Tries multiple client profiles to extract direct streams without bot challenges."""
+    if not yt_dlp:
+        raise RuntimeError("yt_dlp not installed on server")
+
+    last_error = None
+    target = f"ytsearch6:{query_str}" if is_search else yt_url
+
+    for client_list in CLIENT_PROFILES:
+        ydl_opts = {
+            'quiet': True,
+            'noplaylist': True,
+            'no_warnings': True,
+            'extractor_args': {
+                'youtube': {
+                    'player_client': client_list
+                }
+            }
+        }
+        if not is_search:
+            ydl_opts['format'] = 'bestaudio/best'
+        else:
+            ydl_opts['extract_flat'] = True
+
+        try:
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(target, download=False)
+                if info:
+                    return info
+        except Exception as e:
+            last_error = e
+            continue
+
+    if last_error:
+        raise last_error
+    raise RuntimeError("Failed to extract track information from YouTube")
 
 class RemxrStreamingHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -65,7 +111,7 @@ class RemxrStreamingHandler(SimpleHTTPRequestHandler):
                 'status': 'ok',
                 'proxy': True,
                 'yt_dlp_available': (yt_dlp is not None),
-                'version': '1.0.0'
+                'version': '1.1.0'
             }
             self.wfile.write(json.dumps(data).encode('utf-8'))
             return
@@ -123,175 +169,147 @@ class RemxrStreamingHandler(SimpleHTTPRequestHandler):
         self.wfile.write(json.dumps({'error': message}).encode('utf-8'))
 
     def handle_yt_search(self, query_str):
-        if not yt_dlp:
-            self._send_json_error(500, "yt_dlp not installed on server")
-            return
-
-        ydl_opts = {
-            'quiet': True,
-            'extract_flat': True,
-            'noplaylist': True,
-            'no_warnings': True
-        }
         try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                search_res = ydl.extract_info(f"ytsearch6:{query_str}", download=False)
-                entries = search_res.get('entries', []) or []
-                results = []
-                for e in entries:
-                    if not e: continue
-                    vid_id = e.get('id', '')
-                    results.append({
-                        'id': vid_id,
-                        'title': e.get('title', 'Unknown Track'),
-                        'uploader': e.get('uploader', e.get('channel', 'Artist')),
-                        'duration': e.get('duration', 0),
-                        'thumbnail': e.get('thumbnail') or f"https://img.youtube.com/vi/{vid_id}/hqdefault.jpg",
-                        'url': f"https://www.youtube.com/watch?v={vid_id}"
-                    })
+            search_res = extract_yt_info_with_fallback(None, is_search=True, query_str=query_str)
+            entries = search_res.get('entries', []) or []
+            results = []
+            for e in entries:
+                if not e: continue
+                vid_id = e.get('id', '')
+                results.append({
+                    'id': vid_id,
+                    'title': e.get('title', 'Unknown Track'),
+                    'uploader': e.get('uploader', e.get('channel', 'Artist')),
+                    'duration': e.get('duration', 0),
+                    'thumbnail': e.get('thumbnail') or f"https://img.youtube.com/vi/{vid_id}/hqdefault.jpg",
+                    'url': f"https://www.youtube.com/watch?v={vid_id}"
+                })
 
-                self.send_response(200)
-                self._set_cors_headers()
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps({'results': results}).encode('utf-8'))
+            self.send_response(200)
+            self._set_cors_headers()
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps({'results': results}).encode('utf-8'))
         except Exception as ex:
+            print(f"[SEARCH ERROR]: {ex}", file=sys.stderr)
             self._send_json_error(500, f"Search error: {str(ex)}")
 
     def handle_yt_info(self, url_or_id):
-        if not yt_dlp:
-            self._send_json_error(500, "yt_dlp not installed on server")
-            return
-
         yt_url = url_or_id if url_or_id.startswith('http') else f"https://www.youtube.com/watch?v={url_or_id}"
-        ydl_opts = {
-            'quiet': True,
-            'noplaylist': True,
-            'no_warnings': True
-        }
         try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(yt_url, download=False)
-                vid_id = info.get('id', url_or_id)
-                data = {
-                    'id': vid_id,
-                    'title': info.get('title', 'Unknown Track'),
-                    'uploader': info.get('uploader', info.get('channel', 'Artist')),
-                    'duration': info.get('duration', 0),
-                    'thumbnail': info.get('thumbnail') or f"https://img.youtube.com/vi/{vid_id}/hqdefault.jpg",
-                    'streamUrl': f"/api/yt/stream?id={vid_id}"
-                }
-                self.send_response(200)
-                self._set_cors_headers()
-                self.send_header('Content-Type', 'application/json')
-                self.end_headers()
-                self.wfile.write(json.dumps(data).encode('utf-8'))
+            info = extract_yt_info_with_fallback(yt_url)
+            vid_id = info.get('id', url_or_id)
+            data = {
+                'id': vid_id,
+                'title': info.get('title', 'Unknown Track'),
+                'uploader': info.get('uploader', info.get('channel', 'Artist')),
+                'duration': info.get('duration', 0),
+                'thumbnail': info.get('thumbnail') or f"https://img.youtube.com/vi/{vid_id}/hqdefault.jpg",
+                'streamUrl': f"/api/yt/stream?id={vid_id}"
+            }
+            self.send_response(200)
+            self._set_cors_headers()
+            self.send_header('Content-Type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(data).encode('utf-8'))
         except Exception as ex:
+            print(f"[INFO ERROR]: {ex}", file=sys.stderr)
             self._send_json_error(500, f"Info error: {str(ex)}")
 
     def handle_yt_stream(self, url_or_id):
-        if not yt_dlp:
-            self._send_json_error(500, "yt_dlp not installed on server")
-            return
-
         yt_url = url_or_id if url_or_id.startswith('http') else f"https://www.youtube.com/watch?v={url_or_id}"
-        ydl_opts = {
-            'quiet': True,
-            'format': 'bestaudio/best',
-            'noplaylist': True,
-            'no_warnings': True
-        }
         try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(yt_url, download=False)
-                direct_url = info.get('url')
-                if not direct_url:
-                    formats = info.get('formats', [])
-                    audio_formats = [f for f in formats if f.get('acodec') != 'none']
-                    if audio_formats:
-                        direct_url = audio_formats[-1].get('url')
+            info = extract_yt_info_with_fallback(yt_url)
+            direct_url = info.get('url')
+            if not direct_url:
+                formats = info.get('formats', [])
+                audio_formats = [f for f in formats if f.get('acodec') != 'none' and f.get('url')]
+                if audio_formats:
+                    direct_url = audio_formats[-1].get('url')
 
-                if not direct_url:
-                    self._send_json_error(404, "Could not extract direct audio stream URL")
-                    return
+            if not direct_url:
+                self._send_json_error(404, "Could not extract direct audio stream URL")
+                return
 
-                req = urllib.request.Request(direct_url, headers={
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'Accept': '*/*'
-                })
+            req_headers = info.get('http_headers') or {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': '*/*'
+            }
 
-                with urllib.request.urlopen(req, timeout=30) as upstream:
-                    content_type = upstream.headers.get('Content-Type', 'audio/webm')
-                    content_length = upstream.headers.get('Content-Length')
+            req = urllib.request.Request(direct_url, headers=req_headers)
+            with urllib.request.urlopen(req, timeout=30) as upstream:
+                content_type = upstream.headers.get('Content-Type', 'audio/webm')
+                content_length = upstream.headers.get('Content-Length')
 
-                    self.send_response(200)
-                    self._set_cors_headers()
-                    self.send_header('Content-Type', content_type)
-                    if content_length:
-                        self.send_header('Content-Length', content_length)
-                    self.send_header('Accept-Ranges', 'bytes')
-                    self.end_headers()
+                self.send_response(200)
+                self._set_cors_headers()
+                self.send_header('Content-Type', content_type)
+                if content_length:
+                    self.send_header('Content-Length', content_length)
+                self.send_header('Accept-Ranges', 'bytes')
+                self.end_headers()
 
-                    while True:
-                        chunk = upstream.read(64 * 1024)
-                        if not chunk:
-                            break
-                        self.wfile.write(chunk)
+                while True:
+                    chunk = upstream.read(64 * 1024)
+                    if not chunk:
+                        break
+                    self.wfile.write(chunk)
 
         except Exception as ex:
-            print(f"[REMXR42 PROXY ERROR]: {ex}", file=sys.stderr)
+            print(f"[STREAM PROXY ERROR]: {ex}", file=sys.stderr)
             self._send_json_error(500, f"Stream proxy error: {str(ex)}")
 
     def handle_yt_download(self, url_or_id, fmt='mp3', custom_title=''):
-        if not yt_dlp:
-            self._send_json_error(500, "yt_dlp not installed on server")
-            return
-
         yt_url = url_or_id if url_or_id.startswith('http') else f"https://www.youtube.com/watch?v={url_or_id}"
-        ydl_opts = {
-            'quiet': True,
-            'format': 'bestaudio/best',
-            'noplaylist': True,
-            'no_warnings': True
-        }
         try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(yt_url, download=False)
-                direct_url = info.get('url')
-                title = custom_title or info.get('title', 'remxr42_track')
-                safe_title = "".join(c for c in title if c.isalnum() or c in (' ', '_', '-')).strip()
-                filename = f"{safe_title}.{fmt}"
+            info = extract_yt_info_with_fallback(yt_url)
+            direct_url = info.get('url')
+            if not direct_url:
+                formats = info.get('formats', [])
+                audio_formats = [f for f in formats if f.get('acodec') != 'none' and f.get('url')]
+                if audio_formats:
+                    direct_url = audio_formats[-1].get('url')
 
-                req = urllib.request.Request(direct_url, headers={
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                    'Accept': '*/*'
-                })
+            if not direct_url:
+                self._send_json_error(404, "Could not extract direct audio stream URL")
+                return
 
-                with urllib.request.urlopen(req, timeout=30) as upstream:
-                    mime = 'audio/mpeg' if fmt == 'mp3' else 'audio/wav'
-                    content_length = upstream.headers.get('Content-Length')
+            title = custom_title or info.get('title', 'remxr42_track')
+            safe_title = "".join(c for c in title if c.isalnum() or c in (' ', '_', '-')).strip()
+            filename = f"{safe_title}.{fmt}"
 
-                    self.send_response(200)
-                    self._set_cors_headers()
-                    self.send_header('Content-Type', mime)
-                    self.send_header('Content-Disposition', f'attachment; filename="{filename}"')
-                    if content_length:
-                        self.send_header('Content-Length', content_length)
-                    self.end_headers()
+            req_headers = info.get('http_headers') or {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': '*/*'
+            }
 
-                    while True:
-                        chunk = upstream.read(64 * 1024)
-                        if not chunk:
-                            break
-                        self.wfile.write(chunk)
+            req = urllib.request.Request(direct_url, headers=req_headers)
+            with urllib.request.urlopen(req, timeout=30) as upstream:
+                mime = 'audio/mpeg' if fmt == 'mp3' else 'audio/wav'
+                content_length = upstream.headers.get('Content-Length')
+
+                self.send_response(200)
+                self._set_cors_headers()
+                self.send_header('Content-Type', mime)
+                self.send_header('Content-Disposition', f'attachment; filename="{filename}"')
+                if content_length:
+                    self.send_header('Content-Length', content_length)
+                self.end_headers()
+
+                while True:
+                    chunk = upstream.read(64 * 1024)
+                    if not chunk:
+                        break
+                    self.wfile.write(chunk)
         except Exception as ex:
+            print(f"[DOWNLOAD ERROR]: {ex}", file=sys.stderr)
             self._send_json_error(500, f"Download error: {str(ex)}")
 
 def run_server(port=PORT, open_browser=True):
     server = ThreadingHTTPServer(('0.0.0.0', port), RemxrStreamingHandler)
     url = f"http://localhost:{port}"
     print("\n" + "=" * 64)
-    print("  REMXR42 // LOCAL YOUTUBE STREAMING & MP3/WAV PROXY ACTIVE")
+    print("  REMXR42 // CLOUD & LOCAL YOUTUBE STREAMING PROXY ACTIVE")
     print(f"  Serving Directory: {STATIC_DIR}")
     print(f"  Console URL: {url}")
     print("  Endpoints: /api/health, /api/yt/search, /api/yt/info, /api/yt/stream, /api/yt/download")
@@ -308,7 +326,7 @@ def run_server(port=PORT, open_browser=True):
         server.server_close()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description="REMXR42 Local Audio Streaming Proxy")
+    parser = argparse.ArgumentParser(description="REMXR42 Audio Streaming Proxy")
     parser.add_argument("--port", "-p", type=int, default=PORT, help=f"Port (default: {PORT})")
     parser.add_argument("--no-browser", action="store_true", help="Do not open browser automatically")
     args = parser.parse_args()
