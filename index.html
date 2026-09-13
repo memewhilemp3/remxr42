@@ -578,15 +578,15 @@
                 <div class="gesture-hud-box" id="hud-box">
                     <canvas id="hud-canvas" class="hud-canvas" width="220" height="110"></canvas>
                     <div class="hud-label-row">
-                        <span id="hud-status-a" style="color:#cf4a18;">L: DECK A</span>
-                        <span id="hud-status-b" style="color:#1e6e54;">R: DECK B</span>
+                        <span id="hud-status-a" style="color:#ffaa00;">L: DECK A</span>
+                        <span id="hud-status-b" style="color:#00ff9d;">R: DECK B</span>
                     </div>
                 </div>
 
                 <!-- 3-Band EQ Knobs -->
                 <div style="display:flex; justify-content:space-around; background:#1c1d20; padding:6px 4px; border-radius:4px; border:1px solid #333;">
                     <div class="eq-knob-group">
-                        <span style="color:#cf4a18; font-weight:bold;">DECK A</span>
+                        <span style="color:#ffaa00; font-weight:bold;">DECK A</span>
                         <span>HI</span>
                         <input type="range" id="eq-high-a" min="-12" max="12" step="1" value="0"/>
                         <span>MID</span>
@@ -596,7 +596,7 @@
                     </div>
                     <div style="width:1px; background:#383b40;"></div>
                     <div class="eq-knob-group">
-                        <span style="color:#1e6e54; font-weight:bold;">DECK B</span>
+                        <span style="color:#00ff9d; font-weight:bold;">DECK B</span>
                         <span>HI</span>
                         <input type="range" id="eq-high-b" min="-12" max="12" step="1" value="0"/>
                         <span>MID</span>
@@ -613,16 +613,16 @@
                     <button class="btn" id="btn-export-mix" style="background:#ffaa00; color:#000; width:100%; padding:4px; font-weight:bold;">💾 EXPORT MASTER WAV</button>
                     <div style="display:flex; gap:4px; width:100%;">
                         <button class="btn" id="btn-export-mix-jpg" style="flex:1; background:#25272a; color:#ffaa00; border:1px solid #ffaa00; padding:3px; font-size:8.5px; font-weight:bold;" title="Download Combined Dual Waveform as JPEG">🖼️ MIX JPG</button>
-                        <button class="btn" id="btn-export-mix-svg" style="flex:1; background:#25272a; color:#1e6e54; border:1px solid #1e6e54; padding:3px; font-size:8.5px; font-weight:bold;" title="Download Combined Dual Waveform as SVG">📐 MIX SVG</button>
+                        <button class="btn" id="btn-export-mix-svg" style="flex:1; background:#25272a; color:#1e6e54; border:1px solid #00aa66; padding:3px; font-size:8.5px; font-weight:bold;" title="Download Combined Dual Waveform as SVG">📐 MIX SVG</button>
                     </div>
                 </div>
 
                 <!-- Crossfader Section -->
                 <div style="background:#1c1d20; padding:6px; border-radius:4px; border:1px solid #333;">
                     <div style="display:flex; justify-content:space-between; font-size:9px; color:#aaa; margin-bottom:3px; font-family:'Space Mono', monospace;">
-                        <span style="color:#cf4a18; font-weight:bold;">◀ A</span>
+                        <span style="color:#ffaa00; font-weight:bold;">◀ A</span>
                         <span id="xfade-val" class="badge">0.50</span>
-                        <span style="color:#1e6e54; font-weight:bold;">B ▶</span>
+                        <span style="color:#00ff9d; font-weight:bold;">B ▶</span>
                     </div>
                     <input type="range" id="master-crossfader" min="0" max="1" step="0.01" value="0.5" style="width:100%; accent-color:#cf4a18;"/>
                 </div>
@@ -635,7 +635,7 @@
                 <div class="deck-titlebar-b">
                     <span id="title-deck-b">DECK B: REMXR42 BASS B</span>
                     <div style="display:flex; align-items:center; gap:4px;">
-                        <label class="btn btn-mini" style="cursor:pointer; background:#242629; color:#1e6e54; border:1px solid #1e6e54; font-size:8px; padding:1px 5px; border-radius:2px;" title="Open local audio file (MP3/WAV/FLAC/OGG)">
+                        <label class="btn btn-mini" style="cursor:pointer; background:#242629; color:#1e6e54; border:1px solid #00aa66; font-size:8px; padding:1px 5px; border-radius:2px;" title="Open local audio file (MP3/WAV/FLAC/OGG)">
                             📂 OPEN
                             <input type="file" id="file-input-b" accept="audio/*" style="display:none;" />
                         </label>
@@ -646,29 +646,29 @@
                 </div>
 
                                 <!-- DECK B AUDIO SEARCH & INGESTION BAR -->
-                <div class="yt-stream-bar" id="yt-bar-b" style="background:#181a1d; border:1px solid #1e6e54; border-radius:2px; padding:6px; margin-bottom:6px; display:flex; flex-direction:column; gap:5px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5);">
+                <div class="yt-stream-bar" id="yt-bar-b" style="background:#181a1d; border:1px solid #00aa66; border-radius:2px; padding:6px; margin-bottom:6px; display:flex; flex-direction:column; gap:5px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5);">
                     <div style="display:flex; justify-content:space-between; align-items:center; font-size:9px; font-family:'Space Mono', monospace;">
-                        <span style="color:#1e6e54; font-weight:bold; letter-spacing:0.5px;">▶ AUDIO SEARCH & YOUTUBE INGESTION (DECK B)</span>
-                        <span class="badge" id="yt-status-b" style="font-size:8.5px; padding:2px 6px; color:#1e6e54; border-color:#034435; background:#021a14;">READY</span>
+                        <span style="color:#00ff9d; font-weight:bold; letter-spacing:0.5px;">▶ AUDIO SEARCH & YOUTUBE INGESTION (DECK B)</span>
+                        <span class="badge" id="yt-status-b" style="font-size:8.5px; padding:2px 6px; color:#00ff9d; border-color:#034435; background:#021a14;">READY</span>
                     </div>
 
                     <!-- Backlit Mint LCD Preview Monitor -->
                     <div id="yt-lcd-b" style="display:flex; align-items:center; gap:8px; background:#0d0e10; border:1px solid #383b40; border-radius:2px; padding:4px 6px;">
-                        <img id="yt-thumb-b" src="" style="width:52px; height:38px; object-fit:cover; border:1px solid #1e6e54; border-radius:1px; background:#111; display:none;" />
+                        <img id="yt-thumb-b" src="" style="width:52px; height:38px; object-fit:cover; border:1px solid #00aa66; border-radius:1px; background:#111; display:none;" />
                         <div style="display:flex; flex-direction:column; gap:2px; overflow:hidden; flex:1;">
-                            <span id="yt-title-b" style="color:#1e6e54; font-family:'Space Mono', monospace; font-size:9.5px; font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">REMXR42 BASS B</span>
+                            <span id="yt-title-b" style="color:#00ff9d; font-family:'Space Mono', monospace; font-size:9.5px; font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">REMXR42 BASS B</span>
                             <span id="yt-meta-b" style="color:#888; font-family:'Space Mono', monospace; font-size:8px;">READY • PASTE YOUTUBE URL OR SEARCH ANY TRACK</span>
                         </div>
                     </div>
 
                     <!-- Search Input & Buttons -->
                     <div style="display:flex; gap:4px; align-items:center;">
-                        <input type="text" id="yt-url-b" onkeydown="if(event.key==='Enter') searchOrLoadYouTube('b')" placeholder="🔍 Search any artist / track or paste YouTube URL..." value="" style="flex:1; background:#090a0c; border:1px solid #1e6e54; color:#1e6e54; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
+                        <input type="text" id="yt-url-b" onkeydown="if(event.key==='Enter') searchOrLoadYouTube('b')" placeholder="🔍 Search any artist / track or paste YouTube URL..." value="" style="flex:1; background:#090a0c; border:1px solid #00ff9d; color:#00ff9d; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
                         <button class="btn btn-te-green" id="btn-search-yt-b" onclick="searchOrLoadYouTube('b')" style="padding:4px 10px; font-size:9.5px; white-space:nowrap; font-weight:bold;">🚀 LOAD</button>
                     </div>
 
                     <!-- Live Search Results Tray (Populates ONLY on user search with real matches) -->
-                    <div id="yt-results-b" style="display:none; flex-direction:column; gap:3px; max-height:140px; overflow-y:auto; background:#101214; border:1px solid #1e6e54; border-radius:2px; padding:4px;"></div>
+                    <div id="yt-results-b" style="display:none; flex-direction:column; gap:3px; max-height:140px; overflow-y:auto; background:#101214; border:1px solid #00aa66; border-radius:2px; padding:4px;"></div>
                 </div>
 <div class="turntable-stage" id="stage-b">
                     <canvas id="turntable-canvas-b" class="turntable-canvas" width="300" height="300"></canvas>
@@ -676,7 +676,7 @@
 
                 <!-- Linear Waveform Visualizer Strip -->
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; margin-bottom:2px; font-family:'Space Mono', monospace;">
-                    <span style="font-size:8.5px; color:#1e6e54; font-weight:bold; letter-spacing:0.5px;">■ WAVEFORM & LOOP SLICE (DECK B)</span>
+                    <span style="font-size:8.5px; color:#00ff9d; font-weight:bold; letter-spacing:0.5px;">■ WAVEFORM & LOOP SLICE (DECK B)</span>
                     <span style="font-size:8px; color:#888;">CLICK/DRAG SCRUB</span>
                 </div>
                 <canvas id="linear-canvas-b" class="linear-strip" width="400" height="64"></canvas>
@@ -703,8 +703,8 @@
 
                     <div style="margin-left:auto; display:flex; gap:2px;">
                         <button class="btn btn-mini" id="btn-export-b" style="background:#ffaa00; color:#000; padding:1px 5px; font-size:8px;" title="Export Sliced Audio as 16-bit WAV">💾 WAV</button>
-                        <button class="btn btn-mini" id="btn-export-jpg-b" style="background:#25272a; color:#1e6e54; border:1px solid #1e6e54; padding:1px 5px; font-size:8px;" title="Download Deck B Waveform as JPEG">🖼️ JPG</button>
-                        <button class="btn btn-mini" id="btn-export-svg-b" style="background:#25272a; color:#1e6e54; border:1px solid #1e6e54; padding:1px 5px; font-size:8px;" title="Download Deck B Waveform as SVG">📐 SVG</button>
+                        <button class="btn btn-mini" id="btn-export-jpg-b" style="background:#25272a; color:#1e6e54; border:1px solid #00aa66; padding:1px 5px; font-size:8px;" title="Download Deck B Waveform as JPEG">🖼️ JPG</button>
+                        <button class="btn btn-mini" id="btn-export-svg-b" style="background:#25272a; color:#1e6e54; border:1px solid #00aa66; padding:1px 5px; font-size:8px;" title="Download Deck B Waveform as SVG">📐 SVG</button>
                     </div>
                 </div>
 
@@ -937,7 +937,7 @@ function updateBadges(k) {
 }
 window.updateBadges = updateBadges;
 
-// 7. Full 360° Polar Spectrogram Generator
+// 7. Full 360° High-Contrast Polar Spectrogram Generator
 function generateProceduralPolarSpectrogram(k, size = 600) {
     const d = decks[k];
     const offCanvas = document.createElement('canvas');
@@ -952,7 +952,7 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
     const rOuter = rDisc - 3;
 
     // Dark Basalt Vinyl Disc Base
-    octx.fillStyle = '#101215';
+    octx.fillStyle = '#0f1012';
     octx.beginPath();
     octx.arc(cx, cy, rDisc, 0, 2 * Math.PI);
     octx.fill();
@@ -968,10 +968,10 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
         const a0 = u * 2 * Math.PI - Math.PI / 2;
         const a1 = ((i + 1.15) / numSlices) * 2 * Math.PI - Math.PI / 2;
 
-        let baseAmp = 0.50;
+        let baseAmp = 0.55;
         if (hasPeaks) {
             const pIdx = Math.floor(u * peaks.length);
-            baseAmp = Math.abs(peaks[pIdx] || 0.35);
+            baseAmp = Math.abs(peaks[pIdx] || 0.4);
         }
 
         for (let f = 0; f < numFreqs; f++) {
@@ -981,14 +981,17 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
 
             let fEnergy = baseAmp;
             if (f < 6) {
-                fEnergy *= (1.25 - v * 0.4);
+                // Punchy Bass Frequencies
+                fEnergy *= (1.35 - v * 0.4);
             } else if (f < 18) {
-                const harmonic = Math.sin(u * 40 * Math.PI + f * 1.2);
-                fEnergy *= (0.75 + 0.5 * Math.abs(harmonic));
+                // Melodic Mid Harmonics
+                const harmonic = Math.sin(u * 44 * Math.PI + f * 1.3);
+                fEnergy *= (0.80 + 0.55 * Math.abs(harmonic));
             } else {
-                fEnergy *= (0.45 + 0.55 * Math.sin(u * 80 * Math.PI));
+                // High-End Sizzle & Air
+                fEnergy *= (0.50 + 0.60 * Math.sin(u * 88 * Math.PI));
             }
-            fEnergy = Math.max(0.04, Math.min(1.0, fEnergy));
+            fEnergy = Math.max(0.08, Math.min(1.0, fEnergy));
 
             octx.beginPath();
             octx.arc(cx, cy, r1, a0, a1, false);
@@ -997,32 +1000,36 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
 
             let color;
             if (k === 'a') {
-                if (fEnergy < 0.25) color = `rgba(18, 12, 8, ${0.5 + fEnergy})`;
-                else if (fEnergy < 0.45) {
-                    const t = (fEnergy - 0.25) / 0.2;
-                    color = `rgba(${Math.floor(80 + t * 90)}, ${Math.floor(40 + t * 60)}, 10, ${0.75 + t * 0.25})`;
-                } else if (fEnergy < 0.70) {
-                    const t = (fEnergy - 0.45) / 0.25;
-                    color = `rgba(${Math.floor(170 + t * 60)}, ${Math.floor(100 + t * 60)}, 15, 0.95)`;
-                } else if (fEnergy < 0.88) {
-                    const t = (fEnergy - 0.70) / 0.18;
-                    color = `rgba(255, ${Math.floor(150 - t * 40)}, 0, 0.98)`;
+                // DECK A: Electric Amber, Cyan, Gold, Tangerine, Vivid Hot Red
+                if (fEnergy < 0.22) {
+                    color = `rgba(0, 160, 240, ${0.45 + fEnergy * 1.8})`;
+                } else if (fEnergy < 0.42) {
+                    const t = (fEnergy - 0.22) / 0.20;
+                    color = `rgba(0, ${Math.floor(210 + t * 45)}, ${Math.floor(230 - t * 120)}, ${0.80 + t * 0.20})`;
+                } else if (fEnergy < 0.65) {
+                    const t = (fEnergy - 0.42) / 0.23;
+                    color = `rgba(${Math.floor(t * 255)}, 255, 0, 0.95)`;
+                } else if (fEnergy < 0.85) {
+                    const t = (fEnergy - 0.65) / 0.20;
+                    color = `rgba(255, ${Math.floor(180 - t * 100)}, 0, 0.98)`;
                 } else {
-                    color = `rgba(255, 70, 10, 1.0)`;
+                    color = `rgba(255, 45, 0, 1.0)`;
                 }
             } else {
-                if (fEnergy < 0.25) color = `rgba(8, 20, 16, ${0.5 + fEnergy})`;
-                else if (fEnergy < 0.45) {
-                    const t = (fEnergy - 0.25) / 0.2;
-                    color = `rgba(${Math.floor(10 + t * 40)}, ${Math.floor(100 + t * 70)}, ${Math.floor(80 + t * 50)}, 0.85)`;
-                } else if (fEnergy < 0.70) {
-                    const t = (fEnergy - 0.45) / 0.25;
-                    color = `rgba(${Math.floor(30 + t * 80)}, ${Math.floor(170 + t * 70)}, 150, 0.95)`;
-                } else if (fEnergy < 0.88) {
-                    const t = (fEnergy - 0.70) / 0.18;
-                    color = `rgba(${Math.floor(140 + t * 80)}, 255, 120, 0.98)`;
+                // DECK B: Vivid Mint, Turquoise, Electric Lime, Bright Gold-Yellow
+                if (fEnergy < 0.22) {
+                    color = `rgba(0, 140, 180, ${0.45 + fEnergy * 1.8})`;
+                } else if (fEnergy < 0.42) {
+                    const t = (fEnergy - 0.22) / 0.20;
+                    color = `rgba(0, ${Math.floor(220 + t * 35)}, ${Math.floor(180 - t * 40)}, ${0.82 + t * 0.18})`;
+                } else if (fEnergy < 0.65) {
+                    const t = (fEnergy - 0.42) / 0.23;
+                    color = `rgba(${Math.floor(40 + t * 180)}, 255, 120, 0.95)`;
+                } else if (fEnergy < 0.85) {
+                    const t = (fEnergy - 0.65) / 0.20;
+                    color = `rgba(${Math.floor(200 + t * 55)}, 255, ${Math.floor(70 - t * 40)}, 0.98)`;
                 } else {
-                    color = `rgba(220, 255, 120, 1.0)`;
+                    color = `rgba(255, 255, 80, 1.0)`;
                 }
             }
 
@@ -1034,13 +1041,13 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
     // Fine Radial Vinyl Grooves
     octx.lineWidth = 0.5;
     for (let r = rInner; r < rOuter; r += 2.8) {
-        octx.strokeStyle = `rgba(255, 255, 255, ${0.045 + 0.03 * Math.sin(r * 0.9)})`;
+        octx.strokeStyle = `rgba(255, 255, 255, ${0.05 + 0.03 * Math.sin(r * 0.9)})`;
         octx.beginPath();
         octx.arc(cx, cy, r, 0, 2 * Math.PI);
         octx.stroke();
     }
 
-    // Center Artwork Base
+    // Center Artwork Label Base
     octx.fillStyle = '#141619';
     octx.beginPath();
     octx.arc(cx, cy, rLabel, 0, 2 * Math.PI);
@@ -1386,7 +1393,7 @@ async function searchOrLoadYouTube(k) {
                                     <span style="font-size:7.5px; color:#888;">${r.artistName || 'Artist'} • ${durFmt}</span>
                                 </div>
                             </div>
-                            <span style="font-size:7.5px; font-weight:bold; background:#0a2218; color:#1e6e54; border:1px solid #1e6e54; border-radius:2px; padding:2px 4px; white-space:nowrap;">⚡ LOAD HD</span>
+                            <span style="font-size:7.5px; font-weight:bold; background:#0a2218; color:#1e6e54; border:1px solid #00aa66; border-radius:2px; padding:2px 4px; white-space:nowrap;">⚡ LOAD HD</span>
                         </div>
                     `;
                 }).join('')}
