@@ -1051,7 +1051,7 @@ function applyAudioBufferToDeck(k, audioBuffer, title, artworkUrl = '', metaStr 
     d.buffer = audioBuffer;
     d.duration = audioBuffer.duration;
     d.inTime = 0.0;
-    d.outTime = Math.min(d.duration, 4.0);
+    d.outTime = d.duration;
 
     // Compute Reverse Buffer for Bidirectional Scratching
     if (actx) {
@@ -1689,6 +1689,59 @@ function audioBufferToWavBlob(buffer, optStartTime = 0, optEndTime = null) {
     return new Blob([view], { type: 'audio/wav' });
 }
 window.audioBufferToWavBlob = audioBufferToWavBlob;
+
+
+function downloadDeckFullTrackAsWav(k) {
+    const d = decks[k];
+    if (!d.buffer) {
+        alert('No audio loaded in deck to export.');
+        return;
+    }
+    const titleEl = document.getElementById(`yt-title-${k}`);
+    const trackTitle = (titleEl ? titleEl.innerText : d.name) || `Track_${k.toUpperCase()}`;
+    const word = getFirstCleanWord(trackTitle, `Deck${k.toUpperCase()}`);
+
+    const blob = audioBufferToWavBlob(d.buffer, 0, d.duration);
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = `remxr42_deck_${k}_${word}_full.wav`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 200);
+}
+window.downloadDeckFullTrackAsWav = downloadDeckFullTrackAsWav;
+
+function downloadDeckFullTrackAsMp3(k) {
+    const d = decks[k];
+    if (!d.buffer) {
+        alert('No audio loaded in deck to export.');
+        return;
+    }
+    const titleEl = document.getElementById(`yt-title-${k}`);
+    const trackTitle = (titleEl ? titleEl.innerText : d.name) || `Track_${k.toUpperCase()}`;
+    const word = getFirstCleanWord(trackTitle, `Deck${k.toUpperCase()}`);
+
+    const blob = audioBufferToMp3Blob(d.buffer, 0, d.duration, 192);
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = `remxr42_deck_${k}_${word}_full.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 200);
+}
+window.downloadDeckFullTrackAsMp3 = downloadDeckFullTrackAsMp3;
 
 function downloadDeckSliceAsWav(k) {
     const d = decks[k];
