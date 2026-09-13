@@ -2605,6 +2605,7 @@ async function checkProxyStatus(userTriggered = false) {
     const pill = document.getElementById('proxy-status-pill');
     const candidates = [
         (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : 'http://localhost:8542',
+        'https://remxr42.onrender.com',
         'http://localhost:8542',
         'http://127.0.0.1:8542'
     ];
