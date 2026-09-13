@@ -539,6 +539,7 @@
                         <button class="btn btn-mini" id="btn-export-a" style="background:#ffaa00; color:#000; padding:1px 5px; font-size:8px;" title="Export Sliced Audio as 16-bit WAV">💾 WAV</button>
                         <button class="btn btn-mini" id="btn-export-jpg-a" style="background:#25272a; color:#ff8c00; border:1px solid #ff8c00; padding:1px 5px; font-size:8px;" title="Download Deck A Waveform as JPEG">🖼️ JPG</button>
                         <button class="btn btn-mini" id="btn-export-svg-a" style="background:#25272a; color:#ff8c00; border:1px solid #ff8c00; padding:1px 5px; font-size:8px;" title="Download Deck A Waveform as SVG">📐 SVG</button>
+                        <button class="btn btn-mini" id="btn-export-polar-a" style="background:#25272a; color:#ffaa00; border:1px solid #ff8c00; padding:1px 5px; font-size:8px;" title="Download Deck A Circular Polar Spectrograph as PNG">💿 VINYL</button>
                     </div>
                 </div>
 
@@ -611,9 +612,10 @@
                     <button class="btn btn-te-orange" id="btn-play-both" style="width:100%; padding:5px; font-weight:800;">⚡ SYNC DUAL PLAY</button>
                     <button class="btn btn-te-dark" id="btn-stop-both" style="width:100%; padding:4px;">■ STOP ALL DECKS</button>
                     <button class="btn" id="btn-export-mix" style="background:#ffaa00; color:#000; width:100%; padding:4px; font-weight:bold;">💾 EXPORT MASTER WAV</button>
-                    <div style="display:flex; gap:4px; width:100%;">
-                        <button class="btn" id="btn-export-mix-jpg" style="flex:1; background:#25272a; color:#ffaa00; border:1px solid #ffaa00; padding:3px; font-size:8.5px; font-weight:bold;" title="Download Combined Dual Waveform as JPEG">🖼️ MIX JPG</button>
-                        <button class="btn" id="btn-export-mix-svg" style="flex:1; background:#25272a; color:#1e6e54; border:1px solid #00aa66; padding:3px; font-size:8.5px; font-weight:bold;" title="Download Combined Dual Waveform as SVG">📐 MIX SVG</button>
+                    <div style="display:flex; gap:3px; width:100%;">
+                        <button class="btn" id="btn-export-mix-jpg" style="flex:1; background:#25272a; color:#ffaa00; border:1px solid #ffaa00; padding:3px; font-size:8px; font-weight:bold;" title="Download Combined Dual Waveform as JPEG">🖼️ MIX JPG</button>
+                        <button class="btn" id="btn-export-mix-svg" style="flex:1; background:#25272a; color:#00ff9d; border:1px solid #00aa66; padding:3px; font-size:8px; font-weight:bold;" title="Download Combined Dual Waveform as SVG">📐 MIX SVG</button>
+                        <button class="btn" id="btn-export-mix-polar" style="flex:1; background:#25272a; color:#ffdd44; border:1px solid #ffaa00; padding:3px; font-size:8px; font-weight:bold;" title="Download Master Combined Polar Vinyl Spectrogram as High-Res PNG">💿 MIX VINYL</button>
                     </div>
                 </div>
 
@@ -705,6 +707,7 @@
                         <button class="btn btn-mini" id="btn-export-b" style="background:#ffaa00; color:#000; padding:1px 5px; font-size:8px;" title="Export Sliced Audio as 16-bit WAV">💾 WAV</button>
                         <button class="btn btn-mini" id="btn-export-jpg-b" style="background:#25272a; color:#1e6e54; border:1px solid #00aa66; padding:1px 5px; font-size:8px;" title="Download Deck B Waveform as JPEG">🖼️ JPG</button>
                         <button class="btn btn-mini" id="btn-export-svg-b" style="background:#25272a; color:#1e6e54; border:1px solid #00aa66; padding:1px 5px; font-size:8px;" title="Download Deck B Waveform as SVG">📐 SVG</button>
+                        <button class="btn btn-mini" id="btn-export-polar-b" style="background:#25272a; color:#00ff9d; border:1px solid #00aa66; padding:1px 5px; font-size:8px;" title="Download Deck B Circular Polar Spectrograph as PNG">💿 VINYL</button>
                     </div>
                 </div>
 
@@ -951,8 +954,8 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
     const rInner = rLabel + 2;
     const rOuter = rDisc - 3;
 
-    // 1. Dark Basalt Vinyl Disc Base
-    octx.fillStyle = '#0a0b0e';
+    // 1. Deep Basalt Vinyl Disc Base
+    octx.fillStyle = '#08090c';
     octx.beginPath();
     octx.arc(cx, cy, rDisc, 0, 2 * Math.PI);
     octx.fill();
@@ -963,36 +966,48 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
     const angleStep = (2 * Math.PI) / numSlices;
     const radStep = (rOuter - rInner) / numFreqs;
 
-    const rootsA = [0, 9, 5, 7]; // C - Am - F - G harmonic cycle
-    const rootsB = [7, 4, 0, 2]; // G - Em - C - D harmonic cycle
-    const roots = (k === 'a') ? rootsA : rootsB;
+    // Use track-specific seed for unique composition & harmonic ribbons
+    const seed = (d && d.trackSeed) ? d.trackSeed : ((k === 'a') ? 1576587381 : 2837669395);
+    const rootPitch = seed % 12;
+    const progressionType = (seed >> 4) % 4; // 4 distinct chord progressions
+    
+    const chordCycles = [
+        [0, 9, 5, 7],
+        [0, 8, 3, 10],
+        [0, 7, 9, 5],
+        [2, 7, 0, 9]
+    ];
+    const roots = chordCycles[progressionType].map(n => (n + rootPitch) % 12);
 
     const peaks = d ? d.peaks : null;
     const hasPeaks = peaks && peaks.length > 0;
     const rawData = (d && d.buffer) ? d.buffer.getChannelData(0) : null;
     const hasPcm = rawData && rawData.length > 1000;
 
+    const tempoBpm = 110 + (seed % 40);
+    const beatMultiplier = Math.round(tempoBpm / 2);
+
     for (let i = 0; i < numSlices; i++) {
         const u = i / numSlices; // Time [0, 1] across entire track duration
         const a0 = u * 2 * Math.PI - Math.PI / 2;
-        const a1 = a0 + angleStep * 1.30; // 30% overlap for smooth continuous anti-aliased micro-grooves
+        const a1 = a0 + angleStep * 1.30; // Overlap for continuous antialiased grooves
 
         let baseAmp = 0.70;
         if (hasPeaks) {
             const pIdx = Math.floor(u * peaks.length);
-            baseAmp = Math.max(0.2, Math.min(1.0, Math.abs(peaks[pIdx] || 0.65)));
+            baseAmp = Math.max(0.20, Math.min(1.0, Math.abs(peaks[pIdx] || 0.65)));
         }
 
         // Structural Compositional Model (Nicholas Rougeux orbital ribbons)
         const chordIdx = Math.floor(u * 16) % roots.length;
         const currentRoot = roots[chordIdx];
         const phraseTime = (u * 8) % 1.0;
-        const melodyPitch = (currentRoot + Math.floor(Math.sin(phraseTime * Math.PI * 2) * 5 + 7)) % 12;
+        const melodyPitch = (currentRoot + Math.floor(Math.sin(phraseTime * Math.PI * 2 + (seed % 7)) * 5 + 7)) % 12;
 
-        const beat16 = (u * 128) % 1.0;
-        const isKick = (beat16 < 0.15 && (Math.floor(u * 128) % 4 === 0));
-        const isSnare = (beat16 < 0.15 && (Math.floor(u * 128) % 8 === 4));
-        const isHiHat = (beat16 < 0.22 && (Math.floor(u * 128) % 2 === 1));
+        const beat16 = (u * beatMultiplier) % 1.0;
+        const isKick = (beat16 < 0.18 && (Math.floor(u * beatMultiplier) % 4 === 0));
+        const isSnare = (beat16 < 0.18 && (Math.floor(u * beatMultiplier) % 8 === 4));
+        const isHiHat = (beat16 < 0.25 && (Math.floor(u * beatMultiplier) % 2 === 1));
 
         // Real PCM spectral extraction if audio buffer is loaded
         if (hasPcm) {
@@ -1015,36 +1030,36 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
             const r0 = rInner + f * radStep;
             const r1 = rInner + (f + 1.25) * radStep;
 
-            let energy = 0.16;
+            let energy = 0.18;
 
-            if (f < 10) {
+            if (f < 12) {
                 // Sub-Bass & Kick Dynamics (Inner Grooves: 20Hz - 160Hz)
-                const bassHit = isKick ? 1.0 : 0.45;
-                const rootMatch = (semitone === currentRoot % 12) ? 0.65 : 0.18;
-                energy = Math.max(energy, baseAmp * (bassHit * (1.25 - v * 2.0) + rootMatch));
-            } else if (f < 40) {
+                const bassHit = isKick ? 1.0 : 0.50;
+                const rootMatch = (semitone === currentRoot % 12) ? 0.70 : 0.20;
+                energy = Math.max(energy, baseAmp * (bassHit * (1.30 - v * 1.8) + rootMatch));
+            } else if (f < 44) {
                 // Melodic Ribbons, Vocal Formants & Chords (Mid Grooves: 160Hz - 4kHz)
                 const isTriad = (semitone === currentRoot || semitone === (currentRoot + 4)%12 || semitone === (currentRoot + 7)%12);
-                const chordPad = isTriad ? (0.68 + 0.32 * Math.sin(u * 32 * Math.PI + octave)) : 0.18;
+                const chordPad = isTriad ? (0.75 + 0.25 * Math.sin(u * 32 * Math.PI + octave + (seed % 3))) : 0.20;
 
                 const isMelody = (semitone === melodyPitch && (octave === 2 || octave === 3));
-                const melodyRibbon = isMelody ? (0.92 + 0.18 * Math.sin(phraseTime * Math.PI * 6)) : 0.0;
+                const melodyRibbon = isMelody ? (0.95 + 0.05 * Math.sin(phraseTime * Math.PI * 6)) : 0.0;
 
-                const snareSnap = isSnare ? (0.85 * (1.0 - Math.abs(f - 22) / 16)) : 0.0;
+                const snareSnap = isSnare ? (0.90 * (1.0 - Math.abs(f - 24) / 18)) : 0.0;
                 const isOvertone = (semitone === (melodyPitch + 7) % 12 && octave >= 2);
-                const overtone = isOvertone ? 0.50 : 0.0;
+                const overtone = isOvertone ? 0.60 : 0.0;
 
                 energy = Math.max(energy, baseAmp * (chordPad + melodyRibbon + snareSnap + overtone));
             } else {
                 // High Air, Transient Sparkle & Cymbals (Outer Grooves: 4kHz - 20kHz)
-                const hatEnergy = isHiHat ? (0.78 + 0.22 * Math.sin(u * 128 * Math.PI)) : 0.22;
-                const airShimmer = 0.38 + 0.32 * Math.sin(u * 64 * Math.PI + f * 0.85);
+                const hatEnergy = isHiHat ? (0.82 + 0.18 * Math.sin(u * beatMultiplier * Math.PI)) : 0.25;
+                const airShimmer = 0.42 + 0.35 * Math.sin(u * 64 * Math.PI + f * 0.85);
                 energy = Math.max(energy, baseAmp * (hatEnergy + airShimmer));
             }
 
             // Anisotropic Physical Vinyl Reflection Sheen (Two-lobed specular highlights)
             const sheenAngle = a0 + Math.PI / 4;
-            const sheen = 0.82 + 0.18 * Math.pow(Math.cos(sheenAngle * 2), 4);
+            const sheen = 0.85 + 0.15 * Math.pow(Math.cos(sheenAngle * 2), 4);
             energy = Math.min(1.0, energy * sheen);
 
             octx.beginPath();
@@ -1055,37 +1070,37 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
             let fillStyle;
             if (k === 'a') {
                 // DECK A: Bold Warm Terracotta, Electric Tangerine, Radiant Amber, Solar Gold, Cyan Accents
-                if (energy < 0.25) {
-                    fillStyle = `rgba(36, 22, 16, ${0.45 + energy * 1.5})`;
-                } else if (energy < 0.45) {
-                    const t = (energy - 0.25) / 0.20;
-                    fillStyle = `rgba(${Math.floor(140 + t * 85)}, ${Math.floor(45 + t * 40)}, ${Math.floor(15 + t * 20)}, 0.88)`;
-                } else if (energy < 0.70) {
-                    const t = (energy - 0.45) / 0.25;
-                    fillStyle = `rgba(${Math.floor(225 + t * 30)}, ${Math.floor(85 + t * 75)}, 0, 0.95)`;
-                } else if (energy < 0.88) {
-                    const t = (energy - 0.70) / 0.18;
-                    fillStyle = `rgba(255, ${Math.floor(160 + t * 75)}, ${Math.floor(t * 50)}, 0.98)`;
+                if (energy < 0.28) {
+                    fillStyle = `rgba(45, 26, 18, ${0.50 + energy * 1.5})`;
+                } else if (energy < 0.48) {
+                    const t = (energy - 0.28) / 0.20;
+                    fillStyle = `rgba(${Math.floor(160 + t * 75)}, ${Math.floor(55 + t * 45)}, ${Math.floor(18 + t * 25)}, 0.90)`;
+                } else if (energy < 0.72) {
+                    const t = (energy - 0.48) / 0.24;
+                    fillStyle = `rgba(${Math.floor(235 + t * 20)}, ${Math.floor(100 + t * 70)}, 0, 0.96)`;
+                } else if (energy < 0.90) {
+                    const t = (energy - 0.72) / 0.18;
+                    fillStyle = `rgba(255, ${Math.floor(170 + t * 70)}, ${Math.floor(t * 60)}, 0.98)`;
                 } else {
-                    const t = (energy - 0.88) / 0.12;
-                    fillStyle = `rgba(255, 255, ${Math.floor(140 + t * 115)}, 1.0)`;
+                    const t = (energy - 0.90) / 0.10;
+                    fillStyle = `rgba(255, 255, ${Math.floor(160 + t * 95)}, 1.0)`;
                 }
             } else {
                 // DECK B: Bold Deep Sage, Electric Mint (#00ff9d), Radiant Turquoise, Lime Gold, Peak Flare
-                if (energy < 0.25) {
-                    fillStyle = `rgba(14, 36, 26, ${0.45 + energy * 1.5})`;
-                } else if (energy < 0.45) {
-                    const t = (energy - 0.25) / 0.20;
-                    fillStyle = `rgba(0, ${Math.floor(115 + t * 85)}, ${Math.floor(95 + t * 40)}, 0.88)`;
-                } else if (energy < 0.70) {
-                    const t = (energy - 0.45) / 0.25;
-                    fillStyle = `rgba(0, 255, ${Math.floor(157 - t * 75)}, 0.95)`;
-                } else if (energy < 0.88) {
-                    const t = (energy - 0.70) / 0.18;
-                    fillStyle = `rgba(${Math.floor(t * 210)}, 255, ${Math.floor(82 - t * 50)}, 0.98)`;
+                if (energy < 0.28) {
+                    fillStyle = `rgba(18, 42, 32, ${0.50 + energy * 1.5})`;
+                } else if (energy < 0.48) {
+                    const t = (energy - 0.28) / 0.20;
+                    fillStyle = `rgba(0, ${Math.floor(135 + t * 75)}, ${Math.floor(110 + t * 40)}, 0.90)`;
+                } else if (energy < 0.72) {
+                    const t = (energy - 0.48) / 0.24;
+                    fillStyle = `rgba(0, 255, ${Math.floor(157 - t * 70)}, 0.96)`;
+                } else if (energy < 0.90) {
+                    const t = (energy - 0.72) / 0.18;
+                    fillStyle = `rgba(${Math.floor(t * 220)}, 255, ${Math.floor(87 - t * 40)}, 0.98)`;
                 } else {
-                    const t = (energy - 0.88) / 0.12;
-                    fillStyle = `rgba(255, 255, ${Math.floor(160 + t * 95)}, 1.0)`;
+                    const t = (energy - 0.90) / 0.10;
+                    fillStyle = `rgba(255, 255, ${Math.floor(170 + t * 85)}, 1.0)`;
                 }
             }
 
@@ -1098,13 +1113,42 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
     octx.lineWidth = 0.55;
     for (let r = rInner; r <= rOuter; r += 2.2) {
         const groovePhase = Math.sin(r * 0.9);
-        octx.strokeStyle = `rgba(255, 255, 255, ${0.05 + 0.03 * groovePhase})`;
+        octx.strokeStyle = `rgba(255, 255, 255, ${0.06 + 0.03 * groovePhase})`;
         octx.beginPath();
         octx.arc(cx, cy, r, 0, 2 * Math.PI);
         octx.stroke();
     }
 
-    // 4. Center Artwork Base
+    // 4. Subtle Concentric Frequency Band Rings (SUB, MID, HI)
+    const rSub = rInner + 12 * radStep;
+    const rMid = rInner + 44 * radStep;
+    octx.lineWidth = 1.0;
+    octx.strokeStyle = (k === 'a') ? 'rgba(255, 140, 0, 0.45)' : 'rgba(0, 255, 157, 0.45)';
+    octx.beginPath();
+    octx.arc(cx, cy, rSub, 0, 2 * Math.PI);
+    octx.stroke();
+
+    octx.strokeStyle = (k === 'a') ? 'rgba(255, 200, 50, 0.45)' : 'rgba(0, 255, 200, 0.45)';
+    octx.beginPath();
+    octx.arc(cx, cy, rMid, 0, 2 * Math.PI);
+    octx.stroke();
+
+    // 5. 12 Radial Hour / Beat Division Ticks around the Perimeter
+    for (let h = 0; h < 12; h++) {
+        const rad = (h / 12) * 2 * Math.PI - Math.PI / 2;
+        const x1 = cx + (rOuter - 6) * Math.cos(rad);
+        const y1 = cy + (rOuter - 6) * Math.sin(rad);
+        const x2 = cx + rOuter * Math.cos(rad);
+        const y2 = cy + rOuter * Math.sin(rad);
+        octx.strokeStyle = (h % 3 === 0) ? '#ffffff' : 'rgba(255,255,255,0.4)';
+        octx.lineWidth = (h % 3 === 0) ? 1.5 : 0.8;
+        octx.beginPath();
+        octx.moveTo(x1, y1);
+        octx.lineTo(x2, y2);
+        octx.stroke();
+    }
+
+    // 6. Center Artwork Base
     octx.fillStyle = '#141619';
     octx.beginPath();
     octx.arc(cx, cy, rLabel, 0, 2 * Math.PI);
@@ -1155,10 +1199,19 @@ function applyAudioBufferToDeck(k, audioBuffer, title, artworkUrl = '', metaStr 
         }
     }
 
-    // Compute Comprehensive 400-Bin Full Track Peaks Array with Dynamic Normalization
+    // Compute Comprehensive 400-Bin Full Track Peaks Array with Track-Specific Acoustic DNA Hash
     const binCount = 400;
     d.peaks = new Float32Array(binCount);
     d.minPeaks = new Float32Array(binCount);
+
+    // Deterministic Track Seed Hash from Title, Duration & Deck Key (guarantees unique waveform per song)
+    let seed = 0x811c9dc5;
+    const seedStr = `${title || 'Track'}_${d.duration.toFixed(1)}_${k}`;
+    for (let sIdx = 0; sIdx < seedStr.length; sIdx++) {
+        seed ^= seedStr.charCodeAt(sIdx);
+        seed = Math.imul(seed, 0x01000193);
+    }
+    d.trackSeed = Math.abs(seed);
 
     if (d.buffer) {
         const rawData = d.buffer.getChannelData(0);
@@ -1184,40 +1237,52 @@ function applyAudioBufferToDeck(k, audioBuffer, title, artworkUrl = '', metaStr 
                 d.peaks[i] = p;
                 d.minPeaks[i] = (minVal === 1.0) ? -0.1 : Math.min(-0.05, minVal);
             }
-            // Normalize so peaks comfortably fill the display (scale to 0.85 max)
-            const normFactor = Math.min(3.5, 0.85 / Math.max(0.1, maxOverall));
+            const normFactor = Math.min(3.5, 0.88 / Math.max(0.1, maxOverall));
             for (let i = 0; i < binCount; i++) {
                 d.peaks[i] = Math.min(0.98, d.peaks[i] * normFactor);
                 d.minPeaks[i] = Math.max(-0.98, d.minPeaks[i] * normFactor);
             }
         } else {
-            // Full Track Spectral DNA Synthesis: Generate bold, dynamic peaks spanning full duration
+            // Track-Specific Spectral DNA Synthesis: Completely unique per song
+            const s = d.trackSeed;
+            const introLen = 0.08 + ((s % 7) * 0.015);
+            const drop1Pos = 0.22 + (((s >> 3) % 9) * 0.02);
+            const breakPos = 0.50 + (((s >> 6) % 7) * 0.02);
+            const drop2Pos = breakPos + 0.14 + (((s >> 9) % 6) * 0.02);
+            const outroPos = 0.88 - (((s >> 12) % 5) * 0.015);
+            const beatFreq = 80 + ((s >> 2) % 48); // 80 - 128 beat pulses
+            const harmFreq = 16 + ((s >> 5) % 32);
+
             for (let i = 0; i < binCount; i++) {
                 const u = i / binCount;
-                let structuralEnv = 0.65;
-                if (u < 0.12) {
-                    // Intro build-up
-                    structuralEnv = 0.35 + 0.50 * (u / 0.12);
-                } else if (u < 0.40) {
-                    // Verse 1 Groove
-                    structuralEnv = 0.70 + 0.22 * Math.sin(u * 32 * Math.PI);
-                } else if (u < 0.72) {
-                    // Peak Chorus / Drop
-                    structuralEnv = 0.88 + 0.12 * Math.sin(u * 44 * Math.PI);
-                } else if (u < 0.86) {
-                    // Bridge
-                    structuralEnv = 0.55 + 0.25 * Math.sin(u * 20 * Math.PI);
+                let env = 0.65;
+                if (u < introLen) {
+                    // Dynamic Intro Build
+                    env = 0.25 + 0.55 * (u / introLen);
+                } else if (u < drop1Pos) {
+                    // Verse 1
+                    env = 0.65 + 0.20 * Math.sin(u * harmFreq * Math.PI);
+                } else if (u < breakPos) {
+                    // Peak Chorus / Drop 1
+                    env = 0.88 + 0.12 * Math.sin(u * (harmFreq * 1.5) * Math.PI);
+                } else if (u < drop2Pos) {
+                    // Breakdown / Bridge
+                    env = 0.45 + 0.25 * Math.sin(u * (harmFreq * 0.8) * Math.PI);
+                } else if (u < outroPos) {
+                    // Climax Drop 2
+                    env = 0.92 + 0.08 * Math.sin(u * (harmFreq * 2) * Math.PI);
                 } else {
-                    // Outro resolve
-                    structuralEnv = Math.max(0.20, 0.80 * (1.0 - (u - 0.86) / 0.14));
+                    // Outro Fade
+                    env = Math.max(0.18, 0.80 * (1.0 - (u - outroPos) / (1.0 - outroPos)));
                 }
 
-                // Transient rhythmic beat modulation
-                const beatMod = 0.60 + 0.40 * Math.pow(Math.abs(Math.sin(u * 96 * Math.PI)), 2.5);
-                const dynamicPeak = Math.max(0.15, Math.min(0.96, structuralEnv * beatMod));
+                // High-frequency rhythmic beat transient modulation
+                const beatPulse = 0.55 + 0.45 * Math.pow(Math.abs(Math.sin(u * beatFreq * Math.PI)), 2.8);
+                const microJitter = 0.08 * Math.sin(u * 320 * Math.PI + (s % 10));
+                const peakVal = Math.max(0.15, Math.min(0.98, env * beatPulse + microJitter));
 
-                d.peaks[i] = dynamicPeak;
-                d.minPeaks[i] = -dynamicPeak * (0.85 + 0.15 * Math.sin(u * 12 * Math.PI));
+                d.peaks[i] = peakVal;
+                d.minPeaks[i] = -peakVal * (0.80 + 0.20 * Math.sin(u * 16 * Math.PI + (s % 5)));
             }
         }
     }
@@ -2276,18 +2341,29 @@ function exportDeckWaveform(k, format = 'jpg') {
 }
 window.exportDeckWaveform = exportDeckWaveform;
 
-// Export Combined Dual-Deck Waveform with Translucent Layering & Color Blending (JPEG / SVG)
+// Export Combined Dual-Deck Waveform with Split Dual-Track Coloring & Crossfader Blend (JPEG / SVG)
 function exportCombinedWaveform(format = 'jpg') {
-    const titleA = (document.getElementById('yt-title-a') ? document.getElementById('yt-title-a').innerText : decks.a.name) || 'DECK A LEAD';
-    const titleB = (document.getElementById('yt-title-b') ? document.getElementById('yt-title-b').innerText : decks.b.name) || 'DECK B BASS';
+    const titleA = (decks.a.buffer && decks.a.buffer.title) || document.getElementById('title-deck-a')?.innerText || 'Deck A';
+    const titleB = (decks.b.buffer && decks.b.buffer.title) || document.getElementById('title-deck-b')?.innerText || 'Deck B';
     const wordA = getFirstCleanWord(titleA, 'DeckA');
     const wordB = getFirstCleanWord(titleB, 'DeckB');
     const baseFileName = `remxr42_${wordA}_${wordB}_master_waveform`;
 
     const w = 1400;
-    const h = 420;
-    const centerY = h / 2 + 20;
-    const ampScale = (h - 80) / 2;
+    const h = 460;
+    const centerY = h / 2 + 22;
+    const ampScale = (h - 90) / 2;
+
+    const xFade = (typeof masterCrossfader !== 'undefined') ? masterCrossfader : 0.5;
+    const gainA = Math.cos(xFade * Math.PI / 2);
+    const gainB = Math.sin(xFade * Math.PI / 2);
+
+    const dA = decks.a;
+    const dB = decks.b;
+    const pA = dA.peaks || new Float32Array(400);
+    const pB = dB.peaks || new Float32Array(400);
+    const len = Math.max(pA.length, pB.length, 400);
+    const scaleX = w / len;
 
     if (format === 'svg') {
         let svg = `<?xml version="1.0" encoding="UTF-8"?>
@@ -2306,45 +2382,56 @@ function exportCombinedWaveform(format = 'jpg') {
     <text x="18" y="27" fill="#ffffff" font-family="'Space Mono', monospace" font-size="12.5" font-weight="bold">■ REMXR42 • COMBINED DUAL-DECK MASTER WAVEFORM</text>
     
     <!-- Legend Tags -->
-    <rect x="${w - 480}" y="12" width="220" height="20" fill="#1f1508" stroke="#ff8c00" rx="2"/>
-    <text x="${w - 470}" y="26" fill="#ff8c00" font-family="'Space Mono', monospace" font-size="9" font-weight="bold">DECK A: ${titleA.replace(/&/g, '&amp;').slice(0, 18)}</text>
+    <rect x="${w - 560}" y="11" width="170" height="22" fill="#1f1508" stroke="#ff8c00" rx="2"/>
+    <text x="${w - 550}" y="26" fill="#ff8c00" font-family="'Space Mono', monospace" font-size="9" font-weight="bold">DECK A: ${titleA.replace(/&/g, '&amp;').slice(0, 14)} (${(gainA * 100).toFixed(0)}%)</text>
     
-    <rect x="${w - 240}" y="12" width="220" height="20" fill="#051c14" stroke="#00ff9d" rx="2"/>
-    <text x="${w - 230}" y="26" fill="#00ff9d" font-family="'Space Mono', monospace" font-size="9" font-weight="bold">DECK B: ${titleB.replace(/&/g, '&amp;').slice(0, 18)}</text>
+    <rect x="${w - 380}" y="11" width="170" height="22" fill="#051c14" stroke="#00ff9d" rx="2"/>
+    <text x="${w - 370}" y="26" fill="#00ff9d" font-family="'Space Mono', monospace" font-size="9" font-weight="bold">DECK B: ${titleB.replace(/&/g, '&amp;').slice(0, 14)} (${(gainB * 100).toFixed(0)}%)</text>
 
-    <!-- Translucent Overlay Waveforms (Deck A Reduced Opacity 0.42 for High Transparency) -->
-    <g style="mix-blend-mode: screen; opacity: 0.42;" fill="#ff8c00">`;
+    <rect x="${w - 200}" y="11" width="185" height="22" fill="#181814" stroke="#ffdd44" rx="2"/>
+    <text x="${w - 190}" y="26" fill="#ffdd44" font-family="'Space Mono', monospace" font-size="9" font-weight="bold">XFADE: ${xFade.toFixed(2)} [${(gainA*100).toFixed(0)}A / ${(gainB*100).toFixed(0)}B]</text>
 
-        // Deck A Waveform (Translucent Amber)
-        const dA = decks.a;
-        if (dA.peaks && dA.peaks.length > 0) {
-            const scaleX = w / dA.peaks.length;
-            for (let b = 0; b < dA.peaks.length; b++) {
-                const bx = b * scaleX;
-                const pMax = Math.abs(dA.peaks[b] || 0.05);
-                const pMin = (dA.minPeaks && !isNaN(dA.minPeaks[b])) ? dA.minPeaks[b] : -pMax;
-                const yTop = centerY + pMin * ampScale;
-                const yBot = centerY + pMax * ampScale;
-                svg += `<rect x="${bx.toFixed(1)}" y="${yTop.toFixed(1)}" width="${Math.max(1, scaleX - 0.5).toFixed(1)}" height="${Math.max(2, yBot - yTop).toFixed(1)}"/>`;
-            }
+    <!-- Top Half: Deck A Waveform (Terracotta / Amber) -->
+    <g fill="#ff8c00" opacity="0.90">`;
+        for (let b = 0; b < len; b++) {
+            const bx = b * scaleX;
+            const valA = Math.abs(pA[b % pA.length] || 0.05) * gainA;
+            const yTop = centerY - valA * ampScale;
+            svg += `<rect x="${bx.toFixed(1)}" y="${yTop.toFixed(1)}" width="${Math.max(1, scaleX - 0.5).toFixed(1)}" height="${Math.max(1, centerY - yTop).toFixed(1)}"/>`;
         }
         svg += `</g>
-    <g style="mix-blend-mode: screen; opacity: 0.75;" fill="#00ff9d">`;
-
-        // Deck B Waveform (Mint)
-        const dB = decks.b;
-        if (dB.peaks && dB.peaks.length > 0) {
-            const scaleX = w / dB.peaks.length;
-            for (let b = 0; b < dB.peaks.length; b++) {
-                const bx = b * scaleX;
-                const pMax = Math.abs(dB.peaks[b] || 0.05);
-                const pMin = (dB.minPeaks && !isNaN(dB.minPeaks[b])) ? dB.minPeaks[b] : -pMax;
-                const yTop = centerY + pMin * ampScale;
-                const yBot = centerY + pMax * ampScale;
-                svg += `<rect x="${bx.toFixed(1)}" y="${yTop.toFixed(1)}" width="${Math.max(1, scaleX - 0.5).toFixed(1)}" height="${Math.max(2, yBot - yTop).toFixed(1)}"/>`;
-            }
+    <!-- Bottom Half: Deck B Waveform (Forest Sage / Mint) -->
+    <g fill="#00ff9d" opacity="0.90">`;
+        for (let b = 0; b < len; b++) {
+            const bx = b * scaleX;
+            const valB = Math.abs(pB[b % pB.length] || 0.05) * gainB;
+            const yBot = centerY + valB * ampScale;
+            svg += `<rect x="${bx.toFixed(1)}" y="${centerY.toFixed(1)}" width="${Math.max(1, scaleX - 0.5).toFixed(1)}" height="${Math.max(1, yBot - centerY).toFixed(1)}"/>`;
         }
         svg += `</g>
+    <!-- Center Blended Master Sum Outline (Radiant Gold) -->
+    <g stroke="#ffdd44" stroke-width="1.6" fill="none" opacity="0.95">
+        <polyline points="`;
+        for (let b = 0; b < len; b++) {
+            const bx = b * scaleX + scaleX / 2;
+            const valA = Math.abs(pA[b % pA.length] || 0.05) * gainA;
+            const valB = Math.abs(pB[b % pB.length] || 0.05) * gainB;
+            const sumVal = Math.min(1.0, Math.sqrt(valA*valA + valB*valB));
+            const yTop = centerY - sumVal * ampScale;
+            svg += `${bx.toFixed(1)},${yTop.toFixed(1)} `;
+        }
+        svg += `"/>
+        <polyline points="`;
+        for (let b = 0; b < len; b++) {
+            const bx = b * scaleX + scaleX / 2;
+            const valA = Math.abs(pA[b % pA.length] || 0.05) * gainA;
+            const valB = Math.abs(pB[b % pB.length] || 0.05) * gainB;
+            const sumVal = Math.min(1.0, Math.sqrt(valA*valA + valB*valB));
+            const yBot = centerY + sumVal * ampScale;
+            svg += `${bx.toFixed(1)},${yBot.toFixed(1)} `;
+        }
+        svg += `"/>
+    </g>
 </svg>`;
         const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
         downloadBlob(blob, `${baseFileName}.svg`);
@@ -2386,66 +2473,256 @@ function exportCombinedWaveform(format = 'jpg') {
     ctx.fillStyle = '#1f1508';
     ctx.strokeStyle = '#ff8c00';
     ctx.lineWidth = 1;
-    ctx.fillRect(w - 480, 11, 220, 22);
-    ctx.strokeRect(w - 480, 11, 220, 22);
+    ctx.fillRect(w - 560, 11, 170, 22);
+    ctx.strokeRect(w - 560, 11, 170, 22);
     ctx.fillStyle = '#ff8c00';
-    ctx.font = 'bold 9.5px "Space Mono", monospace';
-    ctx.fillText(`DECK A: ${titleA.toUpperCase().slice(0, 18)}`, w - 470, 26);
+    ctx.font = 'bold 9px "Space Mono", monospace';
+    ctx.fillText(`DECK A: ${titleA.toUpperCase().slice(0, 14)} (${(gainA * 100).toFixed(0)}%)`, w - 550, 26);
 
     ctx.fillStyle = '#051c14';
     ctx.strokeStyle = '#00ff9d';
-    ctx.fillRect(w - 240, 11, 220, 22);
-    ctx.strokeRect(w - 240, 11, 220, 22);
+    ctx.fillRect(w - 380, 11, 170, 22);
+    ctx.strokeRect(w - 380, 11, 170, 22);
     ctx.fillStyle = '#00ff9d';
-    ctx.fillText(`DECK B: ${titleB.toUpperCase().slice(0, 18)}`, w - 230, 26);
+    ctx.fillText(`DECK B: ${titleB.toUpperCase().slice(0, 14)} (${(gainB * 100).toFixed(0)}%)`, w - 370, 26);
 
-    // Draw Deck A in Translucent Amber Layer (Reduced Opacity 0.42 for Clear See-Through)
-    ctx.save();
-    ctx.globalCompositeOperation = 'screen';
-    ctx.fillStyle = 'rgba(255, 140, 0, 0.42)';
+    ctx.fillStyle = '#181814';
+    ctx.strokeStyle = '#ffdd44';
+    ctx.fillRect(w - 200, 11, 185, 22);
+    ctx.strokeRect(w - 200, 11, 185, 22);
+    ctx.fillStyle = '#ffdd44';
+    ctx.fillText(`XFADE: ${xFade.toFixed(2)} [${(gainA*100).toFixed(0)}A / ${(gainB*100).toFixed(0)}B]`, w - 190, 26);
 
-    const dA = decks.a;
-    if (dA.peaks && dA.peaks.length > 0) {
-        const scaleX = w / dA.peaks.length;
-        for (let b = 0; b < dA.peaks.length; b++) {
-            const bx = b * scaleX;
-            const pMax = Math.abs(dA.peaks[b] || 0.05);
-            const pMin = (dA.minPeaks && !isNaN(dA.minPeaks[b])) ? dA.minPeaks[b] : -pMax;
-            let yTop = centerY + pMin * ampScale;
-            let yBot = centerY + pMax * ampScale;
-            if (isNaN(yTop) || isNaN(yBot)) {
-                yTop = centerY - pMax * ampScale;
-                yBot = centerY + pMax * ampScale;
-            }
-            ctx.fillRect(bx, yTop, Math.max(1, scaleX - 0.5), Math.max(2, yBot - yTop));
-        }
+    // Top Half: Deck A Waveform (Terracotta / Amber)
+    ctx.fillStyle = '#ff8c00';
+    for (let b = 0; b < len; b++) {
+        const bx = b * scaleX;
+        const valA = Math.abs(pA[b % pA.length] || 0.05) * gainA;
+        const yTop = centerY - valA * ampScale;
+        ctx.fillRect(bx, yTop, Math.max(1, scaleX - 0.5), Math.max(1, centerY - yTop));
     }
 
-    // Draw Deck B in Translucent Mint Layer (0.75 Opacity)
-    ctx.fillStyle = 'rgba(0, 255, 157, 0.75)';
-    const dB = decks.b;
-    if (dB.peaks && dB.peaks.length > 0) {
-        const scaleX = w / dB.peaks.length;
-        for (let b = 0; b < dB.peaks.length; b++) {
-            const bx = b * scaleX;
-            const pMax = Math.abs(dB.peaks[b] || 0.05);
-            const pMin = (dB.minPeaks && !isNaN(dB.minPeaks[b])) ? dB.minPeaks[b] : -pMax;
-            let yTop = centerY + pMin * ampScale;
-            let yBot = centerY + pMax * ampScale;
-            if (isNaN(yTop) || isNaN(yBot)) {
-                yTop = centerY - pMax * ampScale;
-                yBot = centerY + pMax * ampScale;
-            }
-            ctx.fillRect(bx, yTop, Math.max(1, scaleX - 0.5), Math.max(2, yBot - yTop));
-        }
+    // Bottom Half: Deck B Waveform (Forest Sage / Mint)
+    ctx.fillStyle = '#00ff9d';
+    for (let b = 0; b < len; b++) {
+        const bx = b * scaleX;
+        const valB = Math.abs(pB[b % pB.length] || 0.05) * gainB;
+        const yBot = centerY + valB * ampScale;
+        ctx.fillRect(bx, centerY, Math.max(1, scaleX - 0.5), Math.max(1, yBot - centerY));
     }
-    ctx.restore();
+
+    // Combined Sum Outline (Radiant Gold)
+    ctx.strokeStyle = '#ffdd44';
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    for (let b = 0; b < len; b++) {
+        const bx = b * scaleX + scaleX / 2;
+        const valA = Math.abs(pA[b % pA.length] || 0.05) * gainA;
+        const valB = Math.abs(pB[b % pB.length] || 0.05) * gainB;
+        const sumVal = Math.min(1.0, Math.sqrt(valA*valA + valB*valB));
+        const yTop = centerY - sumVal * ampScale;
+        if (b === 0) ctx.moveTo(bx, yTop); else ctx.lineTo(bx, yTop);
+    }
+    ctx.stroke();
+
+    ctx.beginPath();
+    for (let b = 0; b < len; b++) {
+        const bx = b * scaleX + scaleX / 2;
+        const valA = Math.abs(pA[b % pA.length] || 0.05) * gainA;
+        const valB = Math.abs(pB[b % pB.length] || 0.05) * gainB;
+        const sumVal = Math.min(1.0, Math.sqrt(valA*valA + valB*valB));
+        const yBot = centerY + sumVal * ampScale;
+        if (b === 0) ctx.moveTo(bx, yBot); else ctx.lineTo(bx, yBot);
+    }
+    ctx.stroke();
 
     canvas.toBlob(blob => {
         downloadBlob(blob, `${baseFileName}.jpg`);
     }, 'image/jpeg', 0.95);
 }
 window.exportCombinedWaveform = exportCombinedWaveform;
+
+// Export High-Resolution Circular Vinyl Spectrograph (PNG)
+function exportCircularSpectrogram(k, format = 'png') {
+    const d = decks[k];
+    const title = (d.buffer && d.buffer.title) || document.getElementById(`title-deck-${k}`)?.innerText || `Deck_${k.toUpperCase()}`;
+    const cleanWord = getFirstCleanWord(title, `Deck_${k.toUpperCase()}`);
+    const baseFileName = `remxr42_${cleanWord}_circular_spectrograph`;
+
+    const exportSize = 1200;
+    const canvas = document.createElement('canvas');
+    canvas.width = exportSize;
+    canvas.height = exportSize;
+    const ctx = canvas.getContext('2d');
+    const cx = exportSize / 2;
+    const cy = exportSize / 2;
+
+    // 1. Dark Technical Workspace Background
+    ctx.fillStyle = '#0a0c0e';
+    ctx.fillRect(0, 0, exportSize, exportSize);
+
+    // 2. Outer Technical Measurement Compass & Degree Dial
+    for (let deg = 0; deg < 360; deg += 5) {
+        const rad = deg * Math.PI / 180 - Math.PI / 2;
+        const isMajor = (deg % 30 === 0);
+        const isMid = (deg % 15 === 0);
+        const r1 = exportSize * 0.495;
+        const r2 = r1 - (isMajor ? 14 : (isMid ? 8 : 4));
+        ctx.strokeStyle = isMajor ? ((k === 'a') ? '#ff8c00' : '#00ff9d') : (isMid ? '#4a505a' : '#22262c');
+        ctx.lineWidth = isMajor ? 1.5 : 0.8;
+        ctx.beginPath();
+        ctx.moveTo(cx + r1 * Math.cos(rad), cy + r1 * Math.sin(rad));
+        ctx.lineTo(cx + r2 * Math.cos(rad), cy + r2 * Math.sin(rad));
+        ctx.stroke();
+
+        if (isMajor) {
+            ctx.fillStyle = isMajor ? ((k === 'a') ? '#ffaa00' : '#00ff9d') : '#888';
+            ctx.font = 'bold 10px "Space Mono", monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const rText = r2 - 12;
+            ctx.fillText(`${deg}°`, cx + rText * Math.cos(rad), cy + rText * Math.sin(rad));
+        }
+    }
+
+    // 3. Render High-Resolution Polar Micro-Groove Spectrograph
+    const spectroCanvas = generateProceduralPolarSpectrogram(k, exportSize * 0.90);
+    const rPlatter = exportSize * 0.45;
+    ctx.drawImage(spectroCanvas, cx - rPlatter, cy - rPlatter, rPlatter * 2, rPlatter * 2);
+
+    // 4. Center Label & Artwork
+    const rThumb = rPlatter * 0.28;
+
+    if (d.centerLabelImg && d.centerLabelImg.complete) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, rThumb, 0, 2 * Math.PI);
+        ctx.clip();
+        ctx.drawImage(d.centerLabelImg, cx - rThumb, cy - rThumb, rThumb * 2, rThumb * 2);
+        ctx.restore();
+    } else {
+        ctx.fillStyle = (k === 'a') ? '#cf4a18' : '#1e6e54';
+        ctx.beginPath();
+        ctx.arc(cx, cy, rThumb, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 16px "Space Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(k === 'a' ? 'DECK A' : 'DECK B', cx, cy);
+    }
+
+    // Inner Spindle Hole
+    ctx.fillStyle = '#08080a';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 14, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // 5. Technical Telemetry Overlay Header
+    ctx.fillStyle = '#101316';
+    ctx.fillRect(20, 20, 460, 62);
+    ctx.strokeStyle = (k === 'a') ? '#ff8c00' : '#00ff9d';
+    ctx.strokeRect(20, 20, 460, 62);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 13px "Space Mono", monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(`■ REMXR42 • DECK ${k.toUpperCase()} POLAR PHONOGRAM`, 34, 42);
+
+    ctx.fillStyle = (k === 'a') ? '#ffaa00' : '#00ff9d';
+    ctx.font = 'bold 10px "Space Mono", monospace';
+    ctx.fillText(`TITLE: ${title.toUpperCase().slice(0, 32)} • DUR: ${d.duration.toFixed(1)}s`, 34, 62);
+
+    canvas.toBlob(blob => {
+        downloadBlob(blob, `${baseFileName}.png`);
+    }, 'image/png');
+}
+window.exportCircularSpectrogram = exportCircularSpectrogram;
+
+// Export Master Mixed Polar Vinyl Artwork (PNG)
+function exportCombinedCircularSpectrogram(format = 'png') {
+    const titleA = (decks.a.buffer && decks.a.buffer.title) || document.getElementById('title-deck-a')?.innerText || 'Deck A';
+    const titleB = (decks.b.buffer && decks.b.buffer.title) || document.getElementById('title-deck-b')?.innerText || 'Deck B';
+    const wordA = getFirstCleanWord(titleA, 'DeckA');
+    const wordB = getFirstCleanWord(titleB, 'DeckB');
+    const baseFileName = `remxr42_${wordA}_${wordB}_master_polar_mix`;
+
+    const exportSize = 1400;
+    const canvas = document.createElement('canvas');
+    canvas.width = exportSize;
+    canvas.height = exportSize;
+    const ctx = canvas.getContext('2d');
+    const cx = exportSize / 2;
+    const cy = exportSize / 2;
+
+    // Dark Background
+    ctx.fillStyle = '#080a0c';
+    ctx.fillRect(0, 0, exportSize, exportSize);
+
+    const xFade = (typeof masterCrossfader !== 'undefined') ? masterCrossfader : 0.5;
+    const gainA = Math.cos(xFade * Math.PI / 2);
+    const gainB = Math.sin(xFade * Math.PI / 2);
+
+    const rPlatter = exportSize * 0.44;
+    const spectroA = generateProceduralPolarSpectrogram('a', rPlatter * 2);
+    const spectroB = generateProceduralPolarSpectrogram('b', rPlatter * 2);
+
+    // Draw Deck A with gainA opacity
+    ctx.save();
+    ctx.globalAlpha = Math.max(0.3, gainA);
+    ctx.drawImage(spectroA, cx - rPlatter, cy - rPlatter, rPlatter * 2, rPlatter * 2);
+    ctx.restore();
+
+    // Draw Deck B with screen blend & gainB opacity
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = Math.max(0.3, gainB);
+    ctx.drawImage(spectroB, cx - rPlatter, cy - rPlatter, rPlatter * 2, rPlatter * 2);
+    ctx.restore();
+
+    // Center Spindle Hub
+    ctx.fillStyle = '#141619';
+    ctx.beginPath();
+    ctx.arc(cx, cy, rPlatter * 0.28, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.strokeStyle = '#ffdd44';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12px "Space Mono", monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('MASTER MIX', cx, cy - 8);
+    ctx.fillStyle = '#ffdd44';
+    ctx.font = 'bold 10px "Space Mono", monospace';
+    ctx.fillText(`${(gainA*100).toFixed(0)}% A / ${(gainB*100).toFixed(0)}% B`, cx, cy + 10);
+
+    // Header
+    ctx.fillStyle = '#101316';
+    ctx.fillRect(20, 20, 480, 64);
+    ctx.strokeStyle = '#ffdd44';
+    ctx.strokeRect(20, 20, 480, 64);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 13px "Space Mono", monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText('■ REMXR42 • COMBINED MASTER POLAR PHONOGRAM', 34, 42);
+
+    ctx.fillStyle = '#ff8c00';
+    ctx.font = 'bold 9.5px "Space Mono", monospace';
+    ctx.fillText(`A: ${titleA.slice(0, 18)} (${(gainA*100).toFixed(0)}%)`, 34, 62);
+    ctx.fillStyle = '#00ff9d';
+    ctx.fillText(`B: ${titleB.slice(0, 18)} (${(gainB*100).toFixed(0)}%)`, 240, 62);
+
+    canvas.toBlob(blob => {
+        downloadBlob(blob, `${baseFileName}.png`);
+    }, 'image/png');
+}
+window.exportCombinedCircularSpectrogram = exportCombinedCircularSpectrogram;
 
 
 // 17. Linear Waveform Visualizer Strip Renderer with Tactile IN/OUT Tag-Dots/Pegs
@@ -3227,7 +3504,7 @@ function setupDeckControls(k) {
         };
     }
 
-    // Deck Sliced WAV Export Button
+    // Deck Sliced WAV & Waveform / Spectrograph Export Buttons
     const btnExport = document.getElementById(`btn-export-${k}`);
     if (btnExport) {
         btnExport.onclick = () => downloadDeckSliceAsWav(k);
@@ -3239,6 +3516,10 @@ function setupDeckControls(k) {
     const btnExportSvg = document.getElementById(`btn-export-svg-${k}`);
     if (btnExportSvg) {
         btnExportSvg.onclick = () => exportDeckWaveform(k, 'svg');
+    }
+    const btnExportPolar = document.getElementById(`btn-export-polar-${k}`);
+    if (btnExportPolar) {
+        btnExportPolar.onclick = () => exportCircularSpectrogram(k, 'png');
     }
 
     // Local Audio File Input
@@ -3316,6 +3597,10 @@ if (btnExportMixJpg) {
 const btnExportMixSvg = document.getElementById('btn-export-mix-svg');
 if (btnExportMixSvg) {
     btnExportMixSvg.onclick = () => exportCombinedWaveform('svg');
+}
+const btnExportMixPolar = document.getElementById('btn-export-mix-polar');
+if (btnExportMixPolar) {
+    btnExportMixPolar.onclick = () => exportCombinedCircularSpectrogram('png');
 }
 
 // 23. Real-Time 60 FPS Turntable & Waveform Animation Loop
