@@ -511,7 +511,11 @@
                     <span id="time-out-a" class="badge">4.0s</span>
                     <button class="btn btn-mini" id="btn-out-plus-a">+</button>
 
-                    <button class="btn btn-mini" id="btn-export-a" style="margin-left:auto; background:#ffaa00; color:#000;">💾 WAV</button>
+                    <div style="margin-left:auto; display:flex; gap:2px;">
+                        <button class="btn btn-mini" id="btn-export-a" style="background:#ffaa00; color:#000; padding:1px 5px; font-size:8px;" title="Export Sliced Audio as 16-bit WAV">💾 WAV</button>
+                        <button class="btn btn-mini" id="btn-export-jpg-a" style="background:#25272a; color:#ff8c00; border:1px solid #ff8c00; padding:1px 5px; font-size:8px;" title="Download Deck A Waveform as JPEG">🖼️ JPG</button>
+                        <button class="btn btn-mini" id="btn-export-svg-a" style="background:#25272a; color:#ff8c00; border:1px solid #ff8c00; padding:1px 5px; font-size:8px;" title="Download Deck A Waveform as SVG">📐 SVG</button>
+                    </div>
                 </div>
 
                 <!-- Deck A Hot Cues, Loop Presets & Pitch -->
@@ -582,7 +586,11 @@
                 <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
                     <button class="btn btn-te-orange" id="btn-play-both" style="width:100%; padding:5px; font-weight:800;">⚡ SYNC DUAL PLAY</button>
                     <button class="btn btn-te-dark" id="btn-stop-both" style="width:100%; padding:4px;">■ STOP ALL DECKS</button>
-                    <button class="btn" id="btn-export-mix" style="background:#ffaa00; color:#000; width:100%; padding:4px;">💾 EXPORT MASTER WAV</button>
+                    <button class="btn" id="btn-export-mix" style="background:#ffaa00; color:#000; width:100%; padding:4px; font-weight:bold;">💾 EXPORT MASTER WAV</button>
+                    <div style="display:flex; gap:4px; width:100%;">
+                        <button class="btn" id="btn-export-mix-jpg" style="flex:1; background:#25272a; color:#ffaa00; border:1px solid #ffaa00; padding:3px; font-size:8.5px; font-weight:bold;" title="Download Combined Dual Waveform as JPEG">🖼️ MIX JPG</button>
+                        <button class="btn" id="btn-export-mix-svg" style="flex:1; background:#25272a; color:#00ff9d; border:1px solid #00ff9d; padding:3px; font-size:8.5px; font-weight:bold;" title="Download Combined Dual Waveform as SVG">📐 MIX SVG</button>
+                    </div>
                 </div>
 
                 <!-- Crossfader Section -->
@@ -669,7 +677,11 @@
                     <span id="time-out-b" class="badge">4.0s</span>
                     <button class="btn btn-mini" id="btn-out-plus-b">+</button>
 
-                    <button class="btn btn-mini" id="btn-export-b" style="margin-left:auto; background:#ffaa00; color:#000;">💾 WAV</button>
+                    <div style="margin-left:auto; display:flex; gap:2px;">
+                        <button class="btn btn-mini" id="btn-export-b" style="background:#ffaa00; color:#000; padding:1px 5px; font-size:8px;" title="Export Sliced Audio as 16-bit WAV">💾 WAV</button>
+                        <button class="btn btn-mini" id="btn-export-jpg-b" style="background:#25272a; color:#00ff9d; border:1px solid #00ff9d; padding:1px 5px; font-size:8px;" title="Download Deck B Waveform as JPEG">🖼️ JPG</button>
+                        <button class="btn btn-mini" id="btn-export-svg-b" style="background:#25272a; color:#00ff9d; border:1px solid #00ff9d; padding:1px 5px; font-size:8px;" title="Download Deck B Waveform as SVG">📐 SVG</button>
+                    </div>
                 </div>
 
                 <!-- Deck B Hot Cues, Loop Presets & Pitch -->
@@ -1527,7 +1539,485 @@ function renderTurntable(k) {
 }
 window.renderTurntable = renderTurntable;
 
-// 16. Linear Waveform Visualizer Strip Renderer
+// 16. PCM AUDIO EXPORTER & WAV FILE BUILDER
+function audioBufferToWavBlob(buffer, optStartTime = 0, optEndTime = null) {
+    if (!buffer) return null;
+    const numChannels = buffer.numberOfChannels || 2;
+    const sampleRate = buffer.sampleRate || 44100;
+    const startOffset = Math.floor(Math.max(0, optStartTime) * sampleRate);
+    const endOffset = Math.floor(Math.min(buffer.duration, (optEndTime !== null ? optEndTime : buffer.duration)) * sampleRate);
+    const numFrames = Math.max(1, endOffset - startOffset);
+    const bytesPerSample = 2; // 16-bit PCM
+    const blockAlign = numChannels * bytesPerSample;
+    const byteRate = sampleRate * blockAlign;
+    const dataSize = numFrames * blockAlign;
+    const bufferSize = 44 + dataSize;
+
+    const arrayBuffer = new ArrayBuffer(bufferSize);
+    const view = new DataView(arrayBuffer);
+
+    function writeString(offset, string) {
+        for (let i = 0; i < string.length; i++) {
+            view.setUint8(offset + i, string.charCodeAt(i));
+        }
+    }
+
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + dataSize, true);
+    writeString(8, 'WAVE');
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true); // PCM
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, byteRate, true);
+    view.setUint16(32, blockAlign, true);
+    view.setUint16(34, bytesPerSample * 8, true);
+    writeString(36, 'data');
+    view.setUint32(40, dataSize, true);
+
+    const channels = [];
+    for (let ch = 0; ch < numChannels; ch++) {
+        channels.push(buffer.getChannelData(ch));
+    }
+
+    let offset = 44;
+    for (let i = 0; i < numFrames; i++) {
+        for (let ch = 0; ch < numChannels; ch++) {
+            const sample = Math.max(-1, Math.min(1, channels[ch][startOffset + i] || 0));
+            const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+            view.setInt16(offset, intSample, true);
+            offset += 2;
+        }
+    }
+    return new Blob([view], { type: 'audio/wav' });
+}
+window.audioBufferToWavBlob = audioBufferToWavBlob;
+
+function downloadDeckSliceAsWav(k) {
+    const d = decks[k];
+    if (!d.buffer) {
+        alert('No audio loaded in deck to export.');
+        return;
+    }
+    const blob = audioBufferToWavBlob(d.buffer, d.inTime, d.outTime);
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = `remxr42_deck_${k}_${d.inTime.toFixed(2)}s_${d.outTime.toFixed(2)}s.wav`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 200);
+}
+window.downloadDeckSliceAsWav = downloadDeckSliceAsWav;
+
+function downloadMasterMixAsWav() {
+    ensureAudioContext();
+    const durA = decks.a.buffer ? decks.a.duration : 0;
+    const durB = decks.b.buffer ? decks.b.duration : 0;
+    const maxDur = Math.max(durA, durB, 4.0);
+    const sr = actx ? actx.sampleRate : 44100;
+    const numFrames = Math.floor(sr * maxDur);
+
+    const mixBuf = actx ? actx.createBuffer(2, numFrames, sr) : null;
+    if (!mixBuf) return;
+
+    const left = mixBuf.getChannelData(0);
+    const right = mixBuf.getChannelData(1);
+
+    const gainA = Math.cos(masterCrossfader * Math.PI / 2);
+    const gainB = Math.sin(masterCrossfader * Math.PI / 2);
+
+    ['a', 'b'].forEach(k => {
+        const d = decks[k];
+        if (!d.buffer) return;
+        const g = (k === 'a') ? gainA : gainB;
+        const bL = d.buffer.getChannelData(0);
+        const bR = d.buffer.numberOfChannels > 1 ? d.buffer.getChannelData(1) : bL;
+        const len = d.buffer.length;
+
+        for (let i = 0; i < numFrames; i++) {
+            const srcIdx = i % len;
+            left[i] += (bL[srcIdx] || 0) * g;
+            right[i] += (bR[srcIdx] || 0) * g;
+        }
+    });
+
+    const blob = audioBufferToWavBlob(mixBuf, 0, maxDur);
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = `remxr42_master_mix.wav`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 200);
+}
+window.downloadMasterMixAsWav = downloadMasterMixAsWav;
+
+// =========================================================================
+// WAVEFORM IMAGE & VECTOR EXPORTERS (JPEG & SVG)
+// =========================================================================
+
+function downloadBlob(blob, filename) {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 300);
+}
+
+// Export Individual Deck Waveform (JPEG / SVG)
+function exportDeckWaveform(k, format = 'jpg') {
+    const d = decks[k];
+    const trackTitle = (document.getElementById(`yt-title-${k}`) ? document.getElementById(`yt-title-${k}`).innerText : d.name) || `DECK ${k.toUpperCase()}`;
+    const primaryColor = (k === 'a') ? '#ff8c00' : '#00ff9d';
+    const coreColor = (k === 'a') ? '#ffe28a' : '#d4fff0';
+    const w = 1200;
+    const h = 340;
+    const centerY = h / 2 + 18;
+    const ampScale = (h - 70) / 2;
+
+    if (format === 'svg') {
+        let svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
+    <rect width="${w}" height="${h}" fill="#0a0c0e"/>
+    <!-- Technical Grid -->
+    <g stroke="#181b20" stroke-width="1">`;
+
+        for (let x = 0; x < w; x += 40) {
+            svg += `<line x1="${x}" y1="36" x2="${x}" y2="${h}" />`;
+        }
+        svg += `<line x1="0" y1="${centerY}" x2="${w}" y2="${centerY}" stroke="#252932"/>
+    </g>
+    <!-- Header Typography -->
+    <rect x="0" y="0" width="${w}" height="36" fill="#121518"/>
+    <text x="16" y="23" fill="${primaryColor}" font-family="'Space Mono', monospace" font-size="12" font-weight="bold">■ REMXR42 • DECK ${k.toUpperCase()}: ${trackTitle.replace(/&/g, '&amp;')}</text>
+    <text x="${w - 16}" y="23" text-anchor="end" fill="#888888" font-family="'Space Mono', monospace" font-size="10.5">LOOP: ${d.inTime.toFixed(2)}s - ${d.outTime.toFixed(2)}s (${(d.outTime - d.inTime).toFixed(2)}s) • TOTAL: ${d.duration.toFixed(2)}s</text>
+    <!-- Sliced Loop Region Highlight -->`;
+
+        if (d.duration > 0) {
+            const inX = (d.inTime / d.duration) * w;
+            const outX = (d.outTime / d.duration) * w;
+            svg += `<rect x="${inX}" y="36" width="${Math.max(2, outX - inX)}" height="${h - 36}" fill="${primaryColor}" fill-opacity="0.22"/>
+            <line x1="${inX}" y1="36" x2="${inX}" y2="${h}" stroke="#ff4800" stroke-width="2"/>
+            <line x1="${outX}" y1="36" x2="${outX}" y2="${h}" stroke="#ff0055" stroke-width="2"/>
+            <rect x="${inX}" y="36" width="22" height="14" fill="#ff4800"/>
+            <text x="${inX + 3}" y="47" fill="#fff" font-family="'Space Mono', monospace" font-size="8.5" font-weight="bold">IN</text>
+            <rect x="${outX - 26}" y="36" width="26" height="14" fill="#ff0055"/>
+            <text x="${outX - 23}" y="47" fill="#fff" font-family="'Space Mono', monospace" font-size="8.5" font-weight="bold">OUT</text>`;
+        }
+
+        svg += `<g fill="${primaryColor}">`;
+        if (d.peaks && d.peaks.length > 0) {
+            const binCount = d.peaks.length;
+            const scaleX = w / binCount;
+            for (let b = 0; b < binCount; b++) {
+                const bx = b * scaleX;
+                const pMax = Math.abs(d.peaks[b] || 0.05);
+                const pMin = (d.minPeaks && !isNaN(d.minPeaks[b])) ? d.minPeaks[b] : -pMax;
+                let yTop = centerY + pMin * ampScale;
+                let yBot = centerY + pMax * ampScale;
+                if (isNaN(yTop) || isNaN(yBot)) {
+                    yTop = centerY - pMax * ampScale;
+                    yBot = centerY + pMax * ampScale;
+                }
+                const barH = Math.max(2, yBot - yTop);
+                svg += `<rect x="${bx.toFixed(1)}" y="${yTop.toFixed(1)}" width="${Math.max(1, scaleX - 0.5).toFixed(1)}" height="${barH.toFixed(1)}" />`;
+            }
+        }
+        svg += `</g>
+</svg>`;
+        const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+        downloadBlob(blob, `remxr42_deck_${k}_${trackTitle.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0,20)}_waveform.svg`);
+        return;
+    }
+
+    // JPEG Export via Offscreen Canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#0a0c0e';
+    ctx.fillRect(0, 0, w, h);
+
+    // Grid
+    ctx.strokeStyle = '#181b20';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < w; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 36); ctx.lineTo(x, h);
+        ctx.stroke();
+    }
+    ctx.strokeStyle = '#252932';
+    ctx.beginPath();
+    ctx.moveTo(0, centerY); ctx.lineTo(w, centerY);
+    ctx.stroke();
+
+    // Header Bar
+    ctx.fillStyle = '#121518';
+    ctx.fillRect(0, 0, w, 36);
+
+    ctx.fillStyle = primaryColor;
+    ctx.font = 'bold 12px "Space Mono", monospace';
+    ctx.fillText(`■ REMXR42 • DECK ${k.toUpperCase()}: ${trackTitle.toUpperCase()}`, 16, 23);
+
+    ctx.fillStyle = '#888888';
+    ctx.font = '10px "Space Mono", monospace';
+    const subInfo = `LOOP: ${d.inTime.toFixed(2)}s - ${d.outTime.toFixed(2)}s (${(d.outTime - d.inTime).toFixed(2)}s) • TOTAL: ${d.duration.toFixed(2)}s • 44.1kHz`;
+    ctx.fillText(subInfo, w - ctx.measureText(subInfo).width - 16, 23);
+
+    // Loop Region Highlight
+    if (d.duration > 0) {
+        const inX = (d.inTime / d.duration) * w;
+        const outX = (d.outTime / d.duration) * w;
+
+        ctx.fillStyle = (k === 'a') ? 'rgba(255, 140, 0, 0.25)' : 'rgba(0, 255, 157, 0.22)';
+        ctx.fillRect(inX, 36, Math.max(2, outX - inX), h - 36);
+
+        ctx.fillStyle = '#ff4800';
+        ctx.fillRect(inX - 1, 36, 2, h - 36);
+        ctx.fillRect(inX, 36, 22, 14);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 8.5px "Space Mono", monospace';
+        ctx.fillText('IN', inX + 3, 47);
+
+        ctx.fillStyle = '#ff0055';
+        ctx.fillRect(outX - 1, 36, 2, h - 36);
+        ctx.fillRect(outX - 26, 36, 26, 14);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText('OUT', outX - 23, 47);
+    }
+
+    // Waveform Peaks
+    if (d.peaks && d.peaks.length > 0) {
+        const binCount = d.peaks.length;
+        const scaleX = w / binCount;
+
+        ctx.save();
+        ctx.shadowColor = primaryColor;
+        ctx.shadowBlur = 4;
+
+        for (let b = 0; b < binCount; b++) {
+            const bx = b * scaleX;
+            const pMax = Math.abs(d.peaks[b] || 0.05);
+            const pMin = (d.minPeaks && !isNaN(d.minPeaks[b])) ? d.minPeaks[b] : -pMax;
+            let yTop = centerY + pMin * ampScale;
+            let yBot = centerY + pMax * ampScale;
+            if (isNaN(yTop) || isNaN(yBot)) {
+                yTop = centerY - pMax * ampScale;
+                yBot = centerY + pMax * ampScale;
+            }
+            if (yBot - yTop < 2) {
+                yTop = centerY - 1;
+                yBot = centerY + 1;
+            }
+
+            ctx.fillStyle = primaryColor;
+            ctx.fillRect(bx, yTop, Math.max(1, scaleX - 0.5), yBot - yTop);
+
+            if (yBot - yTop > 8) {
+                ctx.fillStyle = coreColor;
+                ctx.fillRect(bx, yTop + 2, Math.max(1, scaleX - 0.5), yBot - yTop - 4);
+            }
+        }
+        ctx.restore();
+    }
+
+    canvas.toBlob(blob => {
+        downloadBlob(blob, `remxr42_deck_${k}_${trackTitle.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0,20)}_waveform.jpg`);
+    }, 'image/jpeg', 0.95);
+}
+window.exportDeckWaveform = exportDeckWaveform;
+
+// Export Combined Dual-Deck Waveform with Translucent Layering & Color Blending (JPEG / SVG)
+function exportCombinedWaveform(format = 'jpg') {
+    const titleA = (document.getElementById('yt-title-a') ? document.getElementById('yt-title-a').innerText : decks.a.name) || 'DECK A LEAD';
+    const titleB = (document.getElementById('yt-title-b') ? document.getElementById('yt-title-b').innerText : decks.b.name) || 'DECK B BASS';
+
+    const w = 1400;
+    const h = 420;
+    const centerY = h / 2 + 20;
+    const ampScale = (h - 80) / 2;
+
+    if (format === 'svg') {
+        let svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
+    <rect width="${w}" height="${h}" fill="#080a0c"/>
+    <!-- Technical Grid -->
+    <g stroke="#15181c" stroke-width="1">`;
+
+        for (let x = 0; x < w; x += 40) {
+            svg += `<line x1="${x}" y1="44" x2="${x}" y2="${h}" />`;
+        }
+        svg += `<line x1="0" y1="${centerY}" x2="${w}" y2="${centerY}" stroke="#252932"/>
+    </g>
+    <!-- Header Bar -->
+    <rect x="0" y="0" width="${w}" height="44" fill="#101316"/>
+    <text x="18" y="27" fill="#ffffff" font-family="'Space Mono', monospace" font-size="12.5" font-weight="bold">■ REMXR42 • COMBINED DUAL-DECK MASTER WAVEFORM</text>
+    
+    <!-- Legend Tags -->
+    <rect x="${w - 480}" y="12" width="220" height="20" fill="#1f1508" stroke="#ff8c00" rx="2"/>
+    <text x="${w - 470}" y="26" fill="#ff8c00" font-family="'Space Mono', monospace" font-size="9" font-weight="bold">DECK A: ${titleA.replace(/&/g, '&amp;').slice(0, 18)}</text>
+    
+    <rect x="${w - 240}" y="12" width="220" height="20" fill="#051c14" stroke="#00ff9d" rx="2"/>
+    <text x="${w - 230}" y="26" fill="#00ff9d" font-family="'Space Mono', monospace" font-size="9" font-weight="bold">DECK B: ${titleB.replace(/&/g, '&amp;').slice(0, 18)}</text>
+
+    <!-- Translucent Overlay Waveforms with Screen Blending -->
+    <g style="mix-blend-mode: screen; opacity: 0.72;" fill="#ff8c00">`;
+
+        // Deck A Waveform
+        const dA = decks.a;
+        if (dA.peaks && dA.peaks.length > 0) {
+            const scaleX = w / dA.peaks.length;
+            for (let b = 0; b < dA.peaks.length; b++) {
+                const bx = b * scaleX;
+                const pMax = Math.abs(dA.peaks[b] || 0.05);
+                const pMin = (dA.minPeaks && !isNaN(dA.minPeaks[b])) ? dA.minPeaks[b] : -pMax;
+                const yTop = centerY + pMin * ampScale;
+                const yBot = centerY + pMax * ampScale;
+                svg += `<rect x="${bx.toFixed(1)}" y="${yTop.toFixed(1)}" width="${Math.max(1, scaleX - 0.5).toFixed(1)}" height="${Math.max(2, yBot - yTop).toFixed(1)}"/>`;
+            }
+        }
+        svg += `</g>
+    <g style="mix-blend-mode: screen; opacity: 0.72;" fill="#00ff9d">`;
+
+        // Deck B Waveform
+        const dB = decks.b;
+        if (dB.peaks && dB.peaks.length > 0) {
+            const scaleX = w / dB.peaks.length;
+            for (let b = 0; b < dB.peaks.length; b++) {
+                const bx = b * scaleX;
+                const pMax = Math.abs(dB.peaks[b] || 0.05);
+                const pMin = (dB.minPeaks && !isNaN(dB.minPeaks[b])) ? dB.minPeaks[b] : -pMax;
+                const yTop = centerY + pMin * ampScale;
+                const yBot = centerY + pMax * ampScale;
+                svg += `<rect x="${bx.toFixed(1)}" y="${yTop.toFixed(1)}" width="${Math.max(1, scaleX - 0.5).toFixed(1)}" height="${Math.max(2, yBot - yTop).toFixed(1)}"/>`;
+            }
+        }
+        svg += `</g>
+</svg>`;
+        const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' });
+        downloadBlob(blob, `remxr42_combined_master_waveform.svg`);
+        return;
+    }
+
+    // Combined JPEG Export via Canvas with Screen Opacity Blending
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    ctx.fillStyle = '#080a0c';
+    ctx.fillRect(0, 0, w, h);
+
+    // Grid
+    ctx.strokeStyle = '#15181c';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < w; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 44); ctx.lineTo(x, h);
+        ctx.stroke();
+    }
+    ctx.strokeStyle = '#252932';
+    ctx.beginPath();
+    ctx.moveTo(0, centerY); ctx.lineTo(w, centerY);
+    ctx.stroke();
+
+    // Header Bar
+    ctx.fillStyle = '#101316';
+    ctx.fillRect(0, 0, w, 44);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 12.5px "Space Mono", monospace';
+    ctx.fillText('■ REMXR42 • COMBINED DUAL-DECK MASTER WAVEFORM', 18, 27);
+
+    // Legend Badges
+    ctx.fillStyle = '#1f1508';
+    ctx.strokeStyle = '#ff8c00';
+    ctx.lineWidth = 1;
+    ctx.fillRect(w - 480, 11, 220, 22);
+    ctx.strokeRect(w - 480, 11, 220, 22);
+    ctx.fillStyle = '#ff8c00';
+    ctx.font = 'bold 9.5px "Space Mono", monospace';
+    ctx.fillText(`DECK A: ${titleA.toUpperCase().slice(0, 18)}`, w - 470, 26);
+
+    ctx.fillStyle = '#051c14';
+    ctx.strokeStyle = '#00ff9d';
+    ctx.fillRect(w - 240, 11, 220, 22);
+    ctx.strokeRect(w - 240, 11, 220, 22);
+    ctx.fillStyle = '#00ff9d';
+    ctx.fillText(`DECK B: ${titleB.toUpperCase().slice(0, 18)}`, w - 230, 26);
+
+    // Draw Deck A in Translucent Amber Layer
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    ctx.fillStyle = 'rgba(255, 140, 0, 0.75)';
+
+    const dA = decks.a;
+    if (dA.peaks && dA.peaks.length > 0) {
+        const scaleX = w / dA.peaks.length;
+        for (let b = 0; b < dA.peaks.length; b++) {
+            const bx = b * scaleX;
+            const pMax = Math.abs(dA.peaks[b] || 0.05);
+            const pMin = (dA.minPeaks && !isNaN(dA.minPeaks[b])) ? dA.minPeaks[b] : -pMax;
+            let yTop = centerY + pMin * ampScale;
+            let yBot = centerY + pMax * ampScale;
+            if (isNaN(yTop) || isNaN(yBot)) {
+                yTop = centerY - pMax * ampScale;
+                yBot = centerY + pMax * ampScale;
+            }
+            ctx.fillRect(bx, yTop, Math.max(1, scaleX - 0.5), Math.max(2, yBot - yTop));
+        }
+    }
+
+    // Draw Deck B in Translucent Mint Layer (Blends into luminous Gold where overlapping)
+    ctx.fillStyle = 'rgba(0, 255, 157, 0.75)';
+    const dB = decks.b;
+    if (dB.peaks && dB.peaks.length > 0) {
+        const scaleX = w / dB.peaks.length;
+        for (let b = 0; b < dB.peaks.length; b++) {
+            const bx = b * scaleX;
+            const pMax = Math.abs(dB.peaks[b] || 0.05);
+            const pMin = (dB.minPeaks && !isNaN(dB.minPeaks[b])) ? dB.minPeaks[b] : -pMax;
+            let yTop = centerY + pMin * ampScale;
+            let yBot = centerY + pMax * ampScale;
+            if (isNaN(yTop) || isNaN(yBot)) {
+                yTop = centerY - pMax * ampScale;
+                yBot = centerY + pMax * ampScale;
+            }
+            ctx.fillRect(bx, yTop, Math.max(1, scaleX - 0.5), Math.max(2, yBot - yTop));
+        }
+    }
+    ctx.restore();
+
+    canvas.toBlob(blob => {
+        downloadBlob(blob, `remxr42_combined_master_waveform.jpg`);
+    }, 'image/jpeg', 0.95);
+}
+window.exportCombinedWaveform = exportCombinedWaveform;
+
+
+// 17. Linear Waveform Visualizer Strip Renderer with Tactile IN/OUT Handles
 function renderLinearStrip(k) {
     const d = decks[k];
     const cv = d.linCanvas;
@@ -1537,11 +2027,11 @@ function renderLinearStrip(k) {
     const h = cv.height;
     const centerY = h / 2;
 
-    // Dark Technical Background
+    // 1. Dark Technical Background
     ctx.fillStyle = '#0a0c0e';
     ctx.fillRect(0, 0, w, h);
 
-    // Technical Grid Lines
+    // 2. Technical Grid Lines
     ctx.strokeStyle = '#181b20';
     ctx.lineWidth = 1;
     for (let gx = 0; gx < w; gx += 40) {
@@ -1558,6 +2048,7 @@ function renderLinearStrip(k) {
     const coreColor = (k === 'a') ? '#ffe28a' : '#d4fff0';
     const shadowColor = (k === 'a') ? 'rgba(255, 140, 0, 0.45)' : 'rgba(0, 255, 157, 0.45)';
 
+    // 3. True Audio Waveform Peaks
     if (d.peaks && d.peaks.length > 0) {
         const binCount = d.peaks.length;
         const scaleX = w / binCount;
@@ -1593,33 +2084,65 @@ function renderLinearStrip(k) {
         ctx.restore();
     }
 
-    // Playhead Scrubber Line
-    if (d.duration > 0) {
-        const playX = (d.playbackPosition / d.duration) * w;
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(playX, 0); ctx.lineTo(playX, h);
-        ctx.stroke();
-    }
-
-    // Loop Region Markers
+    // 4. Shaded Active Loop Region
     if (d.duration > 0) {
         const inX = (d.inTime / d.duration) * w;
         const outX = (d.outTime / d.duration) * w;
 
-        ctx.fillStyle = (k === 'a') ? 'rgba(255, 72, 0, 0.22)' : 'rgba(0, 255, 157, 0.22)';
+        ctx.fillStyle = (k === 'a') ? 'rgba(255, 72, 0, 0.28)' : 'rgba(0, 255, 157, 0.25)';
         ctx.fillRect(inX, 0, Math.max(2, outX - inX), h);
 
+        // Splice IN Marker Line & Flag Tab
         ctx.fillStyle = '#ff4800';
-        ctx.fillRect(inX, 0, 2, h);
-        ctx.fillStyle = '#ff4800';
-        ctx.fillRect(outX - 2, 0, 2, h);
+        ctx.fillRect(inX - 1.5, 0, 3, h);
+
+        ctx.beginPath();
+        ctx.moveTo(inX, 0);
+        ctx.lineTo(inX + 18, 0);
+        ctx.lineTo(inX + 18, 14);
+        ctx.lineTo(inX + 8, 14);
+        ctx.lineTo(inX, 10);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 8.5px "Space Mono", monospace';
+        ctx.fillText('IN', inX + 3, 10);
+
+        // Splice OUT Marker Line & Flag Tab
+        ctx.fillStyle = '#ff0055';
+        ctx.fillRect(outX - 1.5, 0, 3, h);
+
+        ctx.beginPath();
+        ctx.moveTo(outX, 0);
+        ctx.lineTo(outX - 22, 0);
+        ctx.lineTo(outX - 22, 14);
+        ctx.lineTo(outX - 8, 14);
+        ctx.lineTo(outX, 10);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 8.5px "Space Mono", monospace';
+        ctx.fillText('OUT', outX - 20, 10);
+    }
+
+    // 5. Playhead Scrubber Position
+    if (d.duration > 0) {
+        const playX = (d.playbackPosition / d.duration) * w;
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(playX, 0); ctx.lineTo(playX, h);
+        ctx.stroke();
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(playX, h - 5, 4.5, 0, 2 * Math.PI);
+        ctx.fill();
     }
 }
 window.renderLinearStrip = renderLinearStrip;
 
-// 17. Web Audio Playback Engine
+// 18. Web Audio Playback Engine
 function playDeckSlice(k, startOffset = null) {
     const d = decks[k];
     ensureAudioContext();
@@ -1645,7 +2168,6 @@ function playDeckSlice(k, startOffset = null) {
 
     const inT = d.inTime;
     const outT = d.outTime;
-    const loopDur = Math.max(0.1, outT - inT);
 
     src.loop = d.isLooping;
     if (d.isLooping) {
@@ -1683,7 +2205,7 @@ function stopDeckSlice(k) {
 }
 window.stopDeckSlice = stopDeckSlice;
 
-// 18. Turntable Mouse & Touch Scratching
+// 19. Turntable Mouse & Touch Scratching
 function setupTurntableInteraction(k) {
     const d = decks[k];
     const cv = d.ttCanvas;
@@ -1754,39 +2276,120 @@ function setupTurntableInteraction(k) {
     window.addEventListener('touchmove', onMove, { passive: false });
     window.addEventListener('touchend', onUp);
 }
+window.setupTurntableInteraction = setupTurntableInteraction;
 
-// 19. Linear Waveform Scrubbing
+// 20. Linear Waveform Scrubbing & Tactile IN/OUT Handle Manipulation
 function setupLinearInteraction(k) {
     const d = decks[k];
     const cv = d.linCanvas;
     if (!cv) return;
 
-    let isScrubbing = false;
+    let dragMode = null; // 'in', 'out', 'scrub'
 
-    function scrub(e) {
+    function getNormX(e) {
         const rect = cv.getBoundingClientRect();
         const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-        const norm = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-        d.playbackPosition = norm * d.duration;
-        if (d.isPlaying) {
-            playDeckSlice(k, d.playbackPosition);
+        return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    }
+
+    function getPixels(e) {
+        const rect = cv.getBoundingClientRect();
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        return clientX - rect.left;
+    }
+
+    function onDown(e) {
+        ensureAudioContext();
+        if (d.duration <= 0) return;
+
+        const w = cv.width;
+        const px = getPixels(e);
+        const inX = (d.inTime / d.duration) * w;
+        const outX = (d.outTime / d.duration) * w;
+
+        // Hit testing for IN and OUT handles (16px tolerance)
+        if (Math.abs(px - inX) <= 16) {
+            dragMode = 'in';
+            cv.style.cursor = 'ew-resize';
+        } else if (Math.abs(px - outX) <= 16) {
+            dragMode = 'out';
+            cv.style.cursor = 'ew-resize';
+        } else {
+            dragMode = 'scrub';
+            cv.style.cursor = 'crosshair';
+            const norm = getNormX(e);
+            d.playbackPosition = norm * d.duration;
+            if (d.isPlaying) {
+                playDeckSlice(k, d.playbackPosition);
+            }
         }
+
         renderLinearStrip(k);
         renderTurntable(k);
     }
 
-    cv.addEventListener('mousedown', e => {
-        ensureAudioContext();
-        isScrubbing = true;
-        scrub(e);
-    });
-    window.addEventListener('mousemove', e => {
-        if (isScrubbing) scrub(e);
-    });
-    window.addEventListener('mouseup', () => { isScrubbing = false; });
-}
+    function onMove(e) {
+        if (d.duration <= 0) return;
 
-// 20. Deck Controls & Buttons
+        if (!dragMode) {
+            // Hover cursor indication
+            const w = cv.width;
+            const px = getPixels(e);
+            const inX = (d.inTime / d.duration) * w;
+            const outX = (d.outTime / d.duration) * w;
+
+            if (Math.abs(px - inX) <= 16 || Math.abs(px - outX) <= 16) {
+                cv.style.cursor = 'ew-resize';
+            } else {
+                cv.style.cursor = 'pointer';
+            }
+            return;
+        }
+
+        const norm = getNormX(e);
+        const timeVal = norm * d.duration;
+
+        if (dragMode === 'in') {
+            d.inTime = Math.max(0, Math.min(d.outTime - 0.05, timeVal));
+            if (d.sourceNode && d.isLooping) {
+                try { d.sourceNode.loopStart = d.inTime; } catch(err) {}
+            }
+            updateBadges(k);
+        } else if (dragMode === 'out') {
+            d.outTime = Math.min(d.duration, Math.max(d.inTime + 0.05, timeVal));
+            if (d.sourceNode && d.isLooping) {
+                try { d.sourceNode.loopEnd = d.outTime; } catch(err) {}
+            }
+            updateBadges(k);
+        } else if (dragMode === 'scrub') {
+            d.playbackPosition = timeVal;
+            if (d.isPlaying) {
+                playDeckSlice(k, d.playbackPosition);
+            }
+        }
+
+        renderLinearStrip(k);
+        renderTurntable(k);
+    }
+
+    function onUp() {
+        if (dragMode) {
+            dragMode = null;
+            cv.style.cursor = 'default';
+        }
+    }
+
+    cv.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+
+    cv.addEventListener('touchstart', onDown, { passive: false });
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onUp);
+}
+window.setupLinearInteraction = setupLinearInteraction;
+
+// 21. Deck Controls & Tactile Keycaps (Fully Wired)
 function setupDeckControls(k) {
     const d = decks[k];
 
@@ -1832,19 +2435,75 @@ function setupDeckControls(k) {
         };
     }
 
-    // IN / OUT Loop Points
+    // SPLICE IN: Set Button & Nudge +/-
     const btnSetIn = document.getElementById(`btn-set-in-${k}`);
     if (btnSetIn) {
         btnSetIn.onclick = () => {
-            d.inTime = Math.min(d.outTime - 0.1, d.playbackPosition);
+            d.inTime = Math.max(0, Math.min(d.outTime - 0.05, d.playbackPosition));
+            if (d.sourceNode && d.isLooping) {
+                try { d.sourceNode.loopStart = d.inTime; } catch(e) {}
+            }
             updateBadges(k);
             renderLinearStrip(k);
         };
     }
+    const btnInMinus = document.getElementById(`btn-in-minus-${k}`);
+    if (btnInMinus) {
+        btnInMinus.onclick = e => {
+            const step = (e && e.shiftKey) ? 0.01 : 0.1;
+            d.inTime = Math.max(0, d.inTime - step);
+            if (d.sourceNode && d.isLooping) {
+                try { d.sourceNode.loopStart = d.inTime; } catch(err) {}
+            }
+            updateBadges(k);
+            renderLinearStrip(k);
+        };
+    }
+    const btnInPlus = document.getElementById(`btn-in-plus-${k}`);
+    if (btnInPlus) {
+        btnInPlus.onclick = e => {
+            const step = (e && e.shiftKey) ? 0.01 : 0.1;
+            d.inTime = Math.min(d.outTime - 0.05, d.inTime + step);
+            if (d.sourceNode && d.isLooping) {
+                try { d.sourceNode.loopStart = d.inTime; } catch(err) {}
+            }
+            updateBadges(k);
+            renderLinearStrip(k);
+        };
+    }
+
+    // SPLICE OUT: Set Button & Nudge +/-
     const btnSetOut = document.getElementById(`btn-set-out-${k}`);
     if (btnSetOut) {
         btnSetOut.onclick = () => {
-            d.outTime = Math.max(d.inTime + 0.1, d.playbackPosition);
+            d.outTime = Math.min(d.duration, Math.max(d.inTime + 0.05, d.playbackPosition));
+            if (d.sourceNode && d.isLooping) {
+                try { d.sourceNode.loopEnd = d.outTime; } catch(e) {}
+            }
+            updateBadges(k);
+            renderLinearStrip(k);
+        };
+    }
+    const btnOutMinus = document.getElementById(`btn-out-minus-${k}`);
+    if (btnOutMinus) {
+        btnOutMinus.onclick = e => {
+            const step = (e && e.shiftKey) ? 0.01 : 0.1;
+            d.outTime = Math.max(d.inTime + 0.05, d.outTime - step);
+            if (d.sourceNode && d.isLooping) {
+                try { d.sourceNode.loopEnd = d.outTime; } catch(err) {}
+            }
+            updateBadges(k);
+            renderLinearStrip(k);
+        };
+    }
+    const btnOutPlus = document.getElementById(`btn-out-plus-${k}`);
+    if (btnOutPlus) {
+        btnOutPlus.onclick = e => {
+            const step = (e && e.shiftKey) ? 0.01 : 0.1;
+            d.outTime = Math.min(d.duration, d.outTime + step);
+            if (d.sourceNode && d.isLooping) {
+                try { d.sourceNode.loopEnd = d.outTime; } catch(err) {}
+            }
             updateBadges(k);
             renderLinearStrip(k);
         };
@@ -1863,6 +2522,12 @@ function setupDeckControls(k) {
                     d.inTime = Math.max(0, Math.min(d.duration - dur, d.playbackPosition));
                     d.outTime = Math.min(d.duration, d.inTime + dur);
                 }
+                if (d.sourceNode && d.isLooping) {
+                    try {
+                        d.sourceNode.loopStart = d.inTime;
+                        d.sourceNode.loopEnd = d.outTime;
+                    } catch(e) {}
+                }
                 updateBadges(k);
                 renderLinearStrip(k);
                 if (d.isPlaying) playDeckSlice(k, d.inTime);
@@ -1870,7 +2535,35 @@ function setupDeckControls(k) {
         }
     });
 
-    // Pitch Range Slider
+    // Hot Cues & SET Mode
+    const btnSetMode = document.getElementById(`btn-setmode-${k}`);
+    if (btnSetMode) {
+        btnSetMode.onclick = () => {
+            d.cueSetMode = !d.cueSetMode;
+            btnSetMode.classList.toggle('active', d.cueSetMode);
+        };
+    }
+
+    [1, 2, 3, 4].forEach(cueNum => {
+        const btnCue = document.getElementById(`btn-hotcue-${cueNum}-${k}`);
+        if (btnCue) {
+            btnCue.onclick = () => {
+                if (d.cueSetMode) {
+                    d.hotCues[cueNum - 1] = d.playbackPosition;
+                    d.cueSetMode = false;
+                    if (btnSetMode) btnSetMode.classList.remove('active');
+                    btnCue.classList.add('active-cue');
+                    setTimeout(() => btnCue.classList.remove('active-cue'), 400);
+                } else {
+                    const targetPos = d.hotCues[cueNum - 1] || 0;
+                    d.playbackPosition = targetPos;
+                    playDeckSlice(k, targetPos);
+                }
+            };
+        }
+    });
+
+    // Pitch Slider
     const pitchSlider = document.getElementById(`pitch-${k}`);
     const pitchVal = document.getElementById(`pitch-val-${k}`);
     if (pitchSlider) {
@@ -1883,7 +2576,21 @@ function setupDeckControls(k) {
         };
     }
 
-    // Local Audio File Picker
+    // Deck Sliced WAV Export Button
+    const btnExport = document.getElementById(`btn-export-${k}`);
+    if (btnExport) {
+        btnExport.onclick = () => downloadDeckSliceAsWav(k);
+    }
+    const btnExportJpg = document.getElementById(`btn-export-jpg-${k}`);
+    if (btnExportJpg) {
+        btnExportJpg.onclick = () => exportDeckWaveform(k, 'jpg');
+    }
+    const btnExportSvg = document.getElementById(`btn-export-svg-${k}`);
+    if (btnExportSvg) {
+        btnExportSvg.onclick = () => exportDeckWaveform(k, 'svg');
+    }
+
+    // Local Audio File Input
     const fileIn = document.getElementById(`file-input-${k}`);
     if (fileIn) {
         fileIn.onchange = e => {
@@ -1903,6 +2610,8 @@ function setupDeckControls(k) {
         }
     });
 }
+window.setupDeckControls = setupDeckControls;
+
 
 // 21. Deck Initializer
 function initDeck(k) {
@@ -1944,6 +2653,18 @@ if (btnStopBoth) {
         stopDeckSlice('a');
         stopDeckSlice('b');
     };
+}
+const btnExportMix = document.getElementById('btn-export-mix');
+if (btnExportMix) {
+    btnExportMix.onclick = () => downloadMasterMixAsWav();
+}
+const btnExportMixJpg = document.getElementById('btn-export-mix-jpg');
+if (btnExportMixJpg) {
+    btnExportMixJpg.onclick = () => exportCombinedWaveform('jpg');
+}
+const btnExportMixSvg = document.getElementById('btn-export-mix-svg');
+if (btnExportMixSvg) {
+    btnExportMixSvg.onclick = () => exportCombinedWaveform('svg');
 }
 
 // 23. Real-Time 60 FPS Turntable & Waveform Animation Loop
