@@ -1,5 +1,5 @@
 """
-remxr42 YouTube Audio Streaming & MP3/WAV Proxy Server
+remxr42 YouTube Audio Streaming & MP3/WAV Proxy Server (v1.2.0)
 Enables 100% full-length YouTube track streaming, vinyl turntable scratching,
 waveform generation, and lossless WAV/MP3 exporting in the browser.
 Compatible with Render.com, HuggingFace Spaces, and Local execution.
@@ -35,32 +35,42 @@ def find_valid_doc_root():
 
 STATIC_DIR = find_valid_doc_root()
 
-# YouTube client extraction profiles (ordered by cloud bypass reliability)
+# YouTube client extraction profiles engineered specifically to bypass datacenter IP bot challenges
+# by skipping initial blocked HTML webpage downloads and querying native mobile APIs directly
 CLIENT_PROFILES = [
-    ['android', 'tv_embedded', 'web_safari', 'mweb'],
-    ['android'],
-    ['tv_embedded'],
-    ['ios', 'android'],
-    ['mweb']
+    {
+        'player_client': ['android', 'android_music', 'android_creator'],
+        'player_skip': ['webpage', 'configs']
+    },
+    {
+        'player_client': ['android'],
+        'player_skip': ['webpage', 'configs']
+    },
+    {
+        'player_client': ['android_music'],
+        'player_skip': ['webpage']
+    },
+    {
+        'player_client': ['tv_embedded', 'android'],
+        'player_skip': ['webpage']
+    }
 ]
 
 def extract_yt_info_with_fallback(yt_url, is_search=False, query_str=""):
-    """Tries multiple client profiles to extract direct streams without bot challenges."""
+    """Extracts direct audio streams using direct mobile API ingestion without bot challenges."""
     if not yt_dlp:
         raise RuntimeError("yt_dlp not installed on server")
 
     last_error = None
     target = f"ytsearch6:{query_str}" if is_search else yt_url
 
-    for client_list in CLIENT_PROFILES:
+    for cfg in CLIENT_PROFILES:
         ydl_opts = {
             'quiet': True,
             'noplaylist': True,
             'no_warnings': True,
             'extractor_args': {
-                'youtube': {
-                    'player_client': client_list
-                }
+                'youtube': cfg
             }
         }
         if not is_search:
@@ -111,7 +121,7 @@ class RemxrStreamingHandler(SimpleHTTPRequestHandler):
                 'status': 'ok',
                 'proxy': True,
                 'yt_dlp_available': (yt_dlp is not None),
-                'version': '1.1.0'
+                'version': '1.2.0'
             }
             self.wfile.write(json.dumps(data).encode('utf-8'))
             return
@@ -232,7 +242,7 @@ class RemxrStreamingHandler(SimpleHTTPRequestHandler):
                 return
 
             req_headers = info.get('http_headers') or {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
                 'Accept': '*/*'
             }
 
@@ -279,7 +289,7 @@ class RemxrStreamingHandler(SimpleHTTPRequestHandler):
             filename = f"{safe_title}.{fmt}"
 
             req_headers = info.get('http_headers') or {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'User-Agent': 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
                 'Accept': '*/*'
             }
 
@@ -309,7 +319,7 @@ def run_server(port=PORT, open_browser=True):
     server = ThreadingHTTPServer(('0.0.0.0', port), RemxrStreamingHandler)
     url = f"http://localhost:{port}"
     print("\n" + "=" * 64)
-    print("  REMXR42 // CLOUD & LOCAL YOUTUBE STREAMING PROXY ACTIVE")
+    print("  REMXR42 // CLOUD & LOCAL YOUTUBE STREAMING PROXY ACTIVE (v1.2.0)")
     print(f"  Serving Directory: {STATIC_DIR}")
     print(f"  Console URL: {url}")
     print("  Endpoints: /api/health, /api/yt/search, /api/yt/info, /api/yt/stream, /api/yt/download")
