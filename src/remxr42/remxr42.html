@@ -250,6 +250,12 @@
         transform: translateY(1px);
     }
 
+    .btn-te-blue {
+        background: #142838 !important;
+        color: #7ac1f8 !important;
+        border-color: #0f1e2a !important;
+        box-shadow: 0 2.5px 0 #09131b !important;
+    }
     .btn-te-green {
         background: #08382d !important;
         color: #00ff9d !important;
@@ -270,7 +276,7 @@
     }
     .btn-hotcue {
         background: #252729;
-        color: #00e5ff;
+        color: #6cb4ee;
         border: 1px solid #383b3e;
         border-radius: 1px;
         padding: 2px 6px;
@@ -278,30 +284,40 @@
         box-shadow: 0 2px 0 #141517;
     }
     .btn-hotcue.active-cue {
-        background: #1e6e54;
-        color: #000;
-        border-color: #00cc7a;
+        background: #1e4b6e;
+        color: #ffffff;
+        border-color: #6cb4ee;
     }
     .btn-mini { padding: 2px 6px; font-size: 9px; line-height: 13px; border-radius: 1px; }
 
     .badge {
-        background: #02221b;
-        color: #00ff9d;
+        background: #101214;
+        color: #d0cebe;
         padding: 2px 6px;
         border-radius: 1px;
-        border: 1px solid #034435;
+        border: 1px solid #2e3034;
         font-family: 'Space Mono', monospace;
         font-size: 9.5px;
         white-space: nowrap;
     }
+    .badge-orange {
+        background: #24140a;
+        color: #ffaa00;
+        border: 1px solid #4a2814;
+    }
+    .badge-blue {
+        background: #0d1924;
+        color: #6cb4ee;
+        border: 1px solid #1a3a54;
+    }
     .te-lcd-pill {
-        background: #02221b;
-        color: #00ff9d;
+        background: #0d1924;
+        color: #6cb4ee;
         font-family: 'Space Mono', monospace;
         font-size: 9.5px;
         padding: 2px 8px;
         border-radius: 1px;
-        border: 1px solid #034435;
+        border: 1px solid #1a3a54;
         letter-spacing: 0.5px;
     }
 
@@ -580,7 +596,7 @@
                     <canvas id="hud-canvas" class="hud-canvas" width="220" height="110"></canvas>
                     <div class="hud-label-row">
                         <span id="hud-status-a" style="color:#ffaa00;">L: DECK A</span>
-                        <span id="hud-status-b" style="color:#00ff9d;">R: DECK B</span>
+                        <span id="hud-status-b" style="color:#6cb4ee;">R: DECK B</span>
                     </div>
                 </div>
 
@@ -597,7 +613,7 @@
                     </div>
                     <div style="width:1px; background:#383b40;"></div>
                     <div class="eq-knob-group">
-                        <span style="color:#00ff9d; font-weight:bold;">DECK B</span>
+                        <span style="color:#6cb4ee; font-weight:bold;">DECK B</span>
                         <span>HI</span>
                         <input type="range" id="eq-high-b" min="-12" max="12" step="1" value="0"/>
                         <span>MID</span>
@@ -614,8 +630,8 @@
                     <button class="btn" id="btn-export-mix" style="background:#ffaa00; color:#000; width:100%; padding:4px; font-weight:bold;">💾 EXPORT MASTER WAV</button>
                     <div style="display:flex; gap:3px; width:100%;">
                         <button class="btn" id="btn-export-mix-jpg" style="flex:1; background:#25272a; color:#ffaa00; border:1px solid #ffaa00; padding:3px; font-size:8px; font-weight:bold;" title="Download Combined Dual Waveform as JPEG">🖼️ MIX JPG</button>
-                        <button class="btn" id="btn-export-mix-svg" style="flex:1; background:#25272a; color:#00ff9d; border:1px solid #00aa66; padding:3px; font-size:8px; font-weight:bold;" title="Download Combined Dual Waveform as SVG">📐 MIX SVG</button>
-                        <button class="btn" id="btn-export-mix-polar" style="flex:1; background:#25272a; color:#ffdd44; border:1px solid #ffaa00; padding:3px; font-size:8px; font-weight:bold;" title="Download Master Combined Polar Vinyl Spectrogram as High-Res PNG">💿 MIX VINYL</button>
+                        <button class="btn" id="btn-export-mix-svg" style="flex:1; background:#25272a; color:#6cb4ee; border:1px solid #3a80b8; padding:3px; font-size:8px; font-weight:bold;" title="Download Combined Dual Waveform as SVG">📐 MIX SVG</button>
+                        <button class="btn" id="btn-export-mix-polar" style="flex:1; background:#25272a; color:#f8c548; border:1px solid #f8c548; padding:3px; font-size:8px; font-weight:bold;" title="Download Master Combined Polar Vinyl Spectrogram as High-Res PNG">💿 MIX VINYL</button>
                     </div>
                 </div>
 
@@ -624,7 +640,7 @@
                     <div style="display:flex; justify-content:space-between; font-size:9px; color:#aaa; margin-bottom:3px; font-family:'Space Mono', monospace;">
                         <span style="color:#ffaa00; font-weight:bold;">◀ A</span>
                         <span id="xfade-val" class="badge">0.50</span>
-                        <span style="color:#00ff9d; font-weight:bold;">B ▶</span>
+                        <span style="color:#6cb4ee; font-weight:bold;">B ▶</span>
                     </div>
                     <input type="range" id="master-crossfader" min="0" max="1" step="0.01" value="0.5" style="width:100%; accent-color:#cf4a18;"/>
                 </div>
@@ -634,58 +650,59 @@
             <!-- RIGHT TURNTABLE: DECK B (RIGHT HAND)                          -->
             <!-- ------------------------------------------------------------- -->
             <div class="deck-platter-box" id="deck-box-b">
-                <div class="deck-titlebar-b">
-                    <span id="title-deck-b">DECK B: REMXR42 BASS B</span>
+                <div class="deck-titlebar-b" style="background:#0d1924; border-bottom:1px solid #1a3a54; padding:4px 6px; display:flex; justify-content:space-between; align-items:center;">
+                    <span id="title-deck-b" style="color:#6cb4ee; font-weight:bold; font-size:10px;">DECK B: REMXR42 BASS B</span>
                     <div style="display:flex; align-items:center; gap:4px;">
-                        <label class="btn btn-mini" style="cursor:pointer; background:#242629; color:#1e6e54; border:1px solid #00aa66; font-size:8px; padding:1px 5px; border-radius:2px;" title="Open local audio file (MP3/WAV/FLAC/OGG)">
+                        <label class="btn btn-mini" style="cursor:pointer; background:#142838; color:#7ac1f8; border:1px solid #3a80b8; font-size:8px; padding:1px 5px; border-radius:2px;" title="Open local audio file (MP3/WAV/FLAC/OGG)">
                             📂 OPEN
                             <input type="file" id="file-input-b" accept="audio/*" style="display:none;" />
                         </label>
-                        <span id="badge-b-info" class="badge">0.00s - 4.00s</span>
-                        <span id="hand-badge-b" class="badge" style="color:#ffffff; background:#0a3d31; border-color:#1e6e54; font-size:9px;">[RIGHT HAND]</span>
+                        <span id="badge-b-info" class="badge badge-blue">0.00s - 4.00s</span>
+                        <span id="hand-badge-b" class="badge badge-blue" style="color:#ffffff; background:#1a3a54; border-color:#3a80b8; font-size:9px;">[RIGHT HAND]</span>
                         <span id="scratch-led-b" class="scratch-indicator" title="Scratch Active"></span>
                     </div>
                 </div>
 
-                                <!-- DECK B AUDIO SEARCH & INGESTION BAR -->
-                <div class="yt-stream-bar" id="yt-bar-b" style="background:#181a1d; border:1px solid #00aa66; border-radius:2px; padding:6px; margin-bottom:6px; display:flex; flex-direction:column; gap:5px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5);">
+                <!-- DECK B AUDIO SEARCH & INGESTION BAR -->
+                <div class="yt-stream-bar" id="yt-bar-b" style="background:#14171a; border:1px solid #234b6e; border-radius:2px; padding:6px; margin-bottom:6px; display:flex; flex-direction:column; gap:5px; box-shadow:inset 0 1px 3px rgba(0,0,0,0.5);">
                     <div style="display:flex; justify-content:space-between; align-items:center; font-size:9px; font-family:'Space Mono', monospace;">
-                        <span style="color:#00ff9d; font-weight:bold; letter-spacing:0.5px;">▶ AUDIO SEARCH & YOUTUBE INGESTION (DECK B)</span>
-                        <span class="badge" id="yt-status-b" style="font-size:8.5px; padding:2px 6px; color:#00ff9d; border-color:#034435; background:#021a14;">READY</span>
+                        <span style="color:#6cb4ee; font-weight:bold; letter-spacing:0.5px;">▶ AUDIO SEARCH & YOUTUBE INGESTION (DECK B)</span>
+                        <span class="badge badge-blue" id="yt-status-b" style="font-size:8.5px; padding:2px 6px;">READY</span>
                     </div>
 
-                    <!-- Backlit Mint LCD Preview Monitor -->
-                    <div id="yt-lcd-b" style="display:flex; align-items:center; gap:8px; background:#0d0e10; border:1px solid #383b40; border-radius:2px; padding:4px 6px;">
-                        <img id="yt-thumb-b" src="" style="width:52px; height:38px; object-fit:cover; border:1px solid #00aa66; border-radius:1px; background:#111; display:none;" />
+                    <!-- Backlit Sky Blue LCD Preview Monitor -->
+                    <div id="yt-lcd-b" style="display:flex; align-items:center; gap:8px; background:#0a1018; border:1px solid #1a3a54; border-radius:2px; padding:4px 6px;">
+                        <img id="yt-thumb-b" src="" style="width:52px; height:38px; object-fit:cover; border:1px solid #3a80b8; border-radius:1px; background:#111; display:none;" />
                         <div style="display:flex; flex-direction:column; gap:2px; overflow:hidden; flex:1;">
-                            <span id="yt-title-b" style="color:#00ff9d; font-family:'Space Mono', monospace; font-size:9.5px; font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">REMXR42 BASS B</span>
+                            <span id="yt-title-b" style="color:#6cb4ee; font-family:'Space Mono', monospace; font-size:9.5px; font-weight:bold; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">REMXR42 BASS B</span>
                             <span id="yt-meta-b" style="color:#888; font-family:'Space Mono', monospace; font-size:8px;">READY • PASTE YOUTUBE URL OR SEARCH ANY TRACK</span>
                         </div>
                     </div>
 
                     <!-- Search Input & Buttons -->
                     <div style="display:flex; gap:4px; align-items:center;">
-                        <input type="text" id="yt-url-b" onkeydown="if(event.key==='Enter') searchOrLoadYouTube('b')" placeholder="🔍 Search any artist / track or paste YouTube URL..." value="" style="flex:1; background:#090a0c; border:1px solid #00ff9d; color:#00ff9d; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
-                        <button class="btn btn-te-green" id="btn-search-yt-b" onclick="searchOrLoadYouTube('b')" style="padding:4px 10px; font-size:9.5px; white-space:nowrap; font-weight:bold;">🚀 LOAD</button>
+                        <input type="text" id="yt-url-b" onkeydown="if(event.key==='Enter') searchOrLoadYouTube('b')" placeholder="🔍 Search any artist / track or paste YouTube URL..." value="" style="flex:1; background:#090e14; border:1px solid #3a80b8; color:#7ac1f8; font-family:'Space Mono', monospace; font-size:9.5px; padding:4px 6px; border-radius:1px; outline:none;"/>
+                        <button class="btn btn-te-blue" id="btn-search-yt-b" onclick="searchOrLoadYouTube('b')" style="padding:4px 10px; font-size:9.5px; white-space:nowrap; font-weight:bold;">🚀 LOAD</button>
                     </div>
 
                     <!-- Live Search Results Tray (Populates ONLY on user search with real matches) -->
-                    <div id="yt-results-b" style="display:none; flex-direction:column; gap:3px; max-height:140px; overflow-y:auto; background:#101214; border:1px solid #00aa66; border-radius:2px; padding:4px;"></div>
+                    <div id="yt-results-b" style="display:none; flex-direction:column; gap:3px; max-height:140px; overflow-y:auto; background:#0a1018; border:1px solid #234b6e; border-radius:2px; padding:4px;"></div>
                 </div>
-<div class="turntable-stage" id="stage-b">
+
+                <div class="turntable-stage" id="stage-b">
                     <canvas id="turntable-canvas-b" class="turntable-canvas" width="300" height="300"></canvas>
                 </div>
 
                 <!-- Linear Waveform Visualizer Strip -->
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px; margin-bottom:2px; font-family:'Space Mono', monospace;">
-                    <span style="font-size:8.5px; color:#00ff9d; font-weight:bold; letter-spacing:0.5px;">■ WAVEFORM & LOOP SLICE (DECK B)</span>
+                    <span style="font-size:8.5px; color:#6cb4ee; font-weight:bold; letter-spacing:0.5px;">■ WAVEFORM & LOOP SLICE (DECK B)</span>
                     <span style="font-size:8px; color:#888;">CLICK/DRAG SCRUB</span>
                 </div>
                 <canvas id="linear-canvas-b" class="linear-strip" width="400" height="64"></canvas>
 
                 <!-- Deck B Transport & Splicing -->
                 <div class="controls-row">
-                    <button class="btn btn-te-green" id="btn-play-b">▶ PLAY</button>
+                    <button class="btn btn-te-blue" id="btn-play-b">▶ PLAY</button>
                     <button class="btn btn-te-dark" id="btn-stop-b">■ STOP</button>
                     <button class="btn btn-te-orange" id="btn-cue-b">CUE</button>
                     <button class="btn active" id="btn-loop-b">LOOP</button>
@@ -695,19 +712,19 @@
 
                     <button class="btn btn-te-orange btn-mini" id="btn-set-in-b">IN</button>
                     <button class="btn btn-mini" id="btn-in-minus-b">-</button>
-                    <span id="time-in-b" class="badge">0.0s</span>
+                    <span id="time-in-b" class="badge badge-blue">0.0s</span>
                     <button class="btn btn-mini" id="btn-in-plus-b">+</button>
 
                     <button class="btn btn-te-orange btn-mini" id="btn-set-out-b">OUT</button>
                     <button class="btn btn-mini" id="btn-out-minus-b">-</button>
-                    <span id="time-out-b" class="badge">4.0s</span>
+                    <span id="time-out-b" class="badge badge-blue">4.0s</span>
                     <button class="btn btn-mini" id="btn-out-plus-b">+</button>
 
                     <div style="margin-left:auto; display:flex; gap:2px;">
                         <button class="btn btn-mini" id="btn-export-b" style="background:#ffaa00; color:#000; padding:1px 5px; font-size:8px;" title="Export Sliced Audio as 16-bit WAV">💾 WAV</button>
-                        <button class="btn btn-mini" id="btn-export-jpg-b" style="background:#25272a; color:#1e6e54; border:1px solid #00aa66; padding:1px 5px; font-size:8px;" title="Download Deck B Waveform as JPEG">🖼️ JPG</button>
-                        <button class="btn btn-mini" id="btn-export-svg-b" style="background:#25272a; color:#1e6e54; border:1px solid #00aa66; padding:1px 5px; font-size:8px;" title="Download Deck B Waveform as SVG">📐 SVG</button>
-                        <button class="btn btn-mini" id="btn-export-polar-b" style="background:#25272a; color:#00ff9d; border:1px solid #00aa66; padding:1px 5px; font-size:8px;" title="Download Deck B Circular Polar Spectrograph as PNG">💿 VINYL</button>
+                        <button class="btn btn-mini" id="btn-export-jpg-b" style="background:#25272a; color:#6cb4ee; border:1px solid #3a80b8; padding:1px 5px; font-size:8px;" title="Download Deck B Waveform as JPEG">🖼️ JPG</button>
+                        <button class="btn btn-mini" id="btn-export-svg-b" style="background:#25272a; color:#6cb4ee; border:1px solid #3a80b8; padding:1px 5px; font-size:8px;" title="Download Deck B Waveform as SVG">📐 SVG</button>
+                        <button class="btn btn-mini" id="btn-export-polar-b" style="background:#25272a; color:#6cb4ee; border:1px solid #3a80b8; padding:1px 5px; font-size:8px;" title="Download Deck B Circular Polar Spectrograph as PNG">💿 VINYL</button>
                     </div>
                 </div>
 
@@ -1031,14 +1048,17 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
             const r1 = rInner + (f + 1.25) * radStep;
 
             let energy = 0.18;
+            let freqBand = 'low'; // 'low', 'mid', 'high'
 
-            if (f < 12) {
-                // Sub-Bass & Kick Dynamics (Inner Grooves: 20Hz - 160Hz)
+            if (f < 14) {
+                // Sub-Bass & Kick Dynamics (Inner Grooves: 20Hz - 200Hz)
+                freqBand = 'low';
                 const bassHit = isKick ? 1.0 : 0.50;
                 const rootMatch = (semitone === currentRoot % 12) ? 0.70 : 0.20;
                 energy = Math.max(energy, baseAmp * (bassHit * (1.30 - v * 1.8) + rootMatch));
             } else if (f < 44) {
                 // Melodic Ribbons, Vocal Formants & Chords (Mid Grooves: 160Hz - 4kHz)
+                freqBand = 'mid';
                 const isTriad = (semitone === currentRoot || semitone === (currentRoot + 4)%12 || semitone === (currentRoot + 7)%12);
                 const chordPad = isTriad ? (0.75 + 0.25 * Math.sin(u * 32 * Math.PI + octave + (seed % 3))) : 0.20;
 
@@ -1052,6 +1072,7 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
                 energy = Math.max(energy, baseAmp * (chordPad + melodyRibbon + snareSnap + overtone));
             } else {
                 // High Air, Transient Sparkle & Cymbals (Outer Grooves: 4kHz - 20kHz)
+                freqBand = 'high';
                 const hatEnergy = isHiHat ? (0.82 + 0.18 * Math.sin(u * beatMultiplier * Math.PI)) : 0.25;
                 const airShimmer = 0.42 + 0.35 * Math.sin(u * 64 * Math.PI + f * 0.85);
                 energy = Math.max(energy, baseAmp * (hatEnergy + airShimmer));
@@ -1067,41 +1088,35 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
             octx.arc(cx, cy, r0, a1, a0, true);
             octx.closePath();
 
+            // 4-COLOR HARMONIC PALETTE SYSTEM:
+            // 1. Deck A Base: Terracotta Orange (#ff7a29 / #cf4a18)
+            // 2. Deck B Base: Faded Sky Blue (#6cb4ee / #5fa8e0)
+            // 3. Shared Mid-Range Layer: Warm Amber Gold (#f8c548 / #ffd166)
+            // 4. Shared High-Frequency Layer: Electric Violet / Soft Orchid (#b388ff / #c084fc)
             let fillStyle;
-            if (k === 'a') {
-                // DECK A: Bold Warm Terracotta, Electric Tangerine, Radiant Amber, Solar Gold, Cyan Accents
-                if (energy < 0.28) {
-                    fillStyle = `rgba(45, 26, 18, ${0.50 + energy * 1.5})`;
-                } else if (energy < 0.48) {
-                    const t = (energy - 0.28) / 0.20;
-                    fillStyle = `rgba(${Math.floor(160 + t * 75)}, ${Math.floor(55 + t * 45)}, ${Math.floor(18 + t * 25)}, 0.90)`;
-                } else if (energy < 0.72) {
-                    const t = (energy - 0.48) / 0.24;
-                    fillStyle = `rgba(${Math.floor(235 + t * 20)}, ${Math.floor(100 + t * 70)}, 0, 0.96)`;
-                } else if (energy < 0.90) {
-                    const t = (energy - 0.72) / 0.18;
-                    fillStyle = `rgba(255, ${Math.floor(170 + t * 70)}, ${Math.floor(t * 60)}, 0.98)`;
+            if (freqBand === 'low') {
+                if (k === 'a') {
+                    // Deck A Terracotta Orange
+                    const t = Math.min(1.0, energy * 1.2);
+                    fillStyle = `rgba(${Math.floor(180 + t * 75)}, ${Math.floor(70 + t * 50)}, ${Math.floor(20 + t * 20)}, ${0.75 + energy * 0.25})`;
                 } else {
-                    const t = (energy - 0.90) / 0.10;
-                    fillStyle = `rgba(255, 255, ${Math.floor(160 + t * 95)}, 1.0)`;
+                    // Deck B Faded Sky Blue
+                    const t = Math.min(1.0, energy * 1.2);
+                    fillStyle = `rgba(${Math.floor(70 + t * 40)}, ${Math.floor(140 + t * 45)}, ${Math.floor(210 + t * 45)}, ${0.75 + energy * 0.25})`;
                 }
+            } else if (freqBand === 'mid') {
+                // Shared Warm Amber Gold Band (#f8c548)
+                const t = Math.min(1.0, energy * 1.15);
+                fillStyle = `rgba(${Math.floor(235 + t * 20)}, ${Math.floor(180 + t * 40)}, ${Math.floor(60 + t * 40)}, ${0.80 + energy * 0.20})`;
             } else {
-                // DECK B: Bold Deep Sage, Electric Mint (#00ff9d), Radiant Turquoise, Lime Gold, Peak Flare
-                if (energy < 0.28) {
-                    fillStyle = `rgba(18, 42, 32, ${0.50 + energy * 1.5})`;
-                } else if (energy < 0.48) {
-                    const t = (energy - 0.28) / 0.20;
-                    fillStyle = `rgba(0, ${Math.floor(135 + t * 75)}, ${Math.floor(110 + t * 40)}, 0.90)`;
-                } else if (energy < 0.72) {
-                    const t = (energy - 0.48) / 0.24;
-                    fillStyle = `rgba(0, 255, ${Math.floor(157 - t * 70)}, 0.96)`;
-                } else if (energy < 0.90) {
-                    const t = (energy - 0.72) / 0.18;
-                    fillStyle = `rgba(${Math.floor(t * 220)}, 255, ${Math.floor(87 - t * 40)}, 0.98)`;
-                } else {
-                    const t = (energy - 0.90) / 0.10;
-                    fillStyle = `rgba(255, 255, ${Math.floor(170 + t * 85)}, 1.0)`;
-                }
+                // Shared Electric Violet / Soft Orchid Band (#b388ff)
+                const t = Math.min(1.0, energy * 1.2);
+                fillStyle = `rgba(${Math.floor(165 + t * 50)}, ${Math.floor(125 + t * 50)}, ${Math.floor(240 + t * 15)}, ${0.85 + energy * 0.15})`;
+            }
+
+            // High energy peak flares
+            if (energy > 0.92) {
+                fillStyle = (k === 'a') ? 'rgba(255, 250, 220, 0.98)' : 'rgba(235, 245, 255, 0.98)';
             }
 
             octx.fillStyle = fillStyle;
@@ -1119,16 +1134,16 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
         octx.stroke();
     }
 
-    // 4. Subtle Concentric Frequency Band Rings (SUB, MID, HI)
-    const rSub = rInner + 12 * radStep;
+    // 4. Subtle Concentric Frequency Band Rings (SUB, MID, HI) in Shared Palette
+    const rSub = rInner + 14 * radStep;
     const rMid = rInner + 44 * radStep;
     octx.lineWidth = 1.0;
-    octx.strokeStyle = (k === 'a') ? 'rgba(255, 140, 0, 0.45)' : 'rgba(0, 255, 157, 0.45)';
+    octx.strokeStyle = (k === 'a') ? 'rgba(255, 122, 41, 0.50)' : 'rgba(108, 180, 238, 0.50)';
     octx.beginPath();
     octx.arc(cx, cy, rSub, 0, 2 * Math.PI);
     octx.stroke();
 
-    octx.strokeStyle = (k === 'a') ? 'rgba(255, 200, 50, 0.45)' : 'rgba(0, 255, 200, 0.45)';
+    octx.strokeStyle = 'rgba(248, 197, 72, 0.55)'; // Warm Amber Mid Ring
     octx.beginPath();
     octx.arc(cx, cy, rMid, 0, 2 * Math.PI);
     octx.stroke();
@@ -1329,7 +1344,7 @@ function applyAudioBufferToDeck(k, audioBuffer, title, artworkUrl = '', metaStr 
 
     if (statusEl) {
         statusEl.innerText = `FULL TRACK READY (${durFmt})`;
-        statusEl.style.color = (k === 'a' ? '#cf4a18' : '#1e6e54');
+        statusEl.style.color = (k === 'a' ? '#ff7a29' : '#6cb4ee');
     }
 
     renderTurntable(k);
@@ -1461,7 +1476,7 @@ async function searchOrLoadYouTube(k) {
 
     if (statusEl) {
         statusEl.innerText = 'SEARCHING CATALOG...';
-        statusEl.style.color = (k === 'a' ? '#ffaa00' : '#00ff9d');
+        statusEl.style.color = (k === 'a' ? '#ffaa00' : '#6cb4ee');
     }
 
     const directYtId = extractYouTubeId(query);
@@ -1496,7 +1511,7 @@ async function searchOrLoadYouTube(k) {
             resultsTray.style.flexDirection = 'column';
             resultsTray.style.gap = '4px';
             resultsTray.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; font-size:8px; color:${k === 'a' ? '#ffaa00' : '#00ff9d'}; padding:3px 6px; border-bottom:1px solid #333; background:#181a1d;">
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:8px; color:${k === 'a' ? '#ffaa00' : '#6cb4ee'}; padding:3px 6px; border-bottom:1px solid #333; background:#181a1d;">
                     <span>⚡ HYBRID CLOUD CATALOG (${results.length} TRACKS)</span>
                     <span style="cursor:pointer; color:#aaa; font-weight:bold;" onclick="document.getElementById('yt-results-${k}').style.display='none'">✖ CLOSE</span>
                 </div>
@@ -1517,13 +1532,13 @@ async function searchOrLoadYouTube(k) {
                                     <span style="font-size:7.5px; color:#888;">${artistStr} • ${durFmt}</span>
                                 </div>
                             </div>
-                            <span style="font-size:7.5px; font-weight:bold; background:#0a2218; color:#00ff9d; border:1px solid #00ff9d; border-radius:2px; padding:2px 4px; white-space:nowrap;">⚡ LOAD HD</span>
+                            <span style="font-size:7.5px; font-weight:bold; background:${k === 'a' ? '#24140a' : '#0d1924'}; color:${k === 'a' ? '#ffaa00' : '#6cb4ee'}; border:1px solid ${k === 'a' ? '#ffaa00' : '#3a80b8'}; border-radius:2px; padding:2px 4px; white-space:nowrap;">⚡ LOAD HD</span>
                         </div>
                     `;
                 }).join('')}
             `;
         }
-        if (statusEl) { statusEl.innerText = 'RESULTS READY'; statusEl.style.color = (k === 'a' ? '#ffaa00' : '#00ff9d'); }
+        if (statusEl) { statusEl.innerText = 'RESULTS READY'; statusEl.style.color = (k === 'a' ? '#ffaa00' : '#6cb4ee'); }
     } catch (err) {
         console.warn('Universal search fallback:', err);
         synthesizeProceduralAudioForTrack(k, query);
@@ -1565,7 +1580,7 @@ async function loadHybridMergedTrack(k, title, artist, duration, audioUrl, artwo
 
     if (statusEl) {
         statusEl.innerText = `DECODING HD STREAM (${durFmt})...`;
-        statusEl.style.color = (k === 'a' ? '#ffaa00' : '#00ff9d');
+        statusEl.style.color = (k === 'a' ? '#ffaa00' : '#6cb4ee');
     }
 
     let loaded = false;
@@ -1590,7 +1605,7 @@ async function loadHybridMergedTrack(k, title, artist, duration, audioUrl, artwo
 
     if (statusEl) {
         statusEl.innerText = `FULL TRACK READY (${durFmt})`;
-        statusEl.style.color = (k === 'a' ? '#ffaa00' : '#00ff9d');
+        statusEl.style.color = (k === 'a' ? '#ffaa00' : '#6cb4ee');
     }
 }
 window.loadHybridMergedTrack = loadHybridMergedTrack;
@@ -1848,7 +1863,7 @@ function renderTurntable(k) {
     ctx.beginPath();
     ctx.arc(cx, cy, platterRadius, 0, 2 * Math.PI);
     ctx.fill();
-    ctx.strokeStyle = d.isScratching ? '#ff0055' : ((k === 'a') ? '#4a2818' : '#184236');
+    ctx.strokeStyle = d.isScratching ? '#ff0055' : ((k === 'a') ? '#4a2818' : '#1a3a54');
     ctx.lineWidth = d.isScratching ? 4 : 2.5;
     ctx.stroke();
 
@@ -1901,11 +1916,11 @@ function renderTurntable(k) {
         ctx.restore();
     } else {
         // High-contrast matte disc fallback
-        ctx.fillStyle = (k === 'a') ? '#ff4800' : '#00ff9d';
+        ctx.fillStyle = (k === 'a') ? '#cf4a18' : '#1e4b6e';
         ctx.beginPath();
         ctx.arc(0, 0, rThumb, 0, 2 * Math.PI);
         ctx.fill();
-        ctx.fillStyle = '#101215';
+        ctx.fillStyle = '#ffffff';
         ctx.font = 'bold 9px "Space Mono", monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -1926,7 +1941,7 @@ function renderTurntable(k) {
     ctx.fill();
 
     // Strobe Marker on Vinyl Outer Edge
-    ctx.fillStyle = (k === 'a') ? '#ff4800' : '#00ff9d';
+    ctx.fillStyle = (k === 'a') ? '#ff7a29' : '#6cb4ee';
     ctx.beginPath();
     ctx.arc(0, -rDisc + 5, 4.5, 0, 2 * Math.PI);
     ctx.fill();
@@ -1954,7 +1969,7 @@ function renderTurntable(k) {
     ctx.stroke();
 
     // Stylus Needle Cartridge Head
-    ctx.fillStyle = (k === 'a') ? '#ff4800' : '#00ff9d';
+    ctx.fillStyle = (k === 'a') ? '#ff7a29' : '#6cb4ee';
     ctx.beginPath();
     ctx.arc(needleX, needleY, 5.5, 0, 2 * Math.PI);
     ctx.fill();
@@ -2180,12 +2195,14 @@ function downloadBlob(blob, filename) {
 function exportDeckWaveform(k, format = 'jpg') {
     const d = decks[k];
     const trackTitle = (document.getElementById(`yt-title-${k}`) ? document.getElementById(`yt-title-${k}`).innerText : d.name) || `DECK ${k.toUpperCase()}`;
-    const primaryColor = (k === 'a') ? '#ff8c00' : '#00ff9d';
-    const coreColor = (k === 'a') ? '#ffe28a' : '#d4fff0';
-    const w = 1200;
+    const primaryColor = (k === 'a') ? '#ff7a29' : '#6cb4ee';
+    const midColor     = '#f8c548';
+    const hiColor      = '#b388ff';
+    const w = 1400;
     const h = 340;
     const centerY = h / 2 + 18;
     const ampScale = (h - 70) / 2;
+    const lineweight = 2.5;
 
     if (format === 'svg') {
         let svg = `<?xml version="1.0" encoding="UTF-8"?>
@@ -2208,12 +2225,12 @@ function exportDeckWaveform(k, format = 'jpg') {
         if (d.duration > 0) {
             const inX = (d.inTime / d.duration) * w;
             const outX = (d.outTime / d.duration) * w;
-            svg += `<rect x="${inX}" y="36" width="${Math.max(2, outX - inX)}" height="${h - 36}" fill="${primaryColor}" fill-opacity="0.22"/>
-            <line x1="${inX}" y1="36" x2="${inX}" y2="${h}" stroke="#ff4800" stroke-width="2"/>
-            <line x1="${outX}" y1="36" x2="${outX}" y2="${h}" stroke="#ff0055" stroke-width="2"/>
-            <rect x="${inX}" y="36" width="22" height="14" fill="#ff4800"/>
-            <text x="${inX + 3}" y="47" fill="#fff" font-family="'Space Mono', monospace" font-size="8.5" font-weight="bold">IN</text>
-            <rect x="${outX - 26}" y="36" width="26" height="14" fill="#ff0055"/>
+            svg += `<rect x="${inX}" y="36" width="${Math.max(2, outX - inX)}" height="${h - 36}" fill="${primaryColor}" fill-opacity="0.20"/>
+            <line x1="${inX}" y1="36" x2="${inX}" y2="${h}" stroke="#00ff9d" stroke-width="2.5"/>
+            <line x1="${outX}" y1="36" x2="${outX}" y2="${h}" stroke="#ff2244" stroke-width="2.5"/>
+            <rect x="${inX}" y="36" width="22" height="14" fill="#00ff9d"/>
+            <text x="${inX + 3}" y="47" fill="#000" font-family="'Space Mono', monospace" font-size="8.5" font-weight="bold">IN</text>
+            <rect x="${outX - 26}" y="36" width="26" height="14" fill="#ff2244"/>
             <text x="${outX - 23}" y="47" fill="#fff" font-family="'Space Mono', monospace" font-size="8.5" font-weight="bold">OUT</text>`;
         }
 
@@ -2232,7 +2249,7 @@ function exportDeckWaveform(k, format = 'jpg') {
                     yBot = centerY + pMax * ampScale;
                 }
                 const barH = Math.max(2, yBot - yTop);
-                svg += `<rect x="${bx.toFixed(1)}" y="${yTop.toFixed(1)}" width="${Math.max(1, scaleX - 0.5).toFixed(1)}" height="${barH.toFixed(1)}" />`;
+                svg += `<rect x="${bx.toFixed(1)}" y="${yTop.toFixed(1)}" width="${Math.max(lineweight, scaleX).toFixed(1)}" height="${barH.toFixed(1)}" />`;
             }
         }
         svg += `</g>
@@ -2283,24 +2300,24 @@ function exportDeckWaveform(k, format = 'jpg') {
         const inX = (d.inTime / d.duration) * w;
         const outX = (d.outTime / d.duration) * w;
 
-        ctx.fillStyle = (k === 'a') ? 'rgba(255, 140, 0, 0.25)' : 'rgba(0, 255, 157, 0.22)';
+        ctx.fillStyle = (k === 'a') ? 'rgba(255, 122, 41, 0.22)' : 'rgba(108, 180, 238, 0.20)';
         ctx.fillRect(inX, 36, Math.max(2, outX - inX), h - 36);
 
-        ctx.fillStyle = '#ff4800';
-        ctx.fillRect(inX - 1, 36, 2, h - 36);
+        ctx.fillStyle = '#00ff9d';
+        ctx.fillRect(inX - lineweight / 2, 36, lineweight, h - 36);
         ctx.fillRect(inX, 36, 22, 14);
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = '#000000';
         ctx.font = 'bold 8.5px "Space Mono", monospace';
         ctx.fillText('IN', inX + 3, 47);
 
-        ctx.fillStyle = '#ff0055';
-        ctx.fillRect(outX - 1, 36, 2, h - 36);
+        ctx.fillStyle = '#ff2244';
+        ctx.fillRect(outX - lineweight / 2, 36, lineweight, h - 36);
         ctx.fillRect(outX - 26, 36, 26, 14);
         ctx.fillStyle = '#ffffff';
         ctx.fillText('OUT', outX - 23, 47);
     }
 
-    // Waveform Peaks
+    // Waveform Peaks with 4-Color Layers & 2.5px Lineweight
     if (d.peaks && d.peaks.length > 0) {
         const binCount = d.peaks.length;
         const scaleX = w / binCount;
@@ -2324,12 +2341,20 @@ function exportDeckWaveform(k, format = 'jpg') {
                 yBot = centerY + 1;
             }
 
-            ctx.fillStyle = primaryColor;
-            ctx.fillRect(bx, yTop, Math.max(1, scaleX - 0.5), yBot - yTop);
+            const barHeight = yBot - yTop;
+            const barW = Math.max(lineweight, scaleX);
 
-            if (yBot - yTop > 8) {
-                ctx.fillStyle = coreColor;
-                ctx.fillRect(bx, yTop + 2, Math.max(1, scaleX - 0.5), yBot - yTop - 4);
+            ctx.fillStyle = primaryColor;
+            ctx.fillRect(bx, yTop, barW, barHeight);
+
+            if (barHeight > 10) {
+                ctx.fillStyle = midColor;
+                ctx.fillRect(bx, yTop + barHeight * 0.20, barW, barHeight * 0.60);
+            }
+            if (barHeight > 22) {
+                ctx.fillStyle = hiColor;
+                ctx.fillRect(bx, yTop, barW, 3.5);
+                ctx.fillRect(bx, yBot - 3.5, barW, 3.5);
             }
         }
         ctx.restore();
@@ -2341,7 +2366,7 @@ function exportDeckWaveform(k, format = 'jpg') {
 }
 window.exportDeckWaveform = exportDeckWaveform;
 
-// Export Combined Dual-Deck Waveform with Split Dual-Track Coloring & Crossfader Blend (JPEG / SVG)
+// Export Combined Dual-Deck Waveform (Overlapping Centered with Fader Transparency & 4-Color Layers)
 function exportCombinedWaveform(format = 'jpg') {
     const titleA = (decks.a.buffer && decks.a.buffer.title) || document.getElementById('title-deck-a')?.innerText || 'Deck A';
     const titleB = (decks.b.buffer && decks.b.buffer.title) || document.getElementById('title-deck-b')?.innerText || 'Deck B';
@@ -2358,12 +2383,17 @@ function exportCombinedWaveform(format = 'jpg') {
     const gainA = Math.cos(xFade * Math.PI / 2);
     const gainB = Math.sin(xFade * Math.PI / 2);
 
+    // Crossfader-weighted transparency adjustment so both overlapping waveforms are clearly visible
+    const alphaA = Math.max(0.22, Math.min(0.92, gainA));
+    const alphaB = Math.max(0.22, Math.min(0.92, gainB));
+
     const dA = decks.a;
     const dB = decks.b;
     const pA = dA.peaks || new Float32Array(400);
     const pB = dB.peaks || new Float32Array(400);
     const len = Math.max(pA.length, pB.length, 400);
     const scaleX = w / len;
+    const lineweight = 2.5;
 
     if (format === 'svg') {
         let svg = `<?xml version="1.0" encoding="UTF-8"?>
@@ -2375,42 +2405,44 @@ function exportCombinedWaveform(format = 'jpg') {
         for (let x = 0; x < w; x += 40) {
             svg += `<line x1="${x}" y1="44" x2="${x}" y2="${h}" />`;
         }
-        svg += `<line x1="0" y1="${centerY}" x2="${w}" y2="${centerY}" stroke="#252932"/>
+        svg += `<line x1="0" y1="${centerY}" x2="${w}" y2="${centerY}" stroke="#252932" stroke-width="1.2"/>
     </g>
     <!-- Header Bar -->
     <rect x="0" y="0" width="${w}" height="44" fill="#101316"/>
-    <text x="18" y="27" fill="#ffffff" font-family="'Space Mono', monospace" font-size="12.5" font-weight="bold">■ REMXR42 • COMBINED DUAL-DECK MASTER WAVEFORM</text>
+    <text x="18" y="27" fill="#ffffff" font-family="'Space Mono', monospace" font-size="12.5" font-weight="bold">■ REMXR42 • OVERLAPPING DUAL-DECK MASTER WAVEFORM</text>
     
-    <!-- Legend Tags -->
-    <rect x="${w - 560}" y="11" width="170" height="22" fill="#1f1508" stroke="#ff8c00" rx="2"/>
-    <text x="${w - 550}" y="26" fill="#ff8c00" font-family="'Space Mono', monospace" font-size="9" font-weight="bold">DECK A: ${titleA.replace(/&/g, '&amp;').slice(0, 14)} (${(gainA * 100).toFixed(0)}%)</text>
+    <!-- Legend Badges -->
+    <rect x="${w - 560}" y="11" width="170" height="22" fill="#1f140a" stroke="#ff7a29" rx="2"/>
+    <text x="${w - 550}" y="26" fill="#ff7a29" font-family="'Space Mono', monospace" font-size="9" font-weight="bold">DECK A: ${titleA.replace(/&/g, '&amp;').slice(0, 14)} (${(gainA * 100).toFixed(0)}%)</text>
     
-    <rect x="${w - 380}" y="11" width="170" height="22" fill="#051c14" stroke="#00ff9d" rx="2"/>
-    <text x="${w - 370}" y="26" fill="#00ff9d" font-family="'Space Mono', monospace" font-size="9" font-weight="bold">DECK B: ${titleB.replace(/&/g, '&amp;').slice(0, 14)} (${(gainB * 100).toFixed(0)}%)</text>
+    <rect x="${w - 380}" y="11" width="170" height="22" fill="#0d1924" stroke="#6cb4ee" rx="2"/>
+    <text x="${w - 370}" y="26" fill="#6cb4ee" font-family="'Space Mono', monospace" font-size="9" font-weight="bold">DECK B: ${titleB.replace(/&/g, '&amp;').slice(0, 14)} (${(gainB * 100).toFixed(0)}%)</text>
 
-    <rect x="${w - 200}" y="11" width="185" height="22" fill="#181814" stroke="#ffdd44" rx="2"/>
-    <text x="${w - 190}" y="26" fill="#ffdd44" font-family="'Space Mono', monospace" font-size="9" font-weight="bold">XFADE: ${xFade.toFixed(2)} [${(gainA*100).toFixed(0)}A / ${(gainB*100).toFixed(0)}B]</text>
+    <rect x="${w - 200}" y="11" width="185" height="22" fill="#181814" stroke="#f8c548" rx="2"/>
+    <text x="${w - 190}" y="26" fill="#f8c548" font-family="'Space Mono', monospace" font-size="9" font-weight="bold">XFADE: ${xFade.toFixed(2)} [${(gainA*100).toFixed(0)}A / ${(gainB*100).toFixed(0)}B]</text>
 
-    <!-- Top Half: Deck A Waveform (Terracotta / Amber) -->
-    <g fill="#ff8c00" opacity="0.90">`;
+    <!-- Overlapping Deck A: Terracotta Orange with Crossfader Transparency (${(alphaA*100).toFixed(0)}%) -->
+    <g fill="#ff7a29" opacity="${alphaA.toFixed(2)}">`;
         for (let b = 0; b < len; b++) {
             const bx = b * scaleX;
-            const valA = Math.abs(pA[b % pA.length] || 0.05) * gainA;
+            const valA = Math.abs(pA[b % pA.length] || 0.05);
             const yTop = centerY - valA * ampScale;
-            svg += `<rect x="${bx.toFixed(1)}" y="${yTop.toFixed(1)}" width="${Math.max(1, scaleX - 0.5).toFixed(1)}" height="${Math.max(1, centerY - yTop).toFixed(1)}"/>`;
+            const yBot = centerY + valA * ampScale;
+            svg += `<rect x="${bx.toFixed(1)}" y="${yTop.toFixed(1)}" width="${Math.max(lineweight, scaleX).toFixed(1)}" height="${Math.max(2, yBot - yTop).toFixed(1)}"/>`;
         }
         svg += `</g>
-    <!-- Bottom Half: Deck B Waveform (Forest Sage / Mint) -->
-    <g fill="#00ff9d" opacity="0.90">`;
+    <!-- Overlapping Deck B: Faded Sky Blue with Crossfader Transparency (${(alphaB*100).toFixed(0)}%) -->
+    <g fill="#6cb4ee" opacity="${alphaB.toFixed(2)}">`;
         for (let b = 0; b < len; b++) {
             const bx = b * scaleX;
-            const valB = Math.abs(pB[b % pB.length] || 0.05) * gainB;
+            const valB = Math.abs(pB[b % pB.length] || 0.05);
+            const yTop = centerY - valB * ampScale;
             const yBot = centerY + valB * ampScale;
-            svg += `<rect x="${bx.toFixed(1)}" y="${centerY.toFixed(1)}" width="${Math.max(1, scaleX - 0.5).toFixed(1)}" height="${Math.max(1, yBot - centerY).toFixed(1)}"/>`;
+            svg += `<rect x="${bx.toFixed(1)}" y="${yTop.toFixed(1)}" width="${Math.max(lineweight, scaleX).toFixed(1)}" height="${Math.max(2, yBot - yTop).toFixed(1)}"/>`;
         }
         svg += `</g>
-    <!-- Center Blended Master Sum Outline (Radiant Gold) -->
-    <g stroke="#ffdd44" stroke-width="1.6" fill="none" opacity="0.95">
+    <!-- Master Superposition Sum Envelope Contour (Warm Amber Gold) with 2.5px Lineweight -->
+    <g stroke="#f8c548" stroke-width="2.5" fill="none" opacity="0.95">
         <polyline points="`;
         for (let b = 0; b < len; b++) {
             const bx = b * scaleX + scaleX / 2;
@@ -2467,53 +2499,65 @@ function exportCombinedWaveform(format = 'jpg') {
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 12.5px "Space Mono", monospace';
-    ctx.fillText('■ REMXR42 • COMBINED DUAL-DECK MASTER WAVEFORM', 18, 27);
+    ctx.fillText('■ REMXR42 • OVERLAPPING DUAL-DECK MASTER WAVEFORM', 18, 27);
 
     // Legend Badges
-    ctx.fillStyle = '#1f1508';
-    ctx.strokeStyle = '#ff8c00';
+    ctx.fillStyle = '#1f140a';
+    ctx.strokeStyle = '#ff7a29';
     ctx.lineWidth = 1;
     ctx.fillRect(w - 560, 11, 170, 22);
     ctx.strokeRect(w - 560, 11, 170, 22);
-    ctx.fillStyle = '#ff8c00';
+    ctx.fillStyle = '#ff7a29';
     ctx.font = 'bold 9px "Space Mono", monospace';
     ctx.fillText(`DECK A: ${titleA.toUpperCase().slice(0, 14)} (${(gainA * 100).toFixed(0)}%)`, w - 550, 26);
 
-    ctx.fillStyle = '#051c14';
-    ctx.strokeStyle = '#00ff9d';
+    ctx.fillStyle = '#0d1924';
+    ctx.strokeStyle = '#6cb4ee';
     ctx.fillRect(w - 380, 11, 170, 22);
     ctx.strokeRect(w - 380, 11, 170, 22);
-    ctx.fillStyle = '#00ff9d';
+    ctx.fillStyle = '#6cb4ee';
     ctx.fillText(`DECK B: ${titleB.toUpperCase().slice(0, 14)} (${(gainB * 100).toFixed(0)}%)`, w - 370, 26);
 
     ctx.fillStyle = '#181814';
-    ctx.strokeStyle = '#ffdd44';
+    ctx.strokeStyle = '#f8c548';
     ctx.fillRect(w - 200, 11, 185, 22);
     ctx.strokeRect(w - 200, 11, 185, 22);
-    ctx.fillStyle = '#ffdd44';
+    ctx.fillStyle = '#f8c548';
     ctx.fillText(`XFADE: ${xFade.toFixed(2)} [${(gainA*100).toFixed(0)}A / ${(gainB*100).toFixed(0)}B]`, w - 190, 26);
 
-    // Top Half: Deck A Waveform (Terracotta / Amber)
-    ctx.fillStyle = '#ff8c00';
+    // Overlapping Waveforms with Screen/Alpha Blending & 2.5px Lineweight
+    // 1. Deck A Waveform Layer (Terracotta Orange)
+    ctx.save();
+    ctx.globalAlpha = alphaA;
+    ctx.fillStyle = '#ff7a29';
     for (let b = 0; b < len; b++) {
         const bx = b * scaleX;
-        const valA = Math.abs(pA[b % pA.length] || 0.05) * gainA;
+        const valA = Math.abs(pA[b % pA.length] || 0.05);
         const yTop = centerY - valA * ampScale;
-        ctx.fillRect(bx, yTop, Math.max(1, scaleX - 0.5), Math.max(1, centerY - yTop));
+        const yBot = centerY + valA * ampScale;
+        ctx.fillRect(bx, yTop, Math.max(lineweight, scaleX), Math.max(2, yBot - yTop));
     }
+    ctx.restore();
 
-    // Bottom Half: Deck B Waveform (Forest Sage / Mint)
-    ctx.fillStyle = '#00ff9d';
+    // 2. Deck B Waveform Layer (Faded Sky Blue)
+    ctx.save();
+    ctx.globalAlpha = alphaB;
+    ctx.fillStyle = '#6cb4ee';
     for (let b = 0; b < len; b++) {
         const bx = b * scaleX;
-        const valB = Math.abs(pB[b % pB.length] || 0.05) * gainB;
+        const valB = Math.abs(pB[b % pB.length] || 0.05);
+        const yTop = centerY - valB * ampScale;
         const yBot = centerY + valB * ampScale;
-        ctx.fillRect(bx, centerY, Math.max(1, scaleX - 0.5), Math.max(1, yBot - centerY));
+        ctx.fillRect(bx, yTop, Math.max(lineweight, scaleX), Math.max(2, yBot - yTop));
     }
+    ctx.restore();
 
-    // Combined Sum Outline (Radiant Gold)
-    ctx.strokeStyle = '#ffdd44';
-    ctx.lineWidth = 1.6;
+    // 3. Combined Master Sum Outline (Warm Amber Gold with 2.5px Lineweight)
+    ctx.save();
+    ctx.strokeStyle = '#f8c548';
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = 'rgba(248, 197, 72, 0.5)';
+    ctx.shadowBlur = 6;
     ctx.beginPath();
     for (let b = 0; b < len; b++) {
         const bx = b * scaleX + scaleX / 2;
@@ -2535,6 +2579,7 @@ function exportCombinedWaveform(format = 'jpg') {
         if (b === 0) ctx.moveTo(bx, yBot); else ctx.lineTo(bx, yBot);
     }
     ctx.stroke();
+    ctx.restore();
 
     canvas.toBlob(blob => {
         downloadBlob(blob, `${baseFileName}.jpg`);
@@ -2568,7 +2613,7 @@ function exportCircularSpectrogram(k, format = 'png') {
         const isMid = (deg % 15 === 0);
         const r1 = exportSize * 0.495;
         const r2 = r1 - (isMajor ? 14 : (isMid ? 8 : 4));
-        ctx.strokeStyle = isMajor ? ((k === 'a') ? '#ff8c00' : '#00ff9d') : (isMid ? '#4a505a' : '#22262c');
+        ctx.strokeStyle = isMajor ? ((k === 'a') ? '#ff7a29' : '#6cb4ee') : (isMid ? '#4a505a' : '#22262c');
         ctx.lineWidth = isMajor ? 1.5 : 0.8;
         ctx.beginPath();
         ctx.moveTo(cx + r1 * Math.cos(rad), cy + r1 * Math.sin(rad));
@@ -2576,7 +2621,7 @@ function exportCircularSpectrogram(k, format = 'png') {
         ctx.stroke();
 
         if (isMajor) {
-            ctx.fillStyle = isMajor ? ((k === 'a') ? '#ffaa00' : '#00ff9d') : '#888';
+            ctx.fillStyle = isMajor ? ((k === 'a') ? '#f8c548' : '#7ac1f8') : '#888';
             ctx.font = 'bold 10px "Space Mono", monospace';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -2601,7 +2646,7 @@ function exportCircularSpectrogram(k, format = 'png') {
         ctx.drawImage(d.centerLabelImg, cx - rThumb, cy - rThumb, rThumb * 2, rThumb * 2);
         ctx.restore();
     } else {
-        ctx.fillStyle = (k === 'a') ? '#cf4a18' : '#1e6e54';
+        ctx.fillStyle = (k === 'a') ? '#cf4a18' : '#1e4b6e';
         ctx.beginPath();
         ctx.arc(cx, cy, rThumb, 0, 2 * Math.PI);
         ctx.fill();
@@ -2624,7 +2669,7 @@ function exportCircularSpectrogram(k, format = 'png') {
     // 5. Technical Telemetry Overlay Header
     ctx.fillStyle = '#101316';
     ctx.fillRect(20, 20, 460, 62);
-    ctx.strokeStyle = (k === 'a') ? '#ff8c00' : '#00ff9d';
+    ctx.strokeStyle = (k === 'a') ? '#ff7a29' : '#6cb4ee';
     ctx.strokeRect(20, 20, 460, 62);
 
     ctx.fillStyle = '#ffffff';
@@ -2632,7 +2677,7 @@ function exportCircularSpectrogram(k, format = 'png') {
     ctx.textAlign = 'left';
     ctx.fillText(`■ REMXR42 • DECK ${k.toUpperCase()} POLAR PHONOGRAM`, 34, 42);
 
-    ctx.fillStyle = (k === 'a') ? '#ffaa00' : '#00ff9d';
+    ctx.fillStyle = (k === 'a') ? '#f8c548' : '#6cb4ee';
     ctx.font = 'bold 10px "Space Mono", monospace';
     ctx.fillText(`TITLE: ${title.toUpperCase().slice(0, 32)} • DUR: ${d.duration.toFixed(1)}s`, 34, 62);
 
@@ -2688,7 +2733,7 @@ function exportCombinedCircularSpectrogram(format = 'png') {
     ctx.beginPath();
     ctx.arc(cx, cy, rPlatter * 0.28, 0, 2 * Math.PI);
     ctx.fill();
-    ctx.strokeStyle = '#ffdd44';
+    ctx.strokeStyle = '#f8c548';
     ctx.lineWidth = 2;
     ctx.stroke();
 
@@ -2697,14 +2742,14 @@ function exportCombinedCircularSpectrogram(format = 'png') {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('MASTER MIX', cx, cy - 8);
-    ctx.fillStyle = '#ffdd44';
+    ctx.fillStyle = '#f8c548';
     ctx.font = 'bold 10px "Space Mono", monospace';
     ctx.fillText(`${(gainA*100).toFixed(0)}% A / ${(gainB*100).toFixed(0)}% B`, cx, cy + 10);
 
     // Header
     ctx.fillStyle = '#101316';
     ctx.fillRect(20, 20, 480, 64);
-    ctx.strokeStyle = '#ffdd44';
+    ctx.strokeStyle = '#f8c548';
     ctx.strokeRect(20, 20, 480, 64);
 
     ctx.fillStyle = '#ffffff';
@@ -2712,10 +2757,10 @@ function exportCombinedCircularSpectrogram(format = 'png') {
     ctx.textAlign = 'left';
     ctx.fillText('■ REMXR42 • COMBINED MASTER POLAR PHONOGRAM', 34, 42);
 
-    ctx.fillStyle = '#ff8c00';
+    ctx.fillStyle = '#ff7a29';
     ctx.font = 'bold 9.5px "Space Mono", monospace';
     ctx.fillText(`A: ${titleA.slice(0, 18)} (${(gainA*100).toFixed(0)}%)`, 34, 62);
-    ctx.fillStyle = '#00ff9d';
+    ctx.fillStyle = '#6cb4ee';
     ctx.fillText(`B: ${titleB.slice(0, 18)} (${(gainB*100).toFixed(0)}%)`, 240, 62);
 
     canvas.toBlob(blob => {
@@ -2752,11 +2797,15 @@ function renderLinearStrip(k) {
     ctx.moveTo(0, centerY); ctx.lineTo(w, centerY);
     ctx.stroke();
 
-    const waveColor = (k === 'a') ? '#ff8c00' : '#00ff9d';
-    const coreColor = (k === 'a') ? '#ffe28a' : '#d4fff0';
-    const shadowColor = (k === 'a') ? 'rgba(255, 140, 0, 0.45)' : 'rgba(0, 255, 157, 0.45)';
+    const baseColor = (k === 'a') ? '#ff7a29' : '#6cb4ee';      // Terracotta Orange vs Faded Sky Blue
+    const midColor  = '#f8c548';                               // Common Warm Amber Gold
+    const hiColor   = '#b388ff';                               // Common Electric Violet
+    const shadowColor = (k === 'a') ? 'rgba(255, 122, 41, 0.45)' : 'rgba(108, 180, 238, 0.45)';
 
-    // 3. True Audio Waveform Peaks (Scaled with Bold Dynamic Amplitude)
+    // Standardized Lineweight (2.5px matching scrub line)
+    const lineweight = 2.5;
+
+    // 3. True Audio Waveform Peaks with 4-Color Frequency Encodings & Consistent Lineweight
     if (d.peaks && d.peaks.length > 0) {
         const binCount = d.peaks.length;
         const scaleX = w / binCount;
@@ -2782,29 +2831,41 @@ function renderLinearStrip(k) {
                 yBot = centerY + 2;
             }
 
-            ctx.fillStyle = waveColor;
-            ctx.fillRect(bx, yTop, Math.max(1.2, scaleX), yBot - yTop);
+            const barHeight = yBot - yTop;
+            const barW = Math.max(lineweight, scaleX);
 
-            if (yBot - yTop > 8) {
-                ctx.fillStyle = coreColor;
-                ctx.fillRect(bx, yTop + 2, Math.max(1, scaleX - 0.5), yBot - yTop - 4);
+            // Base Body: Deck Primary (Orange / Sky Blue)
+            ctx.fillStyle = baseColor;
+            ctx.fillRect(bx, yTop, barW, barHeight);
+
+            // Mid Harmonic Core: Warm Amber Gold
+            if (barHeight > 10) {
+                ctx.fillStyle = midColor;
+                ctx.fillRect(bx, yTop + barHeight * 0.20, barW, barHeight * 0.60);
+            }
+
+            // High Transient Peak Spikes: Electric Violet
+            if (barHeight > 22) {
+                ctx.fillStyle = hiColor;
+                ctx.fillRect(bx, yTop, barW, 3.5);
+                ctx.fillRect(bx, yBot - 3.5, barW, 3.5);
             }
         }
         ctx.restore();
     }
 
-    // 4. Shaded Active Loop Region & Tactile Tag-Dots / Pegs (Green for IN, Red for OUT)
+    // 4. Shaded Active Loop Region & Tactile Tag-Dots / Pegs with Exact Lineweight (2.5px)
     if (d.duration > 0) {
         const inX = (d.inTime / d.duration) * w;
         const outX = (d.outTime / d.duration) * w;
 
         // Loop Shading
-        ctx.fillStyle = (k === 'a') ? 'rgba(255, 72, 0, 0.24)' : 'rgba(0, 255, 157, 0.22)';
+        ctx.fillStyle = (k === 'a') ? 'rgba(255, 122, 41, 0.22)' : 'rgba(108, 180, 238, 0.20)';
         ctx.fillRect(inX, 0, Math.max(2, outX - inX), h);
 
-        // SPLICE IN: Green Line & Green Tactile Tag-Dot Pegs
+        // SPLICE IN: Green Line (Exact 2.5px lineweight) & Tactile Peg
         ctx.fillStyle = '#00ff9d';
-        ctx.fillRect(inX - 1, 0, 2, h);
+        ctx.fillRect(inX - lineweight / 2, 0, lineweight, h);
 
         // Top Green IN Peg
         ctx.beginPath();
@@ -2829,9 +2890,9 @@ function renderLinearStrip(k) {
         ctx.lineWidth = 1;
         ctx.stroke();
 
-        // SPLICE OUT: Red Line & Red Tactile Tag-Dot Pegs
+        // SPLICE OUT: Coral Red Line (Exact 2.5px lineweight) & Tactile Peg
         ctx.fillStyle = '#ff2244';
-        ctx.fillRect(outX - 1, 0, 2, h);
+        ctx.fillRect(outX - lineweight / 2, 0, lineweight, h);
 
         // Top Red OUT Peg
         ctx.beginPath();
@@ -2857,11 +2918,11 @@ function renderLinearStrip(k) {
         ctx.stroke();
     }
 
-    // 5. Playhead Scrubber Position
+    // 5. Playhead Scrubber Position (Exact 2.5px Lineweight)
     if (d.duration > 0) {
         const playX = (d.playbackPosition / d.duration) * w;
         ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = lineweight;
         ctx.beginPath();
         ctx.moveTo(playX, 0); ctx.lineTo(playX, h);
         ctx.stroke();
