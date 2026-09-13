@@ -942,9 +942,9 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
     const cx = size / 2;
     const cy = size / 2;
     const rDisc = size * 0.485;
-    const rLabel = size * 0.215; // Minimal neat dial ring
-    const rInner = rLabel + 3;   // Waveform starts right after the neat dial!
-    const rOuter = rDisc - 3;    // Waveform fills almost the entire vinyl disc
+    const rLabel = size * 0.28;  // Prominent center thumbnail boundary
+    const rInner = rLabel + 2;   // Waveform starts directly at the thumbnail's edge!
+    const rOuter = rDisc - 3;    // Waveform spans out to outer vinyl rim
 
     // 1. Dark Basalt Vinyl Disc Base
     octx.fillStyle = '#101215';
@@ -952,7 +952,7 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
     octx.arc(cx, cy, rDisc, 0, 2 * Math.PI);
     octx.fill();
 
-    // 2. Compute Polar Time-Frequency Spectrogram Grid
+    // 2. Compute Polar Time-Frequency Spectrogram Grid (32 Frequency Bands, 280 Angular Slices)
     const numSlices = 280;
     const numFreqs = 32;
     const peaks = d.peaks;
@@ -961,7 +961,7 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
     for (let i = 0; i < numSlices; i++) {
         const u = i / numSlices;
         const a0 = u * 2 * Math.PI - Math.PI / 2;
-        const a1 = ((i + 1.1) / numSlices) * 2 * Math.PI - Math.PI / 2;
+        const a1 = ((i + 1.15) / numSlices) * 2 * Math.PI - Math.PI / 2;
 
         let baseAmp = 0.45;
         if (hasPeaks) {
@@ -972,14 +972,14 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
         for (let f = 0; f < numFreqs; f++) {
             const v = f / numFreqs;
             const r0 = rInner + v * (rOuter - rInner);
-            const r1 = rInner + ((f + 1.1) / numFreqs) * (rOuter - rInner);
+            const r1 = rInner + ((f + 1.15) / numFreqs) * (rOuter - rInner);
 
             let fEnergy = baseAmp;
-            if (f < 5) {
-                fEnergy *= (1.25 - v * 0.5);
-            } else if (f < 14) {
+            if (f < 6) {
+                fEnergy *= (1.3 - v * 0.45);
+            } else if (f < 16) {
                 const harmonic = Math.sin(u * 48 * Math.PI + f * 1.3);
-                fEnergy *= (0.7 + 0.5 * Math.abs(harmonic));
+                fEnergy *= (0.75 + 0.5 * Math.abs(harmonic));
             } else {
                 fEnergy *= (0.35 + 0.65 * Math.sin(u * 96 * Math.PI));
             }
@@ -992,32 +992,32 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
 
             let color;
             if (k === 'a') {
-                if (fEnergy < 0.2) color = `rgba(10, 18, 48, ${0.4 + fEnergy})`;
+                if (fEnergy < 0.2) color = `rgba(10, 18, 48, ${0.45 + fEnergy})`;
                 else if (fEnergy < 0.4) {
                     const t = (fEnergy - 0.2) / 0.2;
-                    color = `rgba(0, ${Math.floor(110 + t * 110)}, ${Math.floor(200 + t * 55)}, ${0.75 + t * 0.25})`;
+                    color = `rgba(0, ${Math.floor(120 + t * 110)}, ${Math.floor(210 + t * 45)}, ${0.75 + t * 0.25})`;
                 } else if (fEnergy < 0.65) {
                     const t = (fEnergy - 0.4) / 0.25;
-                    color = `rgba(${Math.floor(t * 180)}, 255, ${Math.floor(100 - t * 90)}, 0.95)`;
+                    color = `rgba(${Math.floor(t * 200)}, 255, ${Math.floor(80 - t * 70)}, 0.95)`;
                 } else if (fEnergy < 0.85) {
                     const t = (fEnergy - 0.65) / 0.2;
-                    color = `rgba(255, ${Math.floor(190 - t * 70)}, 0, 0.98)`;
+                    color = `rgba(255, ${Math.floor(180 - t * 80)}, 0, 0.98)`;
                 } else {
-                    color = `rgba(255, 60, 0, 1.0)`;
+                    color = `rgba(255, 50, 0, 1.0)`;
                 }
             } else {
-                if (fEnergy < 0.2) color = `rgba(5, 25, 20, ${0.4 + fEnergy})`;
+                if (fEnergy < 0.2) color = `rgba(5, 25, 20, ${0.45 + fEnergy})`;
                 else if (fEnergy < 0.4) {
                     const t = (fEnergy - 0.2) / 0.2;
-                    color = `rgba(0, ${Math.floor(160 + t * 90)}, ${Math.floor(120 + t * 80)}, 0.8)`;
+                    color = `rgba(0, ${Math.floor(170 + t * 85)}, ${Math.floor(130 + t * 70)}, 0.82)`;
                 } else if (fEnergy < 0.65) {
                     const t = (fEnergy - 0.4) / 0.25;
-                    color = `rgba(${Math.floor(40 + t * 140)}, 255, 170, 0.95)`;
+                    color = `rgba(${Math.floor(30 + t * 150)}, 255, 170, 0.95)`;
                 } else if (fEnergy < 0.85) {
                     const t = (fEnergy - 0.65) / 0.2;
-                    color = `rgba(${Math.floor(180 + t * 75)}, 255, 80, 0.98)`;
+                    color = `rgba(${Math.floor(190 + t * 65)}, 255, 70, 0.98)`;
                 } else {
-                    color = `rgba(255, 255, 120, 1.0)`;
+                    color = `rgba(255, 255, 100, 1.0)`;
                 }
             }
 
@@ -1026,51 +1026,25 @@ function generateProceduralPolarSpectrogram(k, size = 600) {
         }
     }
 
-    // 3. Fine Vinyl Grooves
+    // 3. Fine Radial Vinyl Grooves
     octx.lineWidth = 0.5;
-    for (let r = rInner; r < rOuter; r += 3.5) {
-        octx.strokeStyle = `rgba(255, 255, 255, ${0.04 + 0.03 * Math.sin(r * 0.8)})`;
+    for (let r = rInner; r < rOuter; r += 2.8) {
+        octx.strokeStyle = `rgba(255, 255, 255, ${0.045 + 0.03 * Math.sin(r * 0.9)})`;
         octx.beginPath();
         octx.arc(cx, cy, r, 0, 2 * Math.PI);
         octx.stroke();
     }
 
-    // 4. Neat Minimal Center Dial Disc (Teenage Engineering Precision Aesthetic)
-    octx.fillStyle = '#eae7de';
+    // 4. Center Artwork Label Base
+    octx.fillStyle = '#141619';
     octx.beginPath();
     octx.arc(cx, cy, rLabel, 0, 2 * Math.PI);
-    octx.fill();
-
-    // Subtle Outer Bezel Rim
-    octx.strokeStyle = '#c5c1b4';
-    octx.lineWidth = 1.5;
-    octx.stroke();
-
-    // Precision Rotary Calibration Ticks along Dial Rim
-    octx.lineWidth = 1.0;
-    for (let deg = 0; deg < 360; deg += 15) {
-        const rad = deg * Math.PI / 180;
-        const tickLen = (deg % 45 === 0) ? 5 : 2.5;
-        const x1 = cx + (rLabel - tickLen) * Math.cos(rad);
-        const y1 = cy + (rLabel - tickLen) * Math.sin(rad);
-        const x2 = cx + rLabel * Math.cos(rad);
-        const y2 = cy + rLabel * Math.sin(rad);
-        octx.strokeStyle = (deg % 45 === 0) ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.18)';
-        octx.beginPath();
-        octx.moveTo(x1, y1);
-        octx.lineTo(x2, y2);
-        octx.stroke();
-    }
-
-    // Center Spindle Hole
-    octx.fillStyle = '#080808';
-    octx.beginPath();
-    octx.arc(cx, cy, size * 0.038, 0, 2 * Math.PI);
     octx.fill();
 
     return offCanvas;
 }
 window.generateProceduralPolarSpectrogram = generateProceduralPolarSpectrogram;
+
 
 // 8. Master Deck Audio Buffer Application Pipeline
 function applyAudioBufferToDeck(k, audioBuffer, title, artworkUrl = '', metaStr = '') {
@@ -1585,17 +1559,99 @@ function renderTurntable(k) {
     const h = cv.height;
     const cx = w / 2;
     const cy = h / 2;
-    const platterRadius = w * 0.48;
+    const platterRadius = Math.min(w, h) * 0.46;
 
     ctx.clearRect(0, 0, w, h);
 
+    // =========================================================================
+    // A. RENDER REALTIME STREAMING CODE IN THE DARK CORNERS (20% OPACITY)
+    // =========================================================================
+    ctx.save();
+    ctx.font = '9px "Space Mono", monospace';
+    const codeColor = (k === 'a') ? 'rgba(255, 140, 0, 0.20)' : 'rgba(0, 255, 157, 0.20)';
+    const commentColor = 'rgba(120, 130, 140, 0.20)';
+    const accentColor = (k === 'a') ? 'rgba(255, 72, 0, 0.24)' : 'rgba(0, 255, 200, 0.24)';
+
+    const tOffset = (performance.now() * 0.02) % 200;
+    const dur = d.duration > 0 ? d.duration : 0;
+    const pos = d.playbackPosition || 0;
+    const spd = d.pitch || 1.0;
+    const rpm = (33.33 * spd).toFixed(1);
+
+    const cornerLinesLeft = [
+        { c: commentColor, t: `// [INGEST: DECK_${k.toUpperCase()}]` },
+        { c: codeColor,    t: `const buf = await fetch('/api/yt/stream?id=...').arrayBuffer();` },
+        { c: codeColor,    t: `const pcm = await actx.decodeAudioData(buf);` },
+        { c: codeColor,    t: `deck_${k}.buffer = pcm; // sr: 44.1kHz` },
+        { c: commentColor, t: `// [DSP REMIX & CROSSFADE]` },
+        { c: codeColor,    t: `gain_${k} = Math.${k==='a'?'cos':'sin'}(xFade * PI / 2);` },
+        { c: codeColor,    t: `mix[i] += pcm[srcIdx] * gain_${k} * eq_${k};` },
+        { c: commentColor, t: `// [POLAR WAVEFORM MATH]` },
+        { c: codeColor,    t: `r = rInner + (f/32)*(rOuter-rInner);` },
+        { c: codeColor,    t: `ctx.arc(cx, cy, r, a0, a1);` }
+    ];
+
+    const cornerLinesRight = [
+        { c: accentColor,  t: `[TELEMETRY DECK_${k.toUpperCase()}]` },
+        { c: codeColor,    t: `POS: ${(pos).toFixed(2)}s / ${(dur).toFixed(2)}s` },
+        { c: codeColor,    t: `SPEED: ${spd.toFixed(3)}x (${rpm} RPM)` },
+        { c: codeColor,    t: `RMS: ${d.isPlaying ? '-7.8 dB' : 'MUTED'}` },
+        { c: codeColor,    t: `PEAKS: ${d.peaks ? d.peaks.length : 400} BINS` },
+        { c: commentColor, t: `// [SPLICE BOUNDS]` },
+        { c: codeColor,    t: `IN:  ${d.inTime.toFixed(2)}s (GREEN PEG)` },
+        { c: codeColor,    t: `OUT: ${d.outTime.toFixed(2)}s (RED PEG)` },
+        { c: accentColor,  t: `STATUS: ${d.isPlaying ? 'PLAYING' : 'ARMED'}` }
+    ];
+
+    // Draw Top-Left Corner Code
+    for (let i = 0; i < 5; i++) {
+        const item = cornerLinesLeft[i];
+        if (item) {
+            ctx.fillStyle = item.c;
+            ctx.fillText(item.t, 8, 14 + i * 13);
+        }
+    }
+
+    // Draw Bottom-Left Corner Code
+    for (let i = 5; i < cornerLinesLeft.length; i++) {
+        const item = cornerLinesLeft[i];
+        if (item) {
+            ctx.fillStyle = item.c;
+            ctx.fillText(item.t, 8, h - 75 + (i - 5) * 13);
+        }
+    }
+
+    // Draw Top-Right Corner Telemetry
+    for (let i = 0; i < 4; i++) {
+        const item = cornerLinesRight[i];
+        if (item) {
+            ctx.fillStyle = item.c;
+            ctx.textAlign = 'right';
+            ctx.fillText(item.t, w - 8, 14 + i * 13);
+        }
+    }
+
+    // Draw Bottom-Right Corner Telemetry
+    for (let i = 4; i < cornerLinesRight.length; i++) {
+        const item = cornerLinesRight[i];
+        if (item) {
+            ctx.fillStyle = item.c;
+            ctx.textAlign = 'right';
+            ctx.fillText(item.t, w - 8, h - 75 + (i - 4) * 13);
+        }
+    }
+    ctx.restore();
+
+    // =========================================================================
+    // B. TURNTABLE PLATTER & EXPANDED POLAR WAVEFORM
+    // =========================================================================
     // Outer Turntable Metal Platter Rim
-    ctx.fillStyle = '#1c1f24';
+    ctx.fillStyle = '#15171a';
     ctx.beginPath();
     ctx.arc(cx, cy, platterRadius, 0, 2 * Math.PI);
     ctx.fill();
-    ctx.strokeStyle = d.isScratching ? '#ff0055' : '#666e77';
-    ctx.lineWidth = d.isScratching ? 4 : 3;
+    ctx.strokeStyle = d.isScratching ? '#ff0055' : ((k === 'a') ? '#4a2818' : '#184236');
+    ctx.lineWidth = d.isScratching ? 4 : 2.5;
     ctx.stroke();
 
     // Spinning Vinyl Record Body
@@ -1604,11 +1660,10 @@ function renderTurntable(k) {
     ctx.rotate(d.rotationAngle);
 
     const rDisc = platterRadius * 0.94;
-    const rLabel = platterRadius * 0.22; // Minimal neat dial
-    // Thumbnail 2% larger
-    const rThumb = rLabel * 0.86; // 2% bigger thumbnail coverage
+    const rThumb = platterRadius * 0.28; // Prominent, 2%+ larger artwork thumbnail
+    const rBezel = rThumb + 3;          // Minimal 3px precision dial rim
 
-    // Draw Polar Spectrogram
+    // Draw Polar Spectrogram (spans from rBezel all the way out to rDisc)
     if (!d.proceduralCanvas || d.needsProceduralUpdate) {
         d.proceduralCanvas = generateProceduralPolarSpectrogram(k, 600);
         d.needsProceduralUpdate = false;
@@ -1617,24 +1672,20 @@ function renderTurntable(k) {
         ctx.drawImage(d.proceduralCanvas, -rDisc, -rDisc, rDisc * 2, rDisc * 2);
     }
 
-    // Neat Dial Ring & 2% Bigger Artwork Thumbnail
+    // Minimal Precision Dial Rim Around Thumbnail
     ctx.fillStyle = '#eae7de';
     ctx.beginPath();
-    ctx.arc(0, 0, rLabel, 0, 2 * Math.PI);
+    ctx.arc(0, 0, rBezel, 0, 2 * Math.PI);
     ctx.fill();
-    ctx.strokeStyle = '#c5c1b4';
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
 
-    // Calibration micro ticks on dial
+    // Precision Rotary Degree Ticks
     for (let deg = 0; deg < 360; deg += 30) {
         const rad = deg * Math.PI / 180;
-        const tickLen = 3;
-        const x1 = (rLabel - tickLen) * Math.cos(rad);
-        const y1 = (rLabel - tickLen) * Math.sin(rad);
-        const x2 = rLabel * Math.cos(rad);
-        const y2 = rLabel * Math.sin(rad);
-        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        const x1 = (rBezel - 2.5) * Math.cos(rad);
+        const y1 = (rBezel - 2.5) * Math.sin(rad);
+        const x2 = rBezel * Math.cos(rad);
+        const y2 = rBezel * Math.sin(rad);
+        ctx.strokeStyle = 'rgba(0,0,0,0.35)';
         ctx.lineWidth = 0.8;
         ctx.beginPath();
         ctx.moveTo(x1, y1);
@@ -1642,6 +1693,7 @@ function renderTurntable(k) {
         ctx.stroke();
     }
 
+    // Prominent Center Artwork Thumbnail
     if (d.centerLabelImg && d.centerLabelImg.complete) {
         ctx.save();
         ctx.beginPath();
@@ -1649,39 +1701,54 @@ function renderTurntable(k) {
         ctx.clip();
         ctx.drawImage(d.centerLabelImg, -rThumb, -rThumb, rThumb * 2, rThumb * 2);
         ctx.restore();
+    } else {
+        // High-contrast matte disc fallback
+        ctx.fillStyle = (k === 'a') ? '#ff4800' : '#00ff9d';
+        ctx.beginPath();
+        ctx.arc(0, 0, rThumb, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillStyle = '#101215';
+        ctx.font = 'bold 9px "Space Mono", monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(k === 'a' ? 'DECK A' : 'DECK B', 0, 0);
     }
 
+    // Inner Thumbnail Bezel Ring
     ctx.strokeStyle = '#181b20';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 1.8;
     ctx.beginPath();
     ctx.arc(0, 0, rThumb, 0, 2 * Math.PI);
     ctx.stroke();
 
     // Center Spindle Hole
-    ctx.fillStyle = '#0a0a0c';
+    ctx.fillStyle = '#08080a';
     ctx.beginPath();
-    ctx.arc(0, 0, platterRadius * 0.05, 0, 2 * Math.PI);
+    ctx.arc(0, 0, platterRadius * 0.045, 0, 2 * Math.PI);
     ctx.fill();
 
-    // Strobe Marker on Vinyl Edge
+    // Strobe Marker on Vinyl Outer Edge
     ctx.fillStyle = (k === 'a') ? '#ff4800' : '#00ff9d';
     ctx.beginPath();
-    ctx.arc(0, -rDisc + 6, 4.5, 0, 2 * Math.PI);
+    ctx.arc(0, -rDisc + 5, 4.5, 0, 2 * Math.PI);
     ctx.fill();
 
     ctx.restore();
 
-    // Tonearm & Stylus Needle Assembly (Tracking across entire expanded waveform)
+    // =========================================================================
+    // C. TONEARM & STYLUS NEEDLE ASSEMBLY
+    // Sweeps exactly across the expanded waveform from outer rim to thumbnail edge!
+    // =========================================================================
     const armBaseX = cx + platterRadius * 0.94;
     const armBaseY = cy - platterRadius * 0.78;
     const normPos = (d.duration > 0) ? Math.min(1.0, Math.max(0, d.playbackPosition / d.duration)) : 0;
-    const rInner = platterRadius * 0.22;
-    const rOuter = rDisc * 0.92;
+    const rInner = rBezel + 2;   // Innermost point matches thumbnail outer edge!
+    const rOuter = rDisc * 0.93; // Outermost point matches outer vinyl groove
     const needleR = rOuter - normPos * (rOuter - rInner);
     const needleX = cx + needleR * Math.cos(-Math.PI / 4);
     const needleY = cy + needleR * Math.sin(-Math.PI / 4);
 
-    ctx.strokeStyle = '#c8c4b7';
+    ctx.strokeStyle = '#d5d1c4';
     ctx.lineWidth = 3.5;
     ctx.beginPath();
     ctx.moveTo(armBaseX, armBaseY);
@@ -1691,10 +1758,14 @@ function renderTurntable(k) {
     // Stylus Needle Cartridge Head
     ctx.fillStyle = (k === 'a') ? '#ff4800' : '#00ff9d';
     ctx.beginPath();
-    ctx.arc(needleX, needleY, 5, 0, 2 * Math.PI);
+    ctx.arc(needleX, needleY, 5.5, 0, 2 * Math.PI);
     ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
 }
 window.renderTurntable = renderTurntable;
+
 
 // 16. PCM AUDIO EXPORTER & WAV FILE BUILDER
 function audioBufferToWavBlob(buffer, optStartTime = 0, optEndTime = null) {
