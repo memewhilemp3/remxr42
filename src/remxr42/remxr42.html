@@ -5,6 +5,7 @@
 <!-- MediaPipe Hands & Camera Utils -->
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js" crossorigin="anonymous"></script>
 
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=VT323&family=Inter:wght@400;600;700;800;900&display=swap');
@@ -422,10 +423,10 @@
     <div class="remxr-chassis">
         <div class="remxr-titlebar">
             <div class="remxr-logo">
-                <span style="display:inline-block; width:10px; height:10px; background:#ff4800; border-radius:50%; box-shadow:0 0 6px #ff4800;"></span>
-                <span>remxr42</span>
-                <span class="remxr-tag">ORIGINAL DUAL POLAR VINYL WORKSTATION</span>
-            </div>
+            <span>■ REMXR42</span>
+            <span class="remxr-tag">DUAL CIRCULAR POLAR VINYL WORKSTATION</span>
+            <span id="proxy-status-pill" class="remxr-tag" style="background:#1e2023; border:1px solid #333; border-radius:2px; padding:2px 6px; color:#888; font-size:8px; margin-left:6px; cursor:pointer;" onclick="checkProxyStatus(true)" title="Click to refresh local YouTube streaming proxy status">⚡ PROXY: PROBING...</span>
+        </div>
             <div style="display:flex; gap:6px; align-items:center;">
                 <button class="btn btn-te-orange btn-mini" id="btn-gesture-toggle">● ✋ GESTURES: OFF</button>
                 <button class="btn btn-mini" id="view-mode-btn">🎛️ VIEW: FULL (TURNTABLES + WAVEFORMS)</button>
@@ -1228,16 +1229,113 @@ async function searchOrLoadYouTube(k) {
 
     const directYtId = extractYouTubeId(query);
 
-    // CASE 1: DIRECT YOUTUBE LINK / ID
+    // ==========================================
+    // PATH 1: LOCAL PROXY ACTIVE (FULL STREAMING)
+    // ==========================================
+    if (window.remxrProxyActive && window.remxrProxyBaseUrl) {
+        const base = window.remxrProxyBaseUrl;
+
+        // CASE 1A: DIRECT URL / ID VIA PROXY
+        if (directYtId) {
+            if (statusEl) {
+                statusEl.innerText = 'FETCHING YT METADATA...';
+                statusEl.style.color = '#ffaa00';
+            }
+            if (resultsTray) resultsTray.style.display = 'none';
+
+            try {
+                const infoRes = await fetch(`${base}/api/yt/info?id=${directYtId}`);
+                if (!infoRes.ok) throw new Error('Info lookup failed');
+                const info = await infoRes.json();
+
+                const videoTitle = info.title || `YouTube Audio [${directYtId}]`;
+                const uploader = info.uploader || 'YouTube Artist';
+                const thumbUrl = info.thumbnail || `https://img.youtube.com/vi/${directYtId}/hqdefault.jpg`;
+                const durStr = info.duration ? `${Math.floor(info.duration / 60)}:${('0' + (info.duration % 60)).slice(-2)}` : 'FULL';
+
+                if (titleEl) titleEl.innerText = videoTitle.toUpperCase().slice(0, 26);
+                if (metaEl) metaEl.innerText = `${durStr} • ${uploader.toUpperCase()}`;
+                if (thumbEl) { thumbEl.src = thumbUrl; thumbEl.style.display = 'block'; }
+
+                if (statusEl) {
+                    statusEl.innerText = 'DOWNLOADING FULL STREAM...';
+                    statusEl.style.color = '#00ff9d';
+                }
+
+                const streamRes = await fetch(`${base}/api/yt/stream?id=${directYtId}`);
+                if (!streamRes.ok) throw new Error('Stream fetch failed');
+                const arrayBuf = await streamRes.arrayBuffer();
+
+                if (statusEl) {
+                    statusEl.innerText = 'DECODING PCM AUDIO...';
+                    statusEl.style.color = '#00ff9d';
+                }
+
+                const decoded = await actx.decodeAudioData(arrayBuf);
+                applyAudioBufferToDeck(k, decoded, videoTitle, thumbUrl, `YT FULL STREAM • ${(decoded.duration).toFixed(1)}s • 44.1kHz`);
+                return;
+            } catch (err) {
+                console.warn('Proxy streaming error, falling back to local synthesis:', err);
+                if (statusEl) {
+                    statusEl.innerText = 'STREAM ERROR (FALLBACK)';
+                    statusEl.style.color = '#ff4800';
+                }
+            }
+        } else {
+            // CASE 1B: SEARCH QUERY VIA PROXY
+            try {
+                const searchRes = await fetch(`${base}/api/yt/search?q=${encodeURIComponent(query)}`);
+                if (!searchRes.ok) throw new Error('Search failed');
+                const searchData = await searchRes.json();
+                const results = searchData.results || [];
+
+                if (results.length === 0) {
+                    if (resultsTray) {
+                        resultsTray.style.display = 'flex';
+                        resultsTray.innerHTML = `<div style="font-size:8.5px; color:#ff4800; padding:4px;">✖ NO YOUTUBE TRACKS FOUND FOR "${query.toUpperCase()}"</div>`;
+                    }
+                    if (statusEl) { statusEl.innerText = 'NOT FOUND'; statusEl.style.color = '#ff4800'; }
+                    return;
+                }
+
+                if (resultsTray) {
+                    resultsTray.style.display = 'flex';
+                    resultsTray.style.flexDirection = 'column';
+                    resultsTray.style.gap = '4px';
+                    resultsTray.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:8px; color:#00ff9d; padding:2px 4px; border-bottom:1px solid #333;">
+                            <span>⚡ YOUTUBE SEARCH RESULTS (${results.length})</span>
+                            <span style="cursor:pointer; color:#aaa;" onclick="document.getElementById('yt-results-${k}').style.display='none'">✖ CLOSE</span>
+                        </div>
+                        ${results.map(r => `
+                            <div class="yt-result-item" style="display:flex; align-items:center; gap:6px; padding:3px 4px; background:#1c1e21; border:1px solid #333; border-radius:2px; cursor:pointer;"
+                                onclick="loadProxyTrack('${k}', '${r.id}', '${escape(r.title)}', '${r.thumbnail}', '${escape(r.uploader)}', ${r.duration})">
+                                <img src="${r.thumbnail}" style="width:28px; height:28px; object-fit:cover; border-radius:1px;">
+                                <div style="display:flex; flex-direction:column; overflow:hidden;">
+                                    <span style="font-size:8.5px; font-weight:bold; color:#fff; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">${r.title.slice(0, 32)}</span>
+                                    <span style="font-size:7.5px; color:#888;">${r.uploader} • ${Math.floor(r.duration/60)}:${('0'+(r.duration%60)).slice(-2)}</span>
+                                </div>
+                            </div>
+                        `).join('')}
+                    `;
+                }
+                if (statusEl) { statusEl.innerText = 'RESULTS READY'; statusEl.style.color = '#00ff9d'; }
+                return;
+            } catch(e) {
+                console.warn('Proxy search error, falling back:', e);
+            }
+        }
+    }
+
+    // ==========================================
+    // PATH 2: STANDALONE MODE FALLBACK (OFFLINE)
+    // ==========================================
     if (directYtId) {
-        if (statusEl) statusEl.innerText = 'LOADING YOUTUBE...';
+        if (statusEl) statusEl.innerText = 'STANDALONE MODE...';
         if (resultsTray) resultsTray.style.display = 'none';
 
         const thumbUrl = `https://img.youtube.com/vi/${directYtId}/hqdefault.jpg`;
-        if (thumbEl) {
-            thumbEl.src = thumbUrl;
-            thumbEl.style.display = 'block';
-        }
+        if (thumbEl) { thumbEl.src = thumbUrl; thumbEl.style.display = 'block'; }
 
         let videoTitle = `YouTube Audio [${directYtId}]`;
         let author = 'YouTube Audio';
@@ -1249,9 +1347,7 @@ async function searchOrLoadYouTube(k) {
                 if (metaJson.title) videoTitle = metaJson.title;
                 if (metaJson.author_name) author = metaJson.author_name;
             }
-        } catch (e) {
-            console.warn('YouTube oEmbed notice:', e);
-        }
+        } catch (e) {}
 
         if (titleEl) titleEl.innerText = videoTitle.toUpperCase().slice(0, 26);
         if (metaEl) metaEl.innerText = `ID: ${directYtId} • ${author.toUpperCase()}`;
@@ -1266,9 +1362,7 @@ async function searchOrLoadYouTube(k) {
                     streamFound = true;
                 }
             }
-        } catch (err) {
-            console.warn('Audio stream resolution error:', err);
-        }
+        } catch (err) {}
 
         if (!streamFound) {
             synthesizeProceduralAudioForTrack(k, videoTitle, thumbUrl);
@@ -1276,90 +1370,92 @@ async function searchOrLoadYouTube(k) {
         return;
     }
 
-    // CASE 2: SEARCH QUERY
+    // Standalone Search Fallback
     try {
         const searchRes = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=6`);
         if (!searchRes.ok) throw new Error('Search network error');
-        
         const data = await searchRes.json();
         const results = data.results || [];
 
         if (results.length === 0) {
             if (resultsTray) {
                 resultsTray.style.display = 'flex';
-                resultsTray.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:8.5px; color:#ff4800; padding:4px;">
-                        <span>✖ NO TRACKS FOUND FOR "${query.toUpperCase()}"</span>
-                        <span style="cursor:pointer; color:#aaa;" onclick="document.getElementById('yt-results-${k}').style.display='none'">CLOSE</span>
-                    </div>
-                `;
+                resultsTray.innerHTML = `<div style="font-size:8.5px; color:#ff4800; padding:4px;">✖ NO TRACKS FOUND FOR "${query.toUpperCase()}"</div>`;
             }
-            if (statusEl) {
-                statusEl.innerText = 'NOT FOUND';
-                statusEl.style.color = '#ff4800';
-            }
+            if (statusEl) { statusEl.innerText = 'NOT FOUND'; statusEl.style.color = '#ff4800'; }
             return;
         }
 
         if (resultsTray) {
             resultsTray.style.display = 'flex';
+            resultsTray.style.flexDirection = 'column';
+            resultsTray.style.gap = '4px';
             resultsTray.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; font-size:8.5px; color:#aaa; font-weight:bold; margin-bottom:3px;">
-                    <span>■ ${results.length} MATCHES FOR "${query.toUpperCase().slice(0, 20)}":</span>
-                    <span style="cursor:pointer; color:#ff4800;" onclick="document.getElementById('yt-results-${k}').style.display='none'">✖ CLOSE</span>
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:8px; color:#ffaa00; padding:2px 4px; border-bottom:1px solid #333;">
+                    <span>STANDALONE SEARCH RESULTS (${results.length})</span>
+                    <span style="cursor:pointer; color:#aaa;" onclick="document.getElementById('yt-results-${k}').style.display='none'">✖ CLOSE</span>
                 </div>
-            `;
-
-            results.forEach((item) => {
-                const row = document.createElement('div');
-                row.style.cssText = "display:flex; align-items:center; gap:6px; background:#181a1d; padding:4px 6px; border-radius:1px; cursor:pointer; border:1px solid #383b40; transition:background 0.1s;";
-                row.onmouseover = () => { row.style.background = '#25282d'; };
-                row.onmouseout = () => { row.style.background = '#181a1d'; };
-                const artwork = item.artworkUrl100 || item.artworkUrl60 || '';
-                const songTitle = item.trackName || item.collectionName || 'Track';
-                const artist = item.artistName || 'Artist';
-                const genre = item.primaryGenreName || 'Music';
-                const durSec = item.trackTimeMillis ? (item.trackTimeMillis / 1000).toFixed(0) : '30';
-
-                row.innerHTML = `
-                    <img src="${artwork}" style="width:36px; height:36px; object-fit:cover; border-radius:1px; border:1px solid ${k === 'a' ? '#ff8c00' : '#00ff9d'}; background:#000;" />
-                    <div style="flex:1; overflow:hidden;">
-                        <div style="font-size:9.5px; color:#fff; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${songTitle}</div>
-                        <div style="font-size:8px; color:#888;">${artist} • ${genre} (${durSec}s)</div>
+                ${results.map(r => `
+                    <div class="yt-result-item" style="display:flex; align-items:center; gap:6px; padding:3px 4px; background:#1c1e21; border:1px solid #333; border-radius:2px; cursor:pointer;"
+                        onclick="loadAudioFromUrl('${k}', '${r.previewUrl}', '${escape(r.trackName || 'Track')}', '${r.artworkUrl100 || ''}'); document.getElementById('yt-results-${k}').style.display='none';">
+                        <img src="${r.artworkUrl60 || ''}" style="width:28px; height:28px; object-fit:cover; border-radius:1px;">
+                        <div style="display:flex; flex-direction:column; overflow:hidden;">
+                            <span style="font-size:8.5px; font-weight:bold; color:#fff; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;">${(r.trackName || 'Track').slice(0, 32)}</span>
+                            <span style="font-size:7.5px; color:#888;">${r.artistName || 'Artist'}</span>
+                        </div>
                     </div>
-                    <button class="btn btn-mini ${k === 'a' ? 'btn-te-orange' : 'btn-te-green'}" style="font-size:8.5px; padding:3px 8px; font-weight:bold;">🚀 LOAD</button>
-                `;
-
-                row.onclick = async () => {
-                    resultsTray.style.display = 'none';
-                    inputEl.value = `${songTitle} - ${artist}`;
-                    await loadAudioFromUrl(k, item.previewUrl, `${songTitle} - ${artist}`, artwork);
-                };
-                resultsTray.appendChild(row);
-            });
+                `).join('')}
+            `;
         }
-
-        // Auto-load top result immediately
-        const topItem = results[0];
-        if (topItem && topItem.previewUrl) {
-            const topTitle = `${topItem.trackName} - ${topItem.artistName}`;
-            const topArt = topItem.artworkUrl100 || topItem.artworkUrl60 || '';
-            await loadAudioFromUrl(k, topItem.previewUrl, topTitle, topArt);
-        }
-
-        if (statusEl) {
-            statusEl.innerText = `${results.length} FOUND`;
-            statusEl.style.color = (k === 'a' ? '#ff8c00' : '#00ff9d');
-        }
+        if (statusEl) { statusEl.innerText = 'RESULTS READY'; statusEl.style.color = '#ffaa00'; }
     } catch (err) {
-        console.error('Search error:', err);
+        synthesizeProceduralAudioForTrack(k, query);
+    }
+}
+window.searchOrLoadYouTube = searchOrLoadYouTube;
+
+async function loadProxyTrack(k, vidId, encTitle, thumbUrl, encUploader, duration) {
+    const title = unescape(encTitle);
+    const uploader = unescape(encUploader);
+    const base = window.remxrProxyBaseUrl || 'http://localhost:8542';
+    const statusEl = document.getElementById(`yt-status-${k}`);
+    const resultsTray = document.getElementById(`yt-results-${k}`);
+    const titleEl = document.getElementById(`yt-title-${k}`);
+    const metaEl = document.getElementById(`yt-meta-${k}`);
+    const thumbEl = document.getElementById(`yt-thumb-${k}`);
+
+    if (resultsTray) resultsTray.style.display = 'none';
+    if (titleEl) titleEl.innerText = title.toUpperCase().slice(0, 26);
+    if (metaEl) metaEl.innerText = `${Math.floor(duration/60)}:${('0'+(duration%60)).slice(-2)} • ${uploader.toUpperCase()}`;
+    if (thumbEl) { thumbEl.src = thumbUrl; thumbEl.style.display = 'block'; }
+
+    if (statusEl) {
+        statusEl.innerText = 'DOWNLOADING FULL STREAM...';
+        statusEl.style.color = '#00ff9d';
+    }
+
+    try {
+        const streamRes = await fetch(`${base}/api/yt/stream?id=${vidId}`);
+        if (!streamRes.ok) throw new Error('Stream fetch failed');
+        const arrayBuf = await streamRes.arrayBuffer();
+
         if (statusEl) {
-            statusEl.innerText = 'SEARCH ERROR';
+            statusEl.innerText = 'DECODING PCM AUDIO...';
+            statusEl.style.color = '#00ff9d';
+        }
+
+        const decoded = await actx.decodeAudioData(arrayBuf);
+        applyAudioBufferToDeck(k, decoded, title, thumbUrl, `YT PROXY • ${(decoded.duration).toFixed(1)}s • 44.1kHz`);
+    } catch(err) {
+        console.warn('Proxy load error:', err);
+        if (statusEl) {
+            statusEl.innerText = 'STREAM ERROR';
             statusEl.style.color = '#ff4800';
         }
     }
 }
-window.searchOrLoadYouTube = searchOrLoadYouTube;
+window.loadProxyTrack = loadProxyTrack;
+
 
 // 12. Local Audio File Picker Handler
 function loadAudioFileIntoDeck(file, k) {
@@ -2181,6 +2277,188 @@ function renderLinearStrip(k) {
     }
 }
 window.renderLinearStrip = renderLinearStrip;
+
+
+// --- MP3 EXPORTER VIA LAMEJS ---
+function audioBufferToMp3Blob(buffer, optStartTime = 0, optEndTime = null, kbps = 192) {
+    if (!buffer) return null;
+    const numChannels = buffer.numberOfChannels || 2;
+    const sampleRate = buffer.sampleRate || 44100;
+    const startOffset = Math.floor(Math.max(0, optStartTime) * sampleRate);
+    const endOffset = Math.floor(Math.min(buffer.duration, (optEndTime !== null ? optEndTime : buffer.duration)) * sampleRate);
+    const numFrames = Math.max(1, endOffset - startOffset);
+
+    if (typeof lamejs !== 'undefined' && lamejs.Mp3Encoder) {
+        try {
+            const mp3encoder = new lamejs.Mp3Encoder(numChannels, sampleRate, kbps);
+            const mp3Data = [];
+
+            const leftData = buffer.getChannelData(0);
+            const rightData = (numChannels > 1) ? buffer.getChannelData(1) : leftData;
+
+            const leftInt16 = new Int16Array(numFrames);
+            const rightInt16 = new Int16Array(numFrames);
+
+            for (let i = 0; i < numFrames; i++) {
+                const sL = Math.max(-1, Math.min(1, leftData[startOffset + i] || 0));
+                leftInt16[i] = sL < 0 ? sL * 0x8000 : sL * 0x7FFF;
+
+                const sR = Math.max(-1, Math.min(1, rightData[startOffset + i] || 0));
+                rightInt16[i] = sR < 0 ? sR * 0x8000 : sR * 0x7FFF;
+            }
+
+            const sampleBlockSize = 1152;
+            for (let i = 0; i < numFrames; i += sampleBlockSize) {
+                const leftChunk = leftInt16.subarray(i, i + sampleBlockSize);
+                const rightChunk = rightInt16.subarray(i, i + sampleBlockSize);
+                let mp3buf;
+                if (numChannels === 1) {
+                    mp3buf = mp3encoder.encodeBuffer(leftChunk);
+                } else {
+                    mp3buf = mp3encoder.encodeBuffer(leftChunk, rightChunk);
+                }
+                if (mp3buf && mp3buf.length > 0) {
+                    mp3Data.push(mp3buf);
+                }
+            }
+            const endBuf = mp3encoder.flush();
+            if (endBuf && endBuf.length > 0) {
+                mp3Data.push(endBuf);
+            }
+            return new Blob(mp3Data, { type: 'audio/mp3' });
+        } catch(e) {
+            console.warn('lamejs encoding error, fallback to WAV:', e);
+            return audioBufferToWavBlob(buffer, optStartTime, optEndTime);
+        }
+    } else {
+        return audioBufferToWavBlob(buffer, optStartTime, optEndTime);
+    }
+}
+window.audioBufferToMp3Blob = audioBufferToMp3Blob;
+
+function downloadDeckSliceAsMp3(k) {
+    const d = decks[k];
+    if (!d.buffer) {
+        alert('No audio loaded in deck to export.');
+        return;
+    }
+    const blob = audioBufferToMp3Blob(d.buffer, d.inTime, d.outTime, 192);
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = `remxr42_deck_${k}_${d.inTime.toFixed(2)}s_${d.outTime.toFixed(2)}s.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 200);
+}
+window.downloadDeckSliceAsMp3 = downloadDeckSliceAsMp3;
+
+function downloadMasterMixAsMp3() {
+    ensureAudioContext();
+    const titleA = (document.getElementById('yt-title-a') ? document.getElementById('yt-title-a').innerText : decks.a.name) || 'Lead';
+    const titleB = (document.getElementById('yt-title-b') ? document.getElementById('yt-title-b').innerText : decks.b.name) || 'Bass';
+    const wordA = getFirstCleanWord(titleA, 'DeckA');
+    const wordB = getFirstCleanWord(titleB, 'DeckB');
+
+    const durA = decks.a.buffer ? decks.a.duration : 0;
+    const durB = decks.b.buffer ? decks.b.duration : 0;
+    const maxDur = Math.max(durA, durB, 4.0);
+    const sr = actx ? actx.sampleRate : 44100;
+    const numFrames = Math.floor(sr * maxDur);
+
+    const mixBuf = actx ? actx.createBuffer(2, numFrames, sr) : null;
+    if (!mixBuf) return;
+
+    const left = mixBuf.getChannelData(0);
+    const right = mixBuf.getChannelData(1);
+
+    const gainA = Math.cos(masterCrossfader * Math.PI / 2);
+    const gainB = Math.sin(masterCrossfader * Math.PI / 2);
+
+    ['a', 'b'].forEach(k => {
+        const d = decks[k];
+        if (!d.buffer) return;
+        const g = (k === 'a') ? gainA : gainB;
+        const dDur = d.buffer.duration;
+        const dFrames = Math.floor(sr * dDur);
+        const lSrc = d.buffer.getChannelData(0);
+        const rSrc = (d.buffer.numberOfChannels > 1) ? d.buffer.getChannelData(1) : lSrc;
+
+        for (let i = 0; i < numFrames; i++) {
+            const srcIdx = i % dFrames;
+            left[i] += (lSrc[srcIdx] || 0) * g;
+            right[i] += (rSrc[srcIdx] || 0) * g;
+        }
+    });
+
+    const blob = audioBufferToMp3Blob(mixBuf, 0, maxDur, 192);
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = `remxr42_${wordA}_${wordB}_master.mp3`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }, 200);
+}
+window.downloadMasterMixAsMp3 = downloadMasterMixAsMp3;
+
+// --- LOCAL PROXY STATUS PROBER ---
+window.remxrProxyActive = false;
+window.remxrProxyBaseUrl = '';
+
+async function checkProxyStatus(userTriggered = false) {
+    const pill = document.getElementById('proxy-status-pill');
+    const candidates = [
+        (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : 'http://localhost:8542',
+        'http://localhost:8542',
+        'http://127.0.0.1:8542'
+    ];
+
+    for (const base of candidates) {
+        try {
+            const res = await fetch(`${base}/api/health`, { method: 'GET', mode: 'cors' });
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.proxy) {
+                    window.remxrProxyActive = true;
+                    window.remxrProxyBaseUrl = base;
+                    if (pill) {
+                        pill.innerHTML = '⚡ PROXY: ACTIVE (FULL YOUTUBE AUDIO)';
+                        pill.style.background = '#0a2218';
+                        pill.style.border = '1px solid #00ff9d';
+                        pill.style.color = '#00ff9d';
+                        pill.title = `Connected to local streaming proxy at ${base}`;
+                    }
+                    if (userTriggered) alert(`REMXR42 Proxy Connected at ${base}!\nFull YouTube streaming and MP3/WAV download active.`);
+                    return;
+                }
+            }
+        } catch(e) {}
+    }
+
+    window.remxrProxyActive = false;
+    window.remxrProxyBaseUrl = '';
+    if (pill) {
+        pill.innerHTML = '⚡ PROXY: OFFLINE (STANDALONE)';
+        pill.style.background = '#221e1a';
+        pill.style.border = '1px solid #555';
+        pill.style.color = '#aaa';
+        pill.title = 'Local proxy offline. Run "python server.py" or run_remxr42.bat for full YouTube streaming.';
+    }
+    if (userTriggered) alert('Local proxy server is offline.\nTo enable full YouTube audio streaming, launch run_remxr42.bat or run "python server.py".');
+}
+window.checkProxyStatus = checkProxyStatus;
+setTimeout(checkProxyStatus, 100);
 
 // 18. Web Audio Playback Engine
 function playDeckSlice(k, startOffset = null) {
