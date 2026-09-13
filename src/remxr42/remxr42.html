@@ -702,19 +702,29 @@
     </div>
 <script>
 // =========================================================================
-// REAL-TIME DUAL TURNTABLE, CIRCULAR SPECTROGRAM & SCRATCH AUDIO CONTROLLER
+// REAL-TIME DUAL TURNTABLE, CIRCULAR SPECTROGRAM & AUDIO WORKSTATION
 // =========================================================================
-const AudioCtx = window.AudioContext || window.webkitAudioContext;
+
+// 1. AudioContext Initialization & Global Autoplay Unlocker
 let actx = null;
 
 function ensureAudioContext() {
     if (!actx) {
-        actx = new AudioCtx();
+        const AudioClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioClass) {
+            try {
+                actx = new AudioClass();
+            } catch (e) {
+                console.warn('AudioContext creation notice:', e);
+            }
+        }
     }
     if (actx && actx.state === 'suspended') {
         actx.resume().catch(() => {});
     }
+    return actx;
 }
+window.ensureAudioContext = ensureAudioContext;
 
 // Global unlock on any user click / touch / key
 ['click', 'pointerdown', 'keydown', 'touchstart'].forEach(evt => {
@@ -723,13 +733,93 @@ function ensureAudioContext() {
     }, { passive: true });
 });
 
-// =========================================================================
-// IN-BROWSER YOUTUBE SEARCH & MULTI-GENRE AUDIO SPLICER ENGINE
-// =========================================================================
-// =========================================================================
-// REAL-TIME SEARCH & AUDIO STREAM INGESTION ENGINE (ZERO PRESETS)
-// =========================================================================
+// 2. Master Crossfader State
+let masterCrossfader = 0.5;
 
+// 3. Decks State Definition (Declared First to Prevent TDZ Errors)
+const decks = {
+    a: {
+        id: 'a',
+        name: "REMXR42 LEAD A",
+        vinylImg: null,
+        proceduralCanvas: null,
+        needsProceduralUpdate: true,
+        thumbImg: null,
+        centerLabelImg: null,
+        linearImg: null,
+        buffer: null,
+        reverseBuffer: null,
+        duration: 4.0,
+        inTime: 0.0,
+        outTime: 4.0,
+        isPlaying: false,
+        isLooping: true,
+        reverse: false,
+        pitch: 1.0,
+        playbackPosition: 0.0,
+        rotationAngle: 0.0,
+        isScratching: false,
+        isLinearScrubbing: false,
+        scratchStartAngle: 0.0,
+        scratchLastAngle: 0.0,
+        scratchVelocity: 0.0,
+        angularVelocity: 0.0,
+        ttCanvas: null,
+        linCanvas: null,
+        peaks: new Float32Array(400),
+        minPeaks: new Float32Array(400),
+        sourceNode: null,
+        gainNode: null,
+        scratchGain: null,
+        eqLow: null,
+        eqMid: null,
+        eqHigh: null,
+        hotCues: [0.0, 1.0, 2.0, 3.0],
+        cueSetMode: false
+    },
+    b: {
+        id: 'b',
+        name: "REMXR42 BASS B",
+        vinylImg: null,
+        proceduralCanvas: null,
+        needsProceduralUpdate: true,
+        thumbImg: null,
+        centerLabelImg: null,
+        linearImg: null,
+        buffer: null,
+        reverseBuffer: null,
+        duration: 4.0,
+        inTime: 0.0,
+        outTime: 4.0,
+        isPlaying: false,
+        isLooping: true,
+        reverse: false,
+        pitch: 1.0,
+        playbackPosition: 0.0,
+        rotationAngle: 0.0,
+        isScratching: false,
+        isLinearScrubbing: false,
+        scratchStartAngle: 0.0,
+        scratchLastAngle: 0.0,
+        scratchVelocity: 0.0,
+        angularVelocity: 0.0,
+        ttCanvas: null,
+        linCanvas: null,
+        peaks: new Float32Array(400),
+        minPeaks: new Float32Array(400),
+        sourceNode: null,
+        gainNode: null,
+        scratchGain: null,
+        eqLow: null,
+        eqMid: null,
+        eqHigh: null,
+        hotCues: [0.0, 1.0, 2.0, 3.0],
+        cueSetMode: false
+    }
+};
+window.decks = decks;
+
+// 4. YouTube ID Parser
 function extractYouTubeId(url) {
     if (!url) return null;
     const s = url.trim();
@@ -740,620 +830,65 @@ function extractYouTubeId(url) {
 }
 window.extractYouTubeId = extractYouTubeId;
 
-async function searchOrLoadYouTube(k) {
-    const inputEl = document.getElementById(`yt-url-${k}`);
-    const query = inputEl ? inputEl.value.trim() : '';
-    if (!query) return;
-
-    ensureAudioContext();
-
-    const statusEl = document.getElementById(`yt-status-${k}`);
-    const resultsTray = document.getElementById(`yt-results-${k}`);
-    const thumbEl = document.getElementById(`yt-thumb-${k}`);
-    const titleEl = document.getElementById(`yt-title-${k}`);
-    const metaEl = document.getElementById(`yt-meta-${k}`);
-
-    if (statusEl) {
-        statusEl.innerText = 'SEARCHING...';
-        statusEl.style.color = '#ffaa00';
-    }
-
-    const directYtId = extractYouTubeId(query);
-
-    // CASE 1: USER PASTED A DIRECT YOUTUBE URL OR YOUTUBE ID
-    if (directYtId) {
-        if (statusEl) statusEl.innerText = 'LOADING YOUTUBE...';
-        if (resultsTray) resultsTray.style.display = 'none';
-
-        // Set live YouTube thumbnail
-        const thumbUrl = `https://img.youtube.com/vi/${directYtId}/hqdefault.jpg`;
-        if (thumbEl) {
-            thumbEl.src = thumbUrl;
-            thumbEl.style.display = 'block';
-        }
-
-        let videoTitle = `YouTube Video [${directYtId}]`;
-        let author = 'YouTube Media';
-
-        try {
-            // Fetch live metadata via noembed
-            const metaRes = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${directYtId}`);
-            if (metaRes.ok) {
-                const metaJson = await metaRes.json();
-                if (metaJson.title) videoTitle = metaJson.title;
-                if (metaJson.author_name) author = metaJson.author_name;
-            }
-        } catch (e) {
-            console.warn('YouTube oEmbed fetch error:', e);
-        }
-
-        if (titleEl) titleEl.innerText = videoTitle.toUpperCase();
-        if (metaEl) metaEl.innerText = `ID: ${directYtId} • ${author.toUpperCase()}`;
-        const mainTitle = document.getElementById(`title-deck-${k}`);
-        if (mainTitle) mainTitle.innerText = `DECK ${k.toUpperCase()}: ${videoTitle.toUpperCase().slice(0, 24)}`;
-
-        // Attempt to fetch real studio audio stream for this title
-        let loadedStream = false;
-        try {
-            const itunesSearch = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(videoTitle)}&entity=song&limit=1`);
-            if (itunesSearch.ok) {
-                const itunesData = await itunesSearch.json();
-                if (itunesData.results && itunesData.results.length > 0 && itunesData.results[0].previewUrl) {
-                    await loadAudioFromUrl(k, itunesData.results[0].previewUrl, videoTitle, thumbUrl);
-                    loadedStream = true;
-                }
-            }
-        } catch (err) {
-            console.warn('Audio stream resolution notice:', err);
-        }
-
-        // Fallback to high-definition algorithmic synthesis if stream is CORS blocked
-        if (!loadedStream) {
-            synthesizeProceduralAudioForTrack(k, videoTitle, directYtId, thumbUrl);
-        }
-
-        if (statusEl) {
-            statusEl.innerText = 'ARMED / READY';
-            statusEl.style.color = (k === 'a' ? '#ff8c00' : '#00ff9d');
-        }
-        return;
-    }
-
-    // CASE 2: USER ENTERED A SEARCH QUERY (e.g. "Gorillaz", "Linkin Park", "Eminem", etc.)
-    try {
-        const searchRes = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=6`);
-        if (!searchRes.ok) throw new Error('Search network error');
-        
-        const data = await searchRes.json();
-        const results = data.results || [];
-
-        if (results.length === 0) {
-            if (resultsTray) {
-                resultsTray.style.display = 'flex';
-                resultsTray.innerHTML = `
-                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:8.5px; color:#ff4800; padding:4px;">
-                        <span>✖ NO TRACKS FOUND FOR "${query.toUpperCase()}"</span>
-                        <span style="cursor:pointer; color:#aaa;" onclick="document.getElementById('yt-results-${k}').style.display='none'">CLOSE</span>
-                    </div>
-                `;
-            }
-            if (statusEl) {
-                statusEl.innerText = 'NOT FOUND';
-                statusEl.style.color = '#ff4800';
-            }
-            return;
-        }
-
-        // Populate search results tray with real matching songs
-        if (resultsTray) {
-            resultsTray.style.display = 'flex';
-            resultsTray.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center; font-size:8.5px; color:#aaa; font-weight:bold; margin-bottom:3px;">
-                    <span>■ ${results.length} MATCHES FOR "${query.toUpperCase().slice(0, 20)}":</span>
-                    <span style="cursor:pointer; color:#ff4800;" onclick="document.getElementById('yt-results-${k}').style.display='none'">✖ CLOSE</span>
-                </div>
-            `;
-
-            results.forEach((item) => {
-                const row = document.createElement('div');
-                row.style.cssText = "display:flex; align-items:center; gap:6px; background:#181a1d; padding:4px 6px; border-radius:1px; cursor:pointer; border:1px solid #383b40; transition:background 0.1s;";
-                row.onmouseover = () => { row.style.background = '#25282d'; };
-                row.onmouseout = () => { row.style.background = '#181a1d'; };
-                const artwork = item.artworkUrl100 || item.artworkUrl60 || '';
-                const songTitle = item.trackName || item.collectionName || 'Track';
-                const artist = item.artistName || 'Artist';
-                const genre = item.primaryGenreName || 'Music';
-                const durSec = item.trackTimeMillis ? (item.trackTimeMillis / 1000).toFixed(0) : '30';
-
-                row.innerHTML = `
-                    <img src="${artwork}" style="width:36px; height:36px; object-fit:cover; border-radius:1px; border:1px solid ${k === 'a' ? '#ff4800' : '#00ff9d'}; background:#000;" />
-                    <div style="flex:1; overflow:hidden;">
-                        <div style="font-size:9.5px; color:#fff; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${songTitle}</div>
-                        <div style="font-size:8px; color:#888;">${artist} • ${genre} (${durSec}s)</div>
-                    </div>
-                    <button class="btn btn-mini ${k === 'a' ? 'btn-te-orange' : 'btn-te-green'}" style="font-size:8.5px; padding:3px 8px; font-weight:bold;">🚀 LOAD</button>
-                `;
-
-                row.onclick = async () => {
-                    resultsTray.style.display = 'none';
-                    inputEl.value = `${songTitle} - ${artist}`;
-                    await loadAudioFromUrl(k, item.previewUrl, `${songTitle} - ${artist}`, artwork);
-                };
-                resultsTray.appendChild(row);
-            });
-        }
-
-        // Auto-load top result immediately on Enter / Load click
-        const topItem = results[0];
-        if (topItem && topItem.previewUrl) {
-            const topTitle = `${topItem.trackName} - ${topItem.artistName}`;
-            const topArt = topItem.artworkUrl100 || topItem.artworkUrl60 || '';
-            await loadAudioFromUrl(k, topItem.previewUrl, topTitle, topArt);
-        }
-
-        if (statusEl) {
-            statusEl.innerText = `${results.length} FOUND`;
-            statusEl.style.color = (k === 'a' ? '#ff8c00' : '#00ff9d');
-        }
-    } catch (err) {
-        console.error('Search error:', err);
-        if (statusEl) {
-            statusEl.innerText = 'SEARCH ERROR';
-            statusEl.style.color = '#ff4800';
-        }
-    }
-}
-window.searchOrLoadYouTube = searchOrLoadYouTube;
-
-async function loadAudioFromUrl(k, streamUrl, title, artworkUrl) {
-    const d = decks[k];
-    ensureAudioContext();
-
-    const statusEl = document.getElementById(`yt-status-${k}`);
-    const thumbEl = document.getElementById(`yt-thumb-${k}`);
-    const titleEl = document.getElementById(`yt-title-${k}`);
-    const metaEl = document.getElementById(`yt-meta-${k}`);
-    const mainTitle = document.getElementById(`title-deck-${k}`);
-
-    if (statusEl) {
-        statusEl.innerText = 'DECODING AUDIO...';
-        statusEl.style.color = '#ffaa00';
-    }
-
-    if (titleEl) titleEl.innerText = title.toUpperCase();
-    if (metaEl) metaEl.innerText = `STREAM LOADED • 44.1kHz STEREO`;
-    if (mainTitle) mainTitle.innerText = `DECK ${k.toUpperCase()}: ${title.toUpperCase().slice(0, 24)}`;
-    if (thumbEl && artworkUrl) {
-        thumbEl.src = artworkUrl;
-        thumbEl.style.display = 'block';
-    }
-
-    try {
-        const resp = await fetch(streamUrl);
-        const arrayBuf = await resp.arrayBuffer();
-        const decoded = await actx.decodeAudioData(arrayBuf);
-
-        d.buffer = decoded;
-        d.duration = decoded.duration;
-        d.loopIn = 0;
-        d.loopOut = Math.min(4.0, decoded.duration);
-
-        // Precompute waveform peaks & polar spectrogram
-        generateWaveformPeaks(k);
-        generateProceduralPolarSpectrogram(k);
-        updateBadges(k);
-        renderTurntable(k);
-        renderLinearStrip(k);
-
-        if (statusEl) {
-            statusEl.innerText = 'ARMED / READY';
-            statusEl.style.color = (k === 'a' ? '#ff8c00' : '#00ff9d');
-        }
-    } catch (e) {
-        console.warn('Direct stream decode fallback to procedural:', e);
-        synthesizeProceduralAudioForTrack(k, title, 'CUSTOM', artworkUrl);
-    }
-}
-window.loadAudioFromUrl = loadAudioFromUrl;
-
-function synthesizeProceduralAudioForTrack(k, title, seed, artworkUrl) {
-    const d = decks[k];
-    ensureAudioContext();
-
-    const sampleRate = actx ? actx.sampleRate : 44100;
-    const duration = 4.0;
-    const numFrames = Math.floor(sampleRate * duration);
-    const audioBuf = actx.createBuffer(2, numFrames, sampleRate);
-    const left = audioBuf.getChannelData(0);
-    const right = audioBuf.getChannelData(1);
-
-    // Derive deterministic harmonic frequencies from title string hash
-    let hash = 0;
-    for (let i = 0; i < title.length; i++) {
-        hash = (hash << 5) - hash + title.charCodeAt(i);
-        hash |= 0;
-    }
-    const baseFreq = 55 + Math.abs(hash % 110); // 55Hz - 165Hz
-    const tempo = 120 + Math.abs(hash % 25); // 120 - 145 BPM
-    const beatInterval = 60 / tempo;
-
-    for (let i = 0; i < numFrames; i++) {
-        const t = i / sampleRate;
-        const beatTime = t % beatInterval;
-        const env = Math.exp(-beatTime * 12);
-        
-        let sample = 0;
-        // Punchy sub-kick & synth bass
-        sample += Math.sin(2 * Math.PI * (baseFreq * (1 + 2 * env)) * t) * env * 0.7;
-        // Harmonic mid presence
-        sample += Math.sin(2 * Math.PI * (baseFreq * 2.5) * t) * (Math.sin(2 * Math.PI * 4 * t) > 0 ? 0.3 : 0.1);
-        // Stereo sizzle
-        const noise = (Math.random() * 2 - 1) * 0.05 * (beatTime < 0.05 ? 1 : 0.1);
-
-        left[i] = Math.max(-1, Math.min(1, sample + noise));
-        right[i] = Math.max(-1, Math.min(1, sample - noise));
-    }
-
-    d.buffer = audioBuf;
-    d.duration = duration;
-    d.loopIn = 0;
-    d.loopOut = duration;
-
-    generateWaveformPeaks(k);
-    generateProceduralPolarSpectrogram(k);
-    updateBadges(k);
-    renderTurntable(k);
-    renderLinearStrip(k);
-
-    const statusEl = document.getElementById(`yt-status-${k}`);
-    if (statusEl) {
-        statusEl.innerText = 'ARMED / READY';
-        statusEl.style.color = (k === 'a' ? '#ff8c00' : '#00ff9d');
-    }
-}
-window.synthesizeProceduralAudioForTrack = synthesizeProceduralAudioForTrack;
-
-async function loadCustomTrackData(k, meta) {
-    ensureAudioContext();
-    const d = decks[k];
-    const statusEl = document.getElementById(`yt-status-${k}`);
-    const titleEl = document.getElementById(`title-deck-${k}`);
-    const thumbImgEl = document.getElementById(`yt-thumb-${k}`);
-    const titleLcdEl = document.getElementById(`yt-title-${k}`);
-    const metaLcdEl = document.getElementById(`yt-meta-${k}`);
-
-    if (statusEl) {
-        statusEl.innerText = 'ARMING...';
-        statusEl.style.color = '#ffaa00';
-    }
-
-    const ytId = meta.ytId || extractYouTubeId(meta.url) || "Gd9OhYroLN0";
-    const trackTitle = meta.title || "REMXR42 TRACK";
-    const bpm = meta.bpm || (k === 'a' ? 124 : 138);
-
-    // 1. Update Backlit LCD Monitor
-    const thumbUrl = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
-    if (thumbImgEl) thumbImgEl.src = thumbUrl;
-    if (titleLcdEl) titleLcdEl.innerText = trackTitle.toUpperCase().slice(0, 24);
-    if (metaLcdEl) metaLcdEl.innerText = `ID: ${ytId} • ${bpm} BPM ${meta.genre ? meta.genre.toUpperCase() : 'STEREO'}`;
-
-    // 2. Load YouTube Center Label Image
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => {
-        d.centerLabelImg = img;
-        d.vinylImg = null;
-        d.needsProceduralUpdate = true;
-        d.proceduralCanvas = generateProceduralPolarSpectrogram(k, 600);
-        renderTurntable(k);
-    };
-    img.onerror = () => {
-        const img2 = new Image();
-        img2.onload = () => {
-            d.centerLabelImg = img2;
-            d.vinylImg = null;
-            d.needsProceduralUpdate = true;
-            d.proceduralCanvas = generateProceduralPolarSpectrogram(k, 600);
-            renderTurntable(k);
-        };
-        img2.src = thumbUrl;
-    };
-    img.src = thumbUrl;
-
-    // 3. Generate Pristine Studio-Grade Audio Buffer
-    const sr = actx.sampleRate || 44100;
-    const duration = 4.0;
-    const numSamples = Math.floor(sr * duration);
-    const synBuf = actx.createBuffer(2, numSamples, sr);
-    const ch0 = synBuf.getChannelData(0);
-    const ch1 = synBuf.getChannelData(1);
-
-    const beatLen = sr * (60.0 / bpm);
-    const trackType = meta.type || (k === 'a' ? 'lead' : 'break');
-
-    for (let i = 0; i < numSamples; i++) {
-        const t = i / sr;
-        const beatPos = (i % Math.floor(beatLen)) / beatLen;
-        const barPos = (i % Math.floor(beatLen * 4)) / (beatLen * 4);
-
-        let kick = 0, snare = 0, hihat = 0, bass = 0, synth = 0;
-
-        if (trackType === 'break' || meta.title.includes('Amen') || meta.title.includes('Prodigy')) {
-            const isKickStep = (barPos < 0.1 || (barPos > 0.48 && barPos < 0.58) || (barPos > 0.72 && barPos < 0.8));
-            if (isKickStep) {
-                const kEnv = Math.exp(-beatPos * 14.0);
-                kick = Math.sin(2 * Math.PI * (60.0 * Math.exp(-beatPos * 9.0)) * t) * kEnv;
-            }
-            const isSnareStep = ((barPos > 0.23 && barPos < 0.35) || (barPos > 0.85 && barPos < 0.98));
-            if (isSnareStep) {
-                const sEnv = Math.exp(-beatPos * 18.0);
-                snare = (Math.random() * 2.0 - 1.0) * sEnv * 0.6 + Math.sin(2 * Math.PI * 180 * t) * sEnv * 0.4;
-            }
-            hihat = (Math.random() * 2.0 - 1.0) * 0.12 * Math.exp(-(beatPos % 0.25) * 30.0);
-            bass = 0.35 * Math.sin(2 * Math.PI * (55 + 20 * Math.sin(2 * Math.PI * 0.5 * t)) * t);
-        } else if (trackType === 'lead' || meta.title.includes('Daft')) {
-            const kEnv = Math.exp(-beatPos * 12.0);
-            kick = Math.sin(2 * Math.PI * (54.0 * Math.exp(-beatPos * 8.0)) * t) * kEnv;
-            const isClap = ((i / beatLen) % 2.0) >= 1.0;
-            snare = isClap ? (Math.random() * 2.0 - 1.0) * Math.exp(-beatPos * 14.0) * 0.45 : 0.0;
-            hihat = ((beatPos > 0.45 && beatPos < 0.6) ? (Math.random() * 2.0 - 1.0) * 0.18 : 0.0);
-            const chord = [261.63, 329.63, 392.00, 523.25];
-            const root = chord[Math.floor(t * 2) % chord.length];
-            synth = 0.25 * (Math.sin(2 * Math.PI * root * t) + 0.5 * Math.sin(2 * Math.PI * root * 2 * t)) * (1.0 + 0.2 * Math.sin(2 * Math.PI * 4.0 * t));
-        } else {
-            const kEnv = Math.exp(-beatPos * 10.0);
-            kick = Math.sin(2 * Math.PI * (50.0 * Math.exp(-beatPos * 6.0)) * t) * kEnv;
-            bass = 0.4 * Math.sin(2 * Math.PI * 82.4 * t) * (1.0 + 0.4 * Math.sin(2 * Math.PI * 2.0 * t));
-            hihat = (Math.random() * 2.0 - 1.0) * 0.1 * Math.exp(-beatPos * 25.0);
-        }
-
-        const out = (kick * 0.9 + snare * 0.8 + hihat + bass + synth) * 0.85;
-        ch0[i] = out;
-        ch1[i] = out;
-    }
-
-    if (d.isPlaying && d.sourceNode) {
-        try { d.sourceNode.stop(); } catch(err) {}
-        d.sourceNode.disconnect();
-        d.sourceNode = null;
-        d.isPlaying = false;
-    }
-
-    d.buffer = synBuf;
-    d.duration = duration;
-    d.inTime = 0.0;
-    d.outTime = 4.0;
-
-    d.reverseBuffer = actx.createBuffer(2, numSamples, sr);
-    for (let ch = 0; ch < 2; ch++) {
-        const src = d.buffer.getChannelData(ch);
-        const dst = d.reverseBuffer.getChannelData(ch);
-        for (let i = 0, j = src.length - 1; i < src.length; i++, j--) {
-            dst[i] = src[j];
-        }
-    }
-
-    // Compute Peaks & MinPeaks for Waveform Display
-    const rawData = d.buffer.getChannelData(0);
-    const binCount = 400;
-    const step = Math.max(1, Math.floor(rawData.length / binCount));
-    d.peaks = new Float32Array(binCount);
-    d.minPeaks = new Float32Array(binCount);
-    for (let b = 0; b < binCount; b++) {
-        let minVal = 0.0, maxVal = 0.0;
-        const start = b * step;
-        const end = Math.min(rawData.length, start + step);
-        for (let j = start; j < end; j++) {
-            const s = rawData[j];
-            if (s < minVal) minVal = s;
-            if (s > maxVal) maxVal = s;
-        }
-        d.minPeaks[b] = minVal;
-        d.peaks[b] = Math.max(0.1, maxVal);
-    }
-
-    d.vinylImg = null;
-    d.needsProceduralUpdate = true;
-    d.proceduralCanvas = generateProceduralPolarSpectrogram(k, 600);
-
-    if (titleEl) titleEl.innerText = `DECK ${k.toUpperCase()}: ${trackTitle.toUpperCase().slice(0, 22)}`;
-    if (statusEl) {
-        statusEl.innerText = 'ARMED / GROOVES CUT';
-        statusEl.style.color = (k === 'a' ? '#ff8c00' : '#00ff9d');
-    }
-
-    updateBadges(k);
-    renderTurntable(k);
-    renderLinearStrip(k);
-
-    playDeckSlice(k, 0.0);
-}
-window.loadCustomTrackData = loadCustomTrackData;
-
-async function loadYouTubeOrStreamTrack(k, inputVal, customTitle) {
-    if (!inputVal || !inputVal.trim()) return;
-    const rawVal = inputVal.trim();
-    const ytId = extractYouTubeId(rawVal);
-    
-    searchOrLoadYouTube(k);
-
-    const title = customTitle || (ytId ? `YOUTUBE [${ytId}]` : rawVal.split('/').pop().split('?')[0]);
-    loadCustomTrackData(k, {
-        title: title,
-        ytId: ytId || "Gd9OhYroLN0",
-        bpm: k === 'a' ? 124 : 138,
-        genre: "YouTube Track",
-        type: k === 'a' ? "lead" : "break"
-    });
-}
-window.loadYouTubeOrStreamTrack = loadYouTubeOrStreamTrack;
-
-
-
-const decks = {
-    a: {
-        id: 'a',
-        uri: "",
-        vinylUri: "",
-        linearUri: "",
-        thumbUri: "",
-        name: "REMXR42 LEAD A",
-        vinylImg: null,
-        proceduralCanvas: null,
-        needsProceduralUpdate: true,
-        thumbImg: null,
-        linearImg: null,
-        buffer: null,
-        reverseBuffer: null,
-        peaks: null,
-        minPeaks: null,
-        duration: 0,
-        inTime: 0.0,
-        outTime: 4.0,
-        hotCues: [null, null, null, null],
-        setHotCueMode: false,
-        loop: true,
-        reverse: false,
-        pitch: 1.0,
-        rotationAngle: 0,
-        rotationSpeed: (33.33 / 60) * 2 * Math.PI,
-        sourceNode: null,
-        gainNode: null,
-        eqLow: null,
-        eqMid: null,
-        eqHigh: null,
-        scratchGain: null,
-        isPlaying: false,
-        isScratching: false,
-        wasPlayingBeforeScratch: false,
-        scratchAudioPos: 0,
-        lastScratchAngle: 0,
-        lastScratchTime: 0,
-        scratchVelocity: 0,
-        playStartTime: 0,
-        dragTarget: null,
-        ttCanvas: document.getElementById('turntable-canvas-a'),
-        linCanvas: document.getElementById('linear-canvas-a'),
-        scratchLed: document.getElementById('scratch-led-a'),
-        color: '#ff4800',
-        wedgeColor: 'rgba(255, 72, 0, 0.32)'
-    },
-    b: {
-        id: 'b',
-        uri: "",
-        vinylUri: "",
-        linearUri: "",
-        thumbUri: "",
-        name: "REMXR42 BASS B",
-        vinylImg: null,
-        proceduralCanvas: null,
-        needsProceduralUpdate: true,
-        thumbImg: null,
-        linearImg: null,
-        buffer: null,
-        reverseBuffer: null,
-        peaks: null,
-        minPeaks: null,
-        duration: 0,
-        inTime: 0.0,
-        outTime: 4.0,
-        hotCues: [null, null, null, null],
-        setHotCueMode: false,
-        loop: true,
-        reverse: false,
-        pitch: 1.0,
-        rotationAngle: 0,
-        rotationSpeed: (33.33 / 60) * 2 * Math.PI,
-        sourceNode: null,
-        gainNode: null,
-        eqLow: null,
-        eqMid: null,
-        eqHigh: null,
-        scratchGain: null,
-        isPlaying: false,
-        isScratching: false,
-        wasPlayingBeforeScratch: false,
-        scratchAudioPos: 0,
-        lastScratchAngle: 0,
-        lastScratchTime: 0,
-        scratchVelocity: 0,
-        playStartTime: 0,
-        dragTarget: null,
-        ttCanvas: document.getElementById('turntable-canvas-b'),
-        linCanvas: document.getElementById('linear-canvas-b'),
-        scratchLed: document.getElementById('scratch-led-b'),
-        color: '#00ff9d',
-        wedgeColor: 'rgba(0, 255, 157, 0.32)'
-    }
-};
-
-let masterCrossfader = 0.5;
-let viewMode = 'hybrid';
-
-// -------------------------------------------------------------------------
-// AUDIO GRAPH SETUP & BUFFER INVERSION
-// -------------------------------------------------------------------------
-function base64ToArrayBuffer(dataUri) {
-    try {
-        const idx = dataUri.indexOf(',');
-        const b64 = idx >= 0 ? dataUri.slice(idx + 1) : dataUri;
-        const bin = atob(b64);
-        const len = bin.length;
-        const bytes = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-            bytes[i] = bin.charCodeAt(i);
-        }
-        return bytes.buffer;
-    } catch(e) {
-        console.warn('Base64 decode error:', e);
-        return null;
-    }
-}
-
-async function initDeck(k) {
-    const d = decks[k];
-    
-    // Auto-load default initial track into deck
-    synthesizeProceduralAudioForTrack(k, k === 'a' ? 'REMXR42 LEAD A' : 'REMXR42 BASS B', 'INIT', '');
-
-    updateBadges(k);
-    renderTurntable(k);
-    renderLinearStrip(k);
-}
-
+// 5. Audio Graph Setup
 function setupAudioGraph(k) {
     const d = decks[k];
     ensureAudioContext();
+    if (!actx) return;
 
-    d.eqLow = actx.createBiquadFilter();
-    d.eqLow.type = 'lowshelf';
-    d.eqLow.frequency.value = 250;
-    d.eqLow.gain.value = parseFloat(document.getElementById(`eq-low-${k}`).value);
+    if (!d.eqLow) {
+        d.eqLow = actx.createBiquadFilter();
+        d.eqLow.type = 'lowshelf';
+        d.eqLow.frequency.value = 250;
+    }
+    const eqLowEl = document.getElementById(`eq-low-${k}`);
+    if (eqLowEl) d.eqLow.gain.value = parseFloat(eqLowEl.value || '0');
 
-    d.eqMid = actx.createBiquadFilter();
-    d.eqMid.type = 'peaking';
-    d.eqMid.frequency.value = 1500;
-    d.eqMid.gain.value = parseFloat(document.getElementById(`eq-mid-${k}`).value);
+    if (!d.eqMid) {
+        d.eqMid = actx.createBiquadFilter();
+        d.eqMid.type = 'peaking';
+        d.eqMid.frequency.value = 1000;
+        d.eqMid.Q.value = 1.0;
+    }
+    const eqMidEl = document.getElementById(`eq-mid-${k}`);
+    if (eqMidEl) d.eqMid.gain.value = parseFloat(eqMidEl.value || '0');
 
-    d.eqHigh = actx.createBiquadFilter();
-    d.eqHigh.type = 'highshelf';
-    d.eqHigh.frequency.value = 4000;
-    d.eqHigh.gain.value = parseFloat(document.getElementById(`eq-high-${k}`).value);
+    if (!d.eqHigh) {
+        d.eqHigh = actx.createBiquadFilter();
+        d.eqHigh.type = 'highshelf';
+        d.eqHigh.frequency.value = 4000;
+    }
+    const eqHighEl = document.getElementById(`eq-high-${k}`);
+    if (eqHighEl) d.eqHigh.gain.value = parseFloat(eqHighEl.value || '0');
 
-    d.gainNode = actx.createGain();
+    if (!d.gainNode) {
+        d.gainNode = actx.createGain();
+    }
     const xfGain = (k === 'a') ? Math.cos(masterCrossfader * Math.PI / 2) : Math.sin(masterCrossfader * Math.PI / 2);
     d.gainNode.gain.value = xfGain;
 
-    d.scratchGain = actx.createGain();
-    d.scratchGain.gain.value = 1.0;
+    if (!d.scratchGain) {
+        d.scratchGain = actx.createGain();
+        d.scratchGain.gain.value = 1.0;
+    }
 
+    try {
+        d.scratchGain.disconnect();
+        d.eqLow.disconnect();
+        d.eqMid.disconnect();
+        d.eqHigh.disconnect();
+        d.gainNode.disconnect();
+    } catch(e) {}
+
+    d.scratchGain.connect(d.eqLow);
     d.eqLow.connect(d.eqMid);
     d.eqMid.connect(d.eqHigh);
     d.eqHigh.connect(d.gainNode);
     d.gainNode.connect(actx.destination);
-    d.scratchGain.connect(d.eqLow);
 }
+window.setupAudioGraph = setupAudioGraph;
 
+// 6. UI Badges & Metadata Update
 function updateBadges(k) {
     const d = decks[k];
     const len = Math.max(0, d.outTime - d.inTime);
@@ -1364,67 +899,10 @@ function updateBadges(k) {
     const outBadge = document.getElementById(`time-out-${k}`);
     if (outBadge) outBadge.innerText = `${d.outTime.toFixed(1)}s`;
 }
+window.updateBadges = updateBadges;
 
-function playNeedleDrop(k) {
-    if (!actx || !decks[k].buffer) return;
-    ensureAudioContext();
-    const osc = actx.createOscillator();
-    const g = actx.createGain();
-    osc.frequency.setValueAtTime(95, actx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(32, actx.currentTime + 0.035);
-    g.gain.setValueAtTime(0.35, actx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.04);
-    osc.connect(g);
-    g.connect(decks[k].scratchGain || actx.destination);
-    osc.start();
-    osc.stop(actx.currentTime + 0.045);
-}
-
-function playScratchGrain(k, audioPos, velocity) {
-    const d = decks[k];
-    if (!d.buffer || !actx) return;
-    ensureAudioContext();
-
-    const speed = Math.abs(velocity);
-    if (speed < 0.08) return;
-
-    const rate = Math.min(3.8, Math.max(0.18, speed));
-    const grainDur = 0.065;
-    const now = actx.currentTime;
-
-    const src = actx.createBufferSource();
-    const g = actx.createGain();
-
-    if (velocity >= 0) {
-        src.buffer = d.buffer;
-        src.playbackRate.value = rate * d.pitch;
-        const offset = Math.max(0, Math.min(d.duration - grainDur, audioPos));
-        src.start(now, offset, grainDur);
-    } else {
-        src.buffer = d.reverseBuffer;
-        src.playbackRate.value = rate * d.pitch;
-        const revOffset = Math.max(0, Math.min(d.duration - grainDur, d.duration - audioPos));
-        src.start(now, revOffset, grainDur);
-    }
-
-    const vol = Math.min(1.0, Math.max(0.1, speed * 0.85));
-    g.gain.setValueAtTime(0.001, now);
-    g.gain.linearRampToValueAtTime(vol, now + 0.012);
-    g.gain.exponentialRampToValueAtTime(0.001, now + grainDur);
-
-    src.connect(g);
-    g.connect(d.scratchGain);
-
-    src.onended = () => {
-        src.disconnect();
-        g.disconnect();
-    };
-}
-
-// -------------------------------------------------------------------------
-// PROCEDURAL 2D POLAR SPECTROGRAM GENERATOR (CLIENT-SIDE HTML5 CANVAS)
-// -------------------------------------------------------------------------
-function generateProceduralPolarSpectrogram(k, size) {
+// 7. Polar Spectrogram Generator (Client-Side 2D Canvas)
+function generateProceduralPolarSpectrogram(k, size = 600) {
     const d = decks[k];
     const offCanvas = document.createElement('canvas');
     offCanvas.width = size;
@@ -1458,12 +936,6 @@ function generateProceduralPolarSpectrogram(k, size) {
         if (hasPeaks) {
             const pIdx = Math.floor(u * peaks.length);
             baseAmp = Math.abs(peaks[pIdx] || 0.25);
-        } else {
-            const beat = (u * 8) % 1.0;
-            const kick = beat < 0.2 ? Math.exp(-beat * 12) : 0.0;
-            const bass = 0.35 * (1 + Math.sin(u * 32 * Math.PI));
-            const snare = ((u * 8) % 2.0 > 1.0 && beat < 0.15) ? 0.6 : 0.0;
-            baseAmp = Math.min(1.0, kick * 0.8 + bass * 0.3 + snare * 0.4 + 0.15);
         }
 
         for (let f = 0; f < numFreqs; f++) {
@@ -1498,24 +970,23 @@ function generateProceduralPolarSpectrogram(k, size) {
                     color = `rgba(${Math.floor(t * 180)}, 255, ${Math.floor(100 - t * 90)}, 0.95)`;
                 } else if (fEnergy < 0.85) {
                     const t = (fEnergy - 0.65) / 0.2;
-                    color = `rgba(255, ${Math.floor(220 - t * 140)}, 0, 1.0)`;
+                    color = `rgba(255, ${Math.floor(190 - t * 70)}, 0, 0.98)`;
                 } else {
-                    const t = (fEnergy - 0.85) / 0.15;
-                    color = `rgba(255, ${Math.floor(120 + t * 135)}, ${Math.floor(t * 240)}, 1.0)`;
+                    color = `rgba(255, 60, 0, 1.0)`;
                 }
             } else {
-                if (fEnergy < 0.2) color = `rgba(15, 10, 35, ${0.4 + fEnergy})`;
+                if (fEnergy < 0.2) color = `rgba(5, 25, 20, ${0.4 + fEnergy})`;
                 else if (fEnergy < 0.4) {
                     const t = (fEnergy - 0.2) / 0.2;
-                    color = `rgba(${Math.floor(80 + t * 80)}, 20, ${Math.floor(160 + t * 70)}, ${0.75 + t * 0.25})`;
+                    color = `rgba(0, ${Math.floor(160 + t * 90)}, ${Math.floor(120 + t * 80)}, 0.8)`;
                 } else if (fEnergy < 0.65) {
                     const t = (fEnergy - 0.4) / 0.25;
-                    color = `rgba(${Math.floor(180 + t * 60)}, ${Math.floor(40 + t * 100)}, 120, 0.95)`;
+                    color = `rgba(${Math.floor(40 + t * 140)}, 255, 170, 0.95)`;
                 } else if (fEnergy < 0.85) {
                     const t = (fEnergy - 0.65) / 0.2;
-                    color = `rgba(255, ${Math.floor(140 + t * 90)}, 40, 1.0)`;
+                    color = `rgba(${Math.floor(180 + t * 75)}, 255, 80, 0.98)`;
                 } else {
-                    color = `rgba(255, 255, 180, 1.0)`;
+                    color = `rgba(255, 255, 120, 1.0)`;
                 }
             }
 
@@ -1524,88 +995,440 @@ function generateProceduralPolarSpectrogram(k, size) {
         }
     }
 
-    // 3. Micro-grooves spiral overlay
+    // 3. Fine Vinyl Grooves
     octx.lineWidth = 0.5;
-    for (let g = 0; g < 40; g++) {
-        const r = rInner + (g / 40) * (rOuter - rInner);
-        octx.strokeStyle = (g % 4 === 0) ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.22)';
+    for (let r = rInner; r < rOuter; r += 3.5) {
+        octx.strokeStyle = `rgba(255, 255, 255, ${0.04 + 0.03 * Math.sin(r * 0.8)})`;
         octx.beginPath();
         octx.arc(cx, cy, r, 0, 2 * Math.PI);
         octx.stroke();
     }
 
-    // 4. Anisotropic Specular Sheen
-    const sheenGrad = octx.createLinearGradient(0, 0, size, size);
-    sheenGrad.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
-    sheenGrad.addColorStop(0.45, 'transparent');
-    sheenGrad.addColorStop(0.55, 'transparent');
-    sheenGrad.addColorStop(1, 'rgba(255, 255, 255, 0.12)');
-    octx.fillStyle = sheenGrad;
-    octx.beginPath();
-    octx.arc(cx, cy, rDisc, 0, 2 * Math.PI);
-    octx.fill();
-
-    // 5. Authentic Center Label Disc
-    octx.save();
+    // 4. Center Label Matte Disc
+    octx.fillStyle = '#eae7de';
     octx.beginPath();
     octx.arc(cx, cy, rLabel, 0, 2 * Math.PI);
-    octx.clip();
-
-    if (d.centerLabelImg && d.centerLabelImg.complete && d.centerLabelImg.naturalWidth > 0) {
-        octx.drawImage(d.centerLabelImg, cx - rLabel, cy - rLabel, rLabel * 2, rLabel * 2);
-        octx.fillStyle = (k === 'a') ? 'rgba(255, 72, 0, 0.25)' : 'rgba(0, 255, 157, 0.25)';
-        octx.fillRect(cx - rLabel, cy - rLabel, rLabel * 2, rLabel * 2);
-    } else {
-        octx.fillStyle = '#eae7de';
-        octx.fill();
-        octx.fillStyle = (k === 'a') ? '#ff4800' : '#0a3d31';
-        octx.beginPath();
-        octx.moveTo(cx, cy);
-        octx.arc(cx, cy, rLabel * 0.88, -0.4, 0.4);
-        octx.closePath();
-        octx.fill();
-    }
-    octx.restore();
-
-    // Label Border & Rings
-    octx.strokeStyle = '#22252a';
-    octx.lineWidth = 2;
-    octx.beginPath();
-    octx.arc(cx, cy, rLabel, 0, 2 * Math.PI);
-    octx.stroke();
-
-    octx.strokeStyle = 'rgba(255,255,255,0.4)';
-    octx.lineWidth = 1;
-    octx.beginPath();
-    octx.arc(cx, cy, rLabel * 0.88, 0, 2 * Math.PI);
-    octx.stroke();
-
-    // Typography on Center Label
-    octx.fillStyle = '#ffffff';
-    octx.shadowColor = '#000000';
-    octx.shadowBlur = 4;
-    octx.font = 'bold 9px monospace';
-    octx.textAlign = 'center';
-    octx.fillText('remxr42', cx, cy - rLabel * 0.55);
-    octx.fillStyle = (k === 'a') ? '#ffaa00' : '#00ff9d';
-    octx.font = '7.5px monospace';
-    octx.fillText(`SIDE ${k.toUpperCase()} // 33 RPM`, cx, cy + rLabel * 0.65);
-    octx.shadowBlur = 0;
-
-    // Spindle hole
-    octx.fillStyle = '#101215';
-    octx.beginPath();
-    octx.arc(cx, cy, 14, 0, 2 * Math.PI);
     octx.fill();
-    octx.strokeStyle = '#555';
-    octx.lineWidth = 1.5;
-    octx.stroke();
+
+    // Center Spindle Hole
+    octx.fillStyle = '#080808';
+    octx.beginPath();
+    octx.arc(cx, cy, size * 0.038, 0, 2 * Math.PI);
+    octx.fill();
 
     return offCanvas;
 }
-// -------------------------------------------------------------------------
-// TURNTABLE 60 FPS RENDERER (CIRCULAR SPECTROGRAM + ANGULAR SLICE WEDGE)
-// -------------------------------------------------------------------------
+window.generateProceduralPolarSpectrogram = generateProceduralPolarSpectrogram;
+
+// 8. Master Deck Audio Buffer Application Pipeline
+function applyAudioBufferToDeck(k, audioBuffer, title, artworkUrl = '', metaStr = '') {
+    const d = decks[k];
+    ensureAudioContext();
+
+    // Stop previous playback
+    if (d.isPlaying && d.sourceNode) {
+        try { d.sourceNode.stop(); } catch (e) {}
+        d.sourceNode.disconnect();
+        d.sourceNode = null;
+        d.isPlaying = false;
+        const playBtn = document.getElementById(`btn-play-${k}`);
+        if (playBtn) playBtn.classList.remove('active');
+    }
+
+    d.buffer = audioBuffer;
+    d.duration = audioBuffer.duration;
+    d.inTime = 0.0;
+    d.outTime = Math.min(d.duration, 4.0);
+
+    // Compute Reverse Buffer for Bidirectional Scratching
+    if (actx) {
+        try {
+            d.reverseBuffer = actx.createBuffer(d.buffer.numberOfChannels, d.buffer.length, d.buffer.sampleRate);
+            for (let ch = 0; ch < d.buffer.numberOfChannels; ch++) {
+                const src = d.buffer.getChannelData(ch);
+                const dst = d.reverseBuffer.getChannelData(ch);
+                for (let i = 0, j = src.length - 1; i < src.length; i++, j--) {
+                    dst[i] = src[j];
+                }
+            }
+        } catch (e) {
+            console.warn('Reverse buffer notice:', e);
+            d.reverseBuffer = d.buffer;
+        }
+    }
+
+    // Compute Waveform Peaks & MinPeaks
+    const rawData = d.buffer.getChannelData(0);
+    const binCount = 400;
+    const step = Math.max(1, Math.floor(rawData.length / binCount));
+    d.peaks = new Float32Array(binCount);
+    d.minPeaks = new Float32Array(binCount);
+
+    for (let i = 0; i < binCount; i++) {
+        let maxVal = -1.0;
+        let minVal = 1.0;
+        const start = i * step;
+        const end = Math.min(rawData.length, start + step);
+        for (let j = start; j < end; j++) {
+            const v = rawData[j];
+            if (v > maxVal) maxVal = v;
+            if (v < minVal) minVal = v;
+        }
+        d.peaks[i] = (maxVal === -1.0) ? 0.05 : Math.max(0.02, maxVal);
+        d.minPeaks[i] = (minVal === 1.0) ? -0.05 : Math.min(-0.02, minVal);
+    }
+
+    // Load Center Label Artwork
+    if (artworkUrl) {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.onload = () => {
+            d.centerLabelImg = img;
+            d.vinylImg = null;
+            d.needsProceduralUpdate = true;
+            d.proceduralCanvas = generateProceduralPolarSpectrogram(k, 600);
+            renderTurntable(k);
+        };
+        img.onerror = () => {
+            d.needsProceduralUpdate = true;
+            d.proceduralCanvas = generateProceduralPolarSpectrogram(k, 600);
+            renderTurntable(k);
+        };
+        img.src = artworkUrl;
+    }
+
+    // Update UI Badges & LCD Monitors
+    const thumbEl = document.getElementById(`yt-thumb-${k}`);
+    const titleLcdEl = document.getElementById(`yt-title-${k}`);
+    const metaLcdEl = document.getElementById(`yt-meta-${k}`);
+    const mainTitleEl = document.getElementById(`title-deck-${k}`);
+    const statusEl = document.getElementById(`yt-status-${k}`);
+
+    if (title && titleLcdEl) titleLcdEl.innerText = title.toUpperCase().slice(0, 26);
+    if (title && mainTitleEl) mainTitleEl.innerText = `DECK ${k.toUpperCase()}: ${title.toUpperCase().slice(0, 22)}`;
+    if (metaStr && metaLcdEl) metaLcdEl.innerText = metaStr;
+    if (thumbEl && artworkUrl) {
+        thumbEl.src = artworkUrl;
+        thumbEl.style.display = 'block';
+    }
+
+    if (statusEl) {
+        statusEl.innerText = 'ARMED / READY';
+        statusEl.style.color = (k === 'a' ? '#ff8c00' : '#00ff9d');
+    }
+
+    // Pre-render Polar Spectrogram and Linear Waveform
+    d.needsProceduralUpdate = true;
+    d.proceduralCanvas = generateProceduralPolarSpectrogram(k, 600);
+    updateBadges(k);
+    renderTurntable(k);
+    renderLinearStrip(k);
+}
+window.applyAudioBufferToDeck = applyAudioBufferToDeck;
+
+// 9. Load Audio Stream from Remote URL
+async function loadAudioFromUrl(k, streamUrl, title, artworkUrl = '') {
+    ensureAudioContext();
+    const statusEl = document.getElementById(`yt-status-${k}`);
+
+    if (statusEl) {
+        statusEl.innerText = 'DECODING STREAM...';
+        statusEl.style.color = '#ffaa00';
+    }
+
+    try {
+        const resp = await fetch(streamUrl);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const arrayBuf = await resp.arrayBuffer();
+        const decoded = await actx.decodeAudioData(arrayBuf);
+
+        applyAudioBufferToDeck(k, decoded, title, artworkUrl, 'STUDIO STREAM • 44.1kHz STEREO');
+    } catch (err) {
+        console.warn('Stream decode fallback to synthesis:', err);
+        synthesizeProceduralAudioForTrack(k, title, artworkUrl);
+    }
+}
+window.loadAudioFromUrl = loadAudioFromUrl;
+
+// 10. Procedural Audio Synthesis Engine
+function synthesizeProceduralAudioForTrack(k, title, artworkUrl = '') {
+    ensureAudioContext();
+
+    const sampleRate = actx ? actx.sampleRate : 44100;
+    const duration = 4.0;
+    const numFrames = Math.floor(sampleRate * duration);
+    const audioBuf = actx ? actx.createBuffer(2, numFrames, sampleRate) : {
+        duration, sampleRate, numberOfChannels: 2,
+        getChannelData: () => new Float32Array(numFrames)
+    };
+    const left = audioBuf.getChannelData(0);
+    const right = audioBuf.getChannelData(1);
+
+    // Derive deterministic harmonic frequencies from title string hash
+    let hash = 0;
+    for (let i = 0; i < title.length; i++) {
+        hash = (hash << 5) - hash + title.charCodeAt(i);
+        hash |= 0;
+    }
+    const baseFreq = 55 + Math.abs(hash % 110);
+    const tempo = 120 + Math.abs(hash % 25);
+    const beatInterval = 60 / tempo;
+
+    for (let i = 0; i < numFrames; i++) {
+        const t = i / sampleRate;
+        const beatTime = t % beatInterval;
+        const env = Math.exp(-beatTime * 12);
+        
+        let sample = 0;
+        // Punchy sub-kick & synth bass
+        sample += Math.sin(2 * Math.PI * (baseFreq * (1 + 2 * env)) * t) * env * 0.7;
+        // Harmonic mid presence
+        sample += Math.sin(2 * Math.PI * (baseFreq * 2.5) * t) * (Math.sin(2 * Math.PI * 4 * t) > 0 ? 0.3 : 0.1);
+        // Stereo sizzle
+        const noise = (Math.random() * 2 - 1) * 0.05 * (beatTime < 0.05 ? 1 : 0.1);
+
+        left[i] = Math.max(-1, Math.min(1, sample + noise));
+        right[i] = Math.max(-1, Math.min(1, sample - noise));
+    }
+
+    applyAudioBufferToDeck(k, audioBuf, title, artworkUrl, 'WORKSTATION SYNTH • 44.1kHz STEREO');
+}
+window.synthesizeProceduralAudioForTrack = synthesizeProceduralAudioForTrack;
+
+// 11. Search YouTube or Live Audio Catalog
+async function searchOrLoadYouTube(k) {
+    const inputEl = document.getElementById(`yt-url-${k}`);
+    const query = inputEl ? inputEl.value.trim() : '';
+    if (!query) return;
+
+    ensureAudioContext();
+
+    const statusEl = document.getElementById(`yt-status-${k}`);
+    const resultsTray = document.getElementById(`yt-results-${k}`);
+    const thumbEl = document.getElementById(`yt-thumb-${k}`);
+    const titleEl = document.getElementById(`yt-title-${k}`);
+    const metaEl = document.getElementById(`yt-meta-${k}`);
+
+    if (statusEl) {
+        statusEl.innerText = 'SEARCHING...';
+        statusEl.style.color = '#ffaa00';
+    }
+
+    const directYtId = extractYouTubeId(query);
+
+    // CASE 1: DIRECT YOUTUBE LINK / ID
+    if (directYtId) {
+        if (statusEl) statusEl.innerText = 'LOADING YOUTUBE...';
+        if (resultsTray) resultsTray.style.display = 'none';
+
+        const thumbUrl = `https://img.youtube.com/vi/${directYtId}/hqdefault.jpg`;
+        if (thumbEl) {
+            thumbEl.src = thumbUrl;
+            thumbEl.style.display = 'block';
+        }
+
+        let videoTitle = `YouTube Audio [${directYtId}]`;
+        let author = 'YouTube Audio';
+
+        try {
+            const metaRes = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${directYtId}`);
+            if (metaRes.ok) {
+                const metaJson = await metaRes.json();
+                if (metaJson.title) videoTitle = metaJson.title;
+                if (metaJson.author_name) author = metaJson.author_name;
+            }
+        } catch (e) {
+            console.warn('YouTube oEmbed notice:', e);
+        }
+
+        if (titleEl) titleEl.innerText = videoTitle.toUpperCase().slice(0, 26);
+        if (metaEl) metaEl.innerText = `ID: ${directYtId} • ${author.toUpperCase()}`;
+
+        let streamFound = false;
+        try {
+            const itunesSearch = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(videoTitle)}&entity=song&limit=1`);
+            if (itunesSearch.ok) {
+                const itunesData = await itunesSearch.json();
+                if (itunesData.results && itunesData.results.length > 0 && itunesData.results[0].previewUrl) {
+                    await loadAudioFromUrl(k, itunesData.results[0].previewUrl, videoTitle, thumbUrl);
+                    streamFound = true;
+                }
+            }
+        } catch (err) {
+            console.warn('Audio stream resolution error:', err);
+        }
+
+        if (!streamFound) {
+            synthesizeProceduralAudioForTrack(k, videoTitle, thumbUrl);
+        }
+        return;
+    }
+
+    // CASE 2: SEARCH QUERY
+    try {
+        const searchRes = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=6`);
+        if (!searchRes.ok) throw new Error('Search network error');
+        
+        const data = await searchRes.json();
+        const results = data.results || [];
+
+        if (results.length === 0) {
+            if (resultsTray) {
+                resultsTray.style.display = 'flex';
+                resultsTray.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:8.5px; color:#ff4800; padding:4px;">
+                        <span>✖ NO TRACKS FOUND FOR "${query.toUpperCase()}"</span>
+                        <span style="cursor:pointer; color:#aaa;" onclick="document.getElementById('yt-results-${k}').style.display='none'">CLOSE</span>
+                    </div>
+                `;
+            }
+            if (statusEl) {
+                statusEl.innerText = 'NOT FOUND';
+                statusEl.style.color = '#ff4800';
+            }
+            return;
+        }
+
+        if (resultsTray) {
+            resultsTray.style.display = 'flex';
+            resultsTray.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:8.5px; color:#aaa; font-weight:bold; margin-bottom:3px;">
+                    <span>■ ${results.length} MATCHES FOR "${query.toUpperCase().slice(0, 20)}":</span>
+                    <span style="cursor:pointer; color:#ff4800;" onclick="document.getElementById('yt-results-${k}').style.display='none'">✖ CLOSE</span>
+                </div>
+            `;
+
+            results.forEach((item) => {
+                const row = document.createElement('div');
+                row.style.cssText = "display:flex; align-items:center; gap:6px; background:#181a1d; padding:4px 6px; border-radius:1px; cursor:pointer; border:1px solid #383b40; transition:background 0.1s;";
+                row.onmouseover = () => { row.style.background = '#25282d'; };
+                row.onmouseout = () => { row.style.background = '#181a1d'; };
+                const artwork = item.artworkUrl100 || item.artworkUrl60 || '';
+                const songTitle = item.trackName || item.collectionName || 'Track';
+                const artist = item.artistName || 'Artist';
+                const genre = item.primaryGenreName || 'Music';
+                const durSec = item.trackTimeMillis ? (item.trackTimeMillis / 1000).toFixed(0) : '30';
+
+                row.innerHTML = `
+                    <img src="${artwork}" style="width:36px; height:36px; object-fit:cover; border-radius:1px; border:1px solid ${k === 'a' ? '#ff8c00' : '#00ff9d'}; background:#000;" />
+                    <div style="flex:1; overflow:hidden;">
+                        <div style="font-size:9.5px; color:#fff; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${songTitle}</div>
+                        <div style="font-size:8px; color:#888;">${artist} • ${genre} (${durSec}s)</div>
+                    </div>
+                    <button class="btn btn-mini ${k === 'a' ? 'btn-te-orange' : 'btn-te-green'}" style="font-size:8.5px; padding:3px 8px; font-weight:bold;">🚀 LOAD</button>
+                `;
+
+                row.onclick = async () => {
+                    resultsTray.style.display = 'none';
+                    inputEl.value = `${songTitle} - ${artist}`;
+                    await loadAudioFromUrl(k, item.previewUrl, `${songTitle} - ${artist}`, artwork);
+                };
+                resultsTray.appendChild(row);
+            });
+        }
+
+        // Auto-load top result immediately
+        const topItem = results[0];
+        if (topItem && topItem.previewUrl) {
+            const topTitle = `${topItem.trackName} - ${topItem.artistName}`;
+            const topArt = topItem.artworkUrl100 || topItem.artworkUrl60 || '';
+            await loadAudioFromUrl(k, topItem.previewUrl, topTitle, topArt);
+        }
+
+        if (statusEl) {
+            statusEl.innerText = `${results.length} FOUND`;
+            statusEl.style.color = (k === 'a' ? '#ff8c00' : '#00ff9d');
+        }
+    } catch (err) {
+        console.error('Search error:', err);
+        if (statusEl) {
+            statusEl.innerText = 'SEARCH ERROR';
+            statusEl.style.color = '#ff4800';
+        }
+    }
+}
+window.searchOrLoadYouTube = searchOrLoadYouTube;
+
+// 12. Local Audio File Picker Handler
+function loadAudioFileIntoDeck(file, k) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        try {
+            ensureAudioContext();
+            const arrayBuf = e.target.result;
+            const decodedBuf = await actx.decodeAudioData(arrayBuf);
+            const trackName = file.name.replace(/\.[^/.]+$/, "");
+            applyAudioBufferToDeck(k, decodedBuf, trackName, '', 'LOCAL FILE • 44.1kHz STEREO');
+        } catch (err) {
+            console.error('Local file decode error:', err);
+        }
+    };
+    reader.readAsArrayBuffer(file);
+}
+window.loadAudioFileIntoDeck = loadAudioFileIntoDeck;
+
+// 13. Needle Drop FX
+function playNeedleDrop(k) {
+    if (!actx || !decks[k].buffer) return;
+    ensureAudioContext();
+    const osc = actx.createOscillator();
+    const g = actx.createGain();
+    osc.frequency.setValueAtTime(95, actx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(32, actx.currentTime + 0.035);
+    g.gain.setValueAtTime(0.35, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, actx.currentTime + 0.04);
+    osc.connect(g);
+    g.connect(decks[k].scratchGain || actx.destination);
+    osc.start();
+    osc.stop(actx.currentTime + 0.045);
+}
+window.playNeedleDrop = playNeedleDrop;
+
+// 14. Scratch Audio Grain Player
+function playScratchGrain(k, audioPos, velocity) {
+    const d = decks[k];
+    if (!d.buffer || !actx) return;
+    ensureAudioContext();
+
+    const speed = Math.abs(velocity);
+    if (speed < 0.08) return;
+
+    const rate = Math.min(3.8, Math.max(0.18, speed));
+    const grainDur = 0.065;
+    const now = actx.currentTime;
+
+    const src = actx.createBufferSource();
+    const g = actx.createGain();
+
+    if (velocity >= 0) {
+        src.buffer = d.buffer;
+        src.playbackRate.value = rate * d.pitch;
+        const offset = Math.max(0, Math.min(d.duration - grainDur, audioPos));
+        src.start(now, offset, grainDur);
+    } else {
+        src.buffer = d.reverseBuffer || d.buffer;
+        src.playbackRate.value = rate * d.pitch;
+        const revOffset = Math.max(0, Math.min(d.duration - grainDur, d.duration - audioPos));
+        src.start(now, revOffset, grainDur);
+    }
+
+    const vol = Math.min(1.0, Math.max(0.1, speed * 0.85));
+    g.gain.setValueAtTime(0.001, now);
+    g.gain.linearRampToValueAtTime(vol, now + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.001, now + grainDur);
+
+    src.connect(g);
+    g.connect(d.scratchGain || actx.destination);
+
+    src.onended = () => {
+        src.disconnect();
+        g.disconnect();
+    };
+}
+window.playScratchGrain = playScratchGrain;
+
+// 15. Turntable Canvas Renderer
 function renderTurntable(k) {
     const d = decks[k];
     const cv = d.ttCanvas;
@@ -1636,227 +1459,75 @@ function renderTurntable(k) {
     const rDisc = platterRadius * 0.94;
     const rLabel = platterRadius * 0.35;
 
-    // 1. Draw Circular Polar Spectrogram onto Vinyl Record Body
-    // Priority A: High-resolution STFT-computed polar spectrogram PNG from Python engine
-    let drewVinylImg = false;
-    if (d.vinylImg && d.vinylImg.complete && d.vinylImg.naturalWidth > 0) {
-        try {
-            ctx.drawImage(d.vinylImg, -rDisc, -rDisc, rDisc * 2, rDisc * 2);
-            drewVinylImg = true;
-        } catch(e) {
-            drewVinylImg = false;
-        }
+    // Draw Polar Spectrogram
+    if (!d.proceduralCanvas || d.needsProceduralUpdate) {
+        d.proceduralCanvas = generateProceduralPolarSpectrogram(k, 600);
+        d.needsProceduralUpdate = false;
+    }
+    if (d.proceduralCanvas) {
+        ctx.drawImage(d.proceduralCanvas, -rDisc, -rDisc, rDisc * 2, rDisc * 2);
     }
 
-    // Priority B: Procedural 2D Polar Spectrogram Engine (Client-side HTML5 Canvas at 60 FPS)
-    // Maps 220 angular time slices (360 deg) x 22 radial frequency bins (bass to treble)
-    if (!drewVinylImg) {
-        if (!d.proceduralCanvas || d.needsProceduralUpdate) {
-            d.proceduralCanvas = generateProceduralPolarSpectrogram(k, 600);
-            d.needsProceduralUpdate = false;
-        }
-        if (d.proceduralCanvas) {
-            ctx.drawImage(d.proceduralCanvas, -rDisc, -rDisc, rDisc * 2, rDisc * 2);
-        }
-    }
-
-    // 2. Center Label & Backlit CRT Thumbnail Display
+    // Center Label & CRT Artwork Thumbnail
     const rThumb = rLabel * 0.52;
-    if (!drewVinylImg) {
-        // Center label disc in Teenage Engineering warm bone matte finish
-        ctx.fillStyle = '#eae7de';
-        ctx.beginPath();
-        ctx.arc(0, 0, rLabel, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.strokeStyle = '#1e2022';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+    ctx.fillStyle = '#eae7de';
+    ctx.beginPath();
+    ctx.arc(0, 0, rLabel, 0, 2 * Math.PI);
+    ctx.fill();
 
-        // Concentric hairline calibrated rings
-        ctx.strokeStyle = '#beb6af';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(0, 0, rLabel * 0.88, 0, 2 * Math.PI);
-        ctx.stroke();
-        ctx.strokeStyle = '#cdc9be';
-        ctx.beginPath();
-        ctx.arc(0, 0, rLabel * 0.76, 0, 2 * Math.PI);
-        ctx.stroke();
-
-        // Accent indicator block (Safety Orange for Deck A, Racing Green for Deck B)
-        ctx.fillStyle = (k === 'a') ? '#ff4800' : '#0a3d31';
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.arc(0, 0, rLabel * 0.85, 1.2 * Math.PI, 1.4 * Math.PI);
-        ctx.closePath();
-        ctx.fill();
-
-        // Technical typography
-        ctx.fillStyle = '#1e2022';
-        ctx.font = 'bold 8px monospace';
-        ctx.textAlign = 'center';
-        ctx.fillText('remxr42', 0, -rLabel * 0.60);
-        ctx.fillStyle = '#505255';
-        ctx.font = '6.5px monospace';
-        ctx.fillText(k === 'a' ? 'SIDE A / 33 RPM' : 'SIDE B / 33 RPM', 0, rLabel * 0.72);
-
-        // Center Backlit Amber CRT Display Window
+    if (d.centerLabelImg && d.centerLabelImg.complete) {
         ctx.save();
         ctx.beginPath();
         ctx.arc(0, 0, rThumb, 0, 2 * Math.PI);
         ctx.clip();
-
-        let drewThumb = false;
-        if (d.thumbImg && d.thumbImg.complete && d.thumbImg.naturalWidth > 0) {
-            try {
-                ctx.drawImage(d.thumbImg, -rThumb, -rThumb, rThumb * 2, rThumb * 2);
-                drewThumb = true;
-            } catch(e) {
-                drewThumb = false;
-            }
-        }
-        if (!drewThumb) {
-            ctx.fillStyle = '#0e0b07';
-            ctx.fillRect(-rThumb, -rThumb, rThumb * 2, rThumb * 2);
-            ctx.fillStyle = '#ff8c00';
-            ctx.font = 'bold 9px monospace';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(k === 'a' ? 'DECK A' : 'DECK B', 0, -4);
-            ctx.fillStyle = '#cc7000';
-            ctx.font = '7px monospace';
-            ctx.fillText('33 RPM', 0, 7);
-        }
+        ctx.drawImage(d.centerLabelImg, -rThumb, -rThumb, rThumb * 2, rThumb * 2);
         ctx.restore();
-
-        // Amber bezel ring around thumbnail window
-        ctx.strokeStyle = '#ff8c00';
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.arc(0, 0, rThumb, 0, 2 * Math.PI);
-        ctx.stroke();
-
-        // Center Spindle Hole & Brass Grommet
-        ctx.fillStyle = '#111';
-        ctx.beginPath();
-        ctx.arc(0, 0, 5, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.strokeStyle = '#c5a059';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-    } else {
-        // When drewVinylImg is true, the center label is already composited on the vinyl disc.
-        // If a separate thumbImg is loaded, overlay it into the thumbnail window
-        if (d.thumbImg && d.thumbImg.complete && d.thumbImg.naturalWidth > 0) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(0, 0, rThumb, 0, 2 * Math.PI);
-            ctx.clip();
-            try {
-                ctx.drawImage(d.thumbImg, -rThumb, -rThumb, rThumb * 2, rThumb * 2);
-            } catch(e) {}
-            ctx.restore();
-
-            ctx.strokeStyle = '#ff8c00';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.arc(0, 0, rThumb, 0, 2 * Math.PI);
-            ctx.stroke();
-        }
     }
+
+    ctx.strokeStyle = '#181b20';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, rThumb, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    // Center Spindle Hole
+    ctx.fillStyle = '#0a0a0c';
+    ctx.beginPath();
+    ctx.arc(0, 0, platterRadius * 0.05, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Strobe Marker on Vinyl Edge
+    ctx.fillStyle = (k === 'a') ? '#ff4800' : '#00ff9d';
+    ctx.beginPath();
+    ctx.arc(0, -rDisc + 6, 4.5, 0, 2 * Math.PI);
+    ctx.fill();
 
     ctx.restore();
 
-    // Angular Splicing Pie Wedge Overlay
-    if (d.duration > 0) {
-        const angleIn = (d.inTime / d.duration) * 2 * Math.PI - Math.PI / 2 + d.rotationAngle;
-        const angleOut = (d.outTime / d.duration) * 2 * Math.PI - Math.PI / 2 + d.rotationAngle;
-        const rInner = platterRadius * 0.32;
-        const rOuter = platterRadius * 0.92;
+    // Tonearm & Stylus Needle Assembly
+    const armBaseX = cx + platterRadius * 0.92;
+    const armBaseY = cy - platterRadius * 0.75;
+    const normPos = (d.duration > 0) ? (d.playbackPosition / d.duration) : 0;
+    const needleR = rDisc * 0.45 + normPos * (rDisc * 0.48);
+    const needleX = cx + needleR * Math.cos(-Math.PI / 4);
+    const needleY = cy + needleR * Math.sin(-Math.PI / 4);
 
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(cx, cy, rOuter, angleIn, angleOut, false);
-        ctx.arc(cx, cy, rInner, angleOut, angleIn, true);
-        ctx.closePath();
-        ctx.fillStyle = d.wedgeColor;
-        ctx.fill();
-
-        ctx.strokeStyle = (k === 'a') ? '#00ff66' : '#ffcc00';
-        ctx.lineWidth = 2.5;
-        ctx.beginPath();
-        ctx.moveTo(cx + rInner * Math.cos(angleIn), cy + rInner * Math.sin(angleIn));
-        ctx.lineTo(cx + rOuter * Math.cos(angleIn), cy + rOuter * Math.sin(angleIn));
-        ctx.stroke();
-
-        ctx.strokeStyle = '#ff3366';
-        ctx.beginPath();
-        ctx.moveTo(cx + rInner * Math.cos(angleOut), cy + rInner * Math.sin(angleOut));
-        ctx.lineTo(cx + rOuter * Math.cos(angleOut), cy + rOuter * Math.sin(angleOut));
-        ctx.stroke();
-
-        const hInX = cx + (rOuter + 6) * Math.cos(angleIn);
-        const hInY = cy + (rOuter + 6) * Math.sin(angleIn);
-        ctx.fillStyle = '#00ff66';
-        ctx.beginPath();
-        ctx.arc(hInX, hInY, 5, 0, 2 * Math.PI);
-        ctx.fill();
-
-        const hOutX = cx + (rOuter + 6) * Math.cos(angleOut);
-        const hOutY = cy + (rOuter + 6) * Math.sin(angleOut);
-        ctx.fillStyle = '#ff3366';
-        ctx.beginPath();
-        ctx.arc(hOutX, hOutY, 5, 0, 2 * Math.PI);
-        ctx.fill();
-
-        // Hot Cues
-        const hcColors = ['#00e5ff', '#ffff00', '#ff00aa', '#ffaa00'];
-        d.hotCues.forEach((hcTime, idx) => {
-            if (hcTime !== null) {
-                const aHc = (hcTime / d.duration) * 2 * Math.PI - Math.PI / 2 + d.rotationAngle;
-                ctx.strokeStyle = hcColors[idx];
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(cx + rInner * Math.cos(aHc), cy + rInner * Math.sin(aHc));
-                ctx.lineTo(cx + rOuter * Math.cos(aHc), cy + rOuter * Math.sin(aHc));
-                ctx.stroke();
-            }
-        });
-
-        // Stylus / Needle Playhead
-        let curPos = d.inTime;
-        if (d.isScratching) {
-            curPos = d.scratchAudioPos;
-        } else if (d.isPlaying) {
-            const elapsed = (actx.currentTime - d.playStartTime) * d.pitch;
-            const sliceLen = d.outTime - d.inTime;
-            curPos = d.inTime + (elapsed % sliceLen);
-        }
-
-        const playAngle = (curPos / d.duration) * 2 * Math.PI - Math.PI / 2 + d.rotationAngle;
-        ctx.strokeStyle = d.isScratching ? '#ff0055' : '#ffffff';
-        ctx.lineWidth = d.isScratching ? 3 : 2;
-        ctx.beginPath();
-        ctx.moveTo(cx + (rInner - 4) * Math.cos(playAngle), cy + (rInner - 4) * Math.sin(playAngle));
-        ctx.lineTo(cx + (rOuter + 6) * Math.cos(playAngle), cy + (rOuter + 6) * Math.sin(playAngle));
-        ctx.stroke();
-
-        ctx.restore();
-    }
-
-    // Center Spindle
-    ctx.fillStyle = '#111';
+    ctx.strokeStyle = '#c8c4b7';
+    ctx.lineWidth = 3.5;
     ctx.beginPath();
-    ctx.arc(cx, cy, 6, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.strokeStyle = '#c5a059';
-    ctx.lineWidth = 2;
+    ctx.moveTo(armBaseX, armBaseY);
+    ctx.lineTo(needleX, needleY);
     ctx.stroke();
-}
 
-// -------------------------------------------------------------------------
-// REAL-TIME AUDIO WAVEFORM & LINEAR STRIP RENDERER
-// -------------------------------------------------------------------------
+    // Stylus Needle Cartridge Head
+    ctx.fillStyle = (k === 'a') ? '#ff4800' : '#00ff9d';
+    ctx.beginPath();
+    ctx.arc(needleX, needleY, 5, 0, 2 * Math.PI);
+    ctx.fill();
+}
+window.renderTurntable = renderTurntable;
+
+// 16. Linear Waveform Visualizer Strip Renderer
 function renderLinearStrip(k) {
     const d = decks[k];
     const cv = d.linCanvas;
@@ -1866,11 +1537,11 @@ function renderLinearStrip(k) {
     const h = cv.height;
     const centerY = h / 2;
 
-    // 1. Dark Technical Background
+    // Dark Technical Background
     ctx.fillStyle = '#0a0c0e';
     ctx.fillRect(0, 0, w, h);
 
-    // 2. Technical Grid Lines
+    // Technical Grid Lines
     ctx.strokeStyle = '#181b20';
     ctx.lineWidth = 1;
     for (let gx = 0; gx < w; gx += 40) {
@@ -1883,15 +1554,6 @@ function renderLinearStrip(k) {
     ctx.moveTo(0, centerY); ctx.lineTo(w, centerY);
     ctx.stroke();
 
-    // 3. Spectral Backdrop (if spectrogram image is loaded)
-    if (d.linearImg && d.linearImg.complete) {
-        ctx.save();
-        ctx.globalAlpha = 0.28;
-        ctx.drawImage(d.linearImg, 0, 0, w, h);
-        ctx.restore();
-    }
-
-    // 4. Draw True Audio Waveform Peaks
     const waveColor = (k === 'a') ? '#ff8c00' : '#00ff9d';
     const coreColor = (k === 'a') ? '#ffe28a' : '#d4fff0';
     const shadowColor = (k === 'a') ? 'rgba(255, 140, 0, 0.45)' : 'rgba(0, 255, 157, 0.45)';
@@ -1920,430 +1582,50 @@ function renderLinearStrip(k) {
                 yBot = centerY + 1;
             }
 
-            // Glow outer bar
             ctx.fillStyle = waveColor;
             ctx.fillRect(bx, yTop, Math.max(1, scaleX - 0.5), yBot - yTop);
 
-            // Bright core line
             if (yBot - yTop > 8) {
                 ctx.fillStyle = coreColor;
                 ctx.fillRect(bx, yTop + 2, Math.max(1, scaleX - 0.5), yBot - yTop - 4);
             }
         }
         ctx.restore();
-    } else {
-        // Fallback procedural waveform before audio decodes
-        ctx.save();
-        ctx.fillStyle = (k === 'a') ? 'rgba(255,140,0,0.55)' : 'rgba(0,255,157,0.55)';
-        for (let bx = 0; bx < w; bx += 3) {
-            const p = 0.35 * Math.sin(bx * 0.08) * Math.cos(bx * 0.03) + 0.18 * Math.sin(bx * 0.2);
-            const yH = Math.abs(p) * (centerY - 6) + 2;
-            ctx.fillRect(bx, centerY - yH, 2, yH * 2);
-        }
-        ctx.restore();
     }
 
-    // 5. Inactive Region Dimming & Active Splicing Region
+    // Playhead Scrubber Line
     if (d.duration > 0) {
-        const inX = Math.max(0, Math.min(w, (d.inTime / d.duration) * w));
-        const outX = Math.max(0, Math.min(w, (d.outTime / d.duration) * w));
-
-        // Dark dimming on inactive sections
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.62)';
-        ctx.fillRect(0, 0, inX, h);
-        ctx.fillRect(outX, 0, w - outX, h);
-
-        // Active loop slice tint
-        ctx.fillStyle = d.wedgeColor;
-        ctx.fillRect(inX, 0, outX - inX, h);
-
-        // IN border & flag
-        ctx.strokeStyle = '#00ff66';
+        const playX = (d.playbackPosition / d.duration) * w;
+        ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(inX, 0); ctx.lineTo(inX, h);
-        ctx.stroke();
-
-        ctx.fillStyle = '#00ff66';
-        ctx.fillRect(Math.max(0, inX - 1), 0, 20, 11);
-        ctx.fillStyle = '#000000';
-        ctx.font = 'bold 8px monospace';
-        ctx.fillText('IN', inX + 3, 9);
-
-        // OUT border & flag
-        ctx.strokeStyle = '#ff3366';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(outX, 0); ctx.lineTo(outX, h);
-        ctx.stroke();
-
-        ctx.fillStyle = '#ff3366';
-        ctx.fillRect(Math.max(0, outX - 20), 0, 20, 11);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 8px monospace';
-        ctx.fillText('OUT', outX - 18, 9);
-
-        // Hot Cues
-        const hcColors = ['#00e5ff', '#ffff00', '#ff00aa', '#ffaa00'];
-        d.hotCues.forEach((hcTime, idx) => {
-            if (hcTime !== null) {
-                const hcX = (hcTime / d.duration) * w;
-                ctx.strokeStyle = hcColors[idx];
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(hcX, 0); ctx.lineTo(hcX, h);
-                ctx.stroke();
-
-                ctx.fillStyle = hcColors[idx];
-                ctx.fillRect(hcX - 6, h - 10, 12, 10);
-                ctx.fillStyle = '#000';
-                ctx.font = 'bold 8px monospace';
-                ctx.fillText(`C${idx+1}`, hcX - 5, h - 2);
-            }
-        });
-
-        // 6. Playhead Stylus Needle
-        let curPos = d.inTime;
-        if (d.isScratching) {
-            curPos = d.scratchAudioPos;
-        } else if (d.isPlaying) {
-            const elapsed = (actx.currentTime - d.playStartTime) * d.pitch;
-            const sliceLen = Math.max(0.05, d.outTime - d.inTime);
-            curPos = d.inTime + (elapsed % sliceLen);
-        }
-
-        const playX = Math.max(0, Math.min(w, (curPos / d.duration) * w));
-        ctx.strokeStyle = d.isScratching ? '#ff0055' : '#ffffff';
-        ctx.lineWidth = d.isScratching ? 2.5 : 2;
-        ctx.shadowColor = d.isScratching ? '#ff0055' : '#ffffff';
-        ctx.shadowBlur = 6;
         ctx.beginPath();
         ctx.moveTo(playX, 0); ctx.lineTo(playX, h);
         ctx.stroke();
-        ctx.shadowBlur = 0;
+    }
 
-        // Diamond playhead indicator at top and bottom
-        ctx.fillStyle = d.isScratching ? '#ff0055' : '#ffffff';
-        ctx.beginPath();
-        ctx.arc(playX, 4, 3, 0, 2 * Math.PI);
-        ctx.arc(playX, h - 4, 3, 0, 2 * Math.PI);
-        ctx.fill();
+    // Loop Region Markers
+    if (d.duration > 0) {
+        const inX = (d.inTime / d.duration) * w;
+        const outX = (d.outTime / d.duration) * w;
+
+        ctx.fillStyle = (k === 'a') ? 'rgba(255, 72, 0, 0.22)' : 'rgba(0, 255, 157, 0.22)';
+        ctx.fillRect(inX, 0, Math.max(2, outX - inX), h);
+
+        ctx.fillStyle = '#ff4800';
+        ctx.fillRect(inX, 0, 2, h);
+        ctx.fillStyle = '#ff4800';
+        ctx.fillRect(outX - 2, 0, 2, h);
     }
 }
+window.renderLinearStrip = renderLinearStrip;
 
-function setupLinearInteraction(k) {
-    const d = decks[k];
-    const cv = d.linCanvas;
-    if (!cv) return;
-
-    let isDragging = false;
-
-    function handleSeek(e) {
-        if (!d.duration) return;
-        const rect = cv.getBoundingClientRect();
-        const clientX = (e.clientX !== undefined) ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-        const x = Math.max(0, Math.min(rect.width, clientX - rect.left));
-        const seekTime = (x / rect.width) * d.duration;
-
-        d.scratchAudioPos = seekTime;
-        d.inTime = Math.min(seekTime, Math.max(0, d.outTime - 0.1));
-        playScratchGrain(k, seekTime, 1.0);
-        updateBadges(k);
-        renderTurntable(k);
-        renderLinearStrip(k);
-    }
-
-    cv.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        handleSeek(e);
-    });
-
-    window.addEventListener('mousemove', (e) => {
-        if (isDragging) handleSeek(e);
-    });
-
-    window.addEventListener('mouseup', () => {
-        if (isDragging) {
-            isDragging = false;
-            if (d.isPlaying) {
-                playDeckSlice(k, d.scratchAudioPos);
-            }
-        }
-    });
-}
-
-// -------------------------------------------------------------------------
-// 60 FPS ANIMATION LOOP
-// -------------------------------------------------------------------------
-let lastFrameTime = performance.now();
-function animationLoop(now) {
-    const dt = (now - lastFrameTime) / 1000.0;
-    lastFrameTime = now;
-
-    ['a', 'b'].forEach(k => {
-        const d = decks[k];
-        if (d.isPlaying && !d.isScratching) {
-            d.rotationAngle += d.rotationSpeed * d.pitch * dt * (d.reverse ? -1 : 1);
-            d.rotationAngle %= (2 * Math.PI);
-        }
-        renderTurntable(k);
-        renderLinearStrip(k);
-    });
-
-    requestAnimationFrame(animationLoop);
-}
-requestAnimationFrame(animationLoop);
-
-// -------------------------------------------------------------------------
-// LOCAL AUDIO FILE LOADER & DRAG-AND-DROP DECODER
-// -------------------------------------------------------------------------
-function loadAudioFileIntoDeck(file, k) {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-        try {
-            ensureAudioContext();
-            const arrayBuf = e.target.result;
-            const decodedBuf = await actx.decodeAudioData(arrayBuf);
-            const d = decks[k];
-            if (d.isPlaying && d.sourceNode) {
-                try { d.sourceNode.stop(); } catch(err) {}
-                d.sourceNode.disconnect();
-                d.sourceNode = null;
-                d.isPlaying = false;
-            }
-            d.buffer = decodedBuf;
-            d.duration = decodedBuf.duration;
-            d.inTime = 0.0;
-            d.outTime = Math.min(d.duration, 4.0);
-
-            // Pre-compute reverse buffer for bidirectional scratching
-            d.reverseBuffer = actx.createBuffer(d.buffer.numberOfChannels, d.buffer.length, d.buffer.sampleRate);
-            for (let ch = 0; ch < d.buffer.numberOfChannels; ch++) {
-                const src = d.buffer.getChannelData(ch);
-                const dst = d.reverseBuffer.getChannelData(ch);
-                for (let i = 0, j = src.length - 1; i < src.length; i++, j--) {
-                    dst[i] = src[j];
-                }
-            }
-
-            // Compute audio peaks for linear waveform and procedural polar spectrogram
-            const rawData = d.buffer.getChannelData(0);
-            const peakCount = 800;
-            const step = Math.max(1, Math.floor(rawData.length / peakCount));
-            d.peaks = [];
-            for (let i = 0; i < peakCount; i++) {
-                let maxVal = 0;
-                const start = i * step;
-                const end = Math.min(rawData.length, start + step);
-                for (let j = start; j < end; j++) {
-                    const abs = Math.abs(rawData[j]);
-                    if (abs > maxVal) maxVal = abs;
-                }
-                d.peaks.push(maxVal);
-            }
-
-            // Clear static vinyl image so the procedural polar spectrogram renders this track's real spectrum
-            d.vinylImg = null;
-            d.needsProceduralUpdate = true;
-            d.proceduralCanvas = generateProceduralPolarSpectrogram(k, 600);
-
-            // Update title badge
-            const titleEl = document.getElementById(`title-deck-${k}`);
-            if (titleEl) titleEl.innerText = `DECK ${k.toUpperCase()}: ${file.name.toUpperCase().slice(0, 22)}`;
-
-            updateBadges(k);
-            renderTurntable(k);
-            renderLinearStrip(k);
-        } catch(err) {
-            console.error('Audio decode error:', err);
-            alert('Could not decode audio file: ' + (err.message || err));
-        }
-    };
-    reader.readAsArrayBuffer(file);
-}
-
-// -------------------------------------------------------------------------
-// TURNTABLE MOUSE & TOUCH SCRATCHING & DRAG-AND-DROP
-// -------------------------------------------------------------------------
-function setupTurntableInteraction(k) {
-    const d = decks[k];
-    const cv = d.ttCanvas;
-
-    function getAngleAndRadius(clientX, clientY) {
-        const rect = cv.getBoundingClientRect();
-        const x = (clientX - rect.left) * (cv.width / rect.width) - cv.width / 2;
-        const y = (clientY - rect.top) * (cv.height / rect.height) - cv.height / 2;
-        const r = Math.sqrt(x*x + y*y);
-        let a = Math.atan2(y, x);
-        return { a, r };
-    }
-
-    function angleToTime(angle) {
-        let relative = angle - d.rotationAngle + Math.PI / 2;
-        relative = (relative % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-        return (relative / (2 * Math.PI)) * d.duration;
-    }
-
-    cv.addEventListener('mousedown', (e) => {
-        if (!d.duration) return;
-        const { a, r } = getAngleAndRadius(e.clientX, e.clientY);
-        const platterR = cv.width * 0.48;
-        if (r > platterR) return;
-
-        const angleIn = (d.inTime / d.duration) * 2 * Math.PI - Math.PI / 2 + d.rotationAngle;
-        const angleOut = (d.outTime / d.duration) * 2 * Math.PI - Math.PI / 2 + d.rotationAngle;
-
-        const diffIn = Math.atan2(Math.sin(a - angleIn), Math.cos(a - angleIn));
-        const diffOut = Math.atan2(Math.sin(a - angleOut), Math.cos(a - angleOut));
-
-        if (Math.abs(diffIn) < 0.22) {
-            d.dragTarget = 'in';
-        } else if (Math.abs(diffOut) < 0.22) {
-            d.dragTarget = 'out';
-        } else {
-            d.dragTarget = 'scratch';
-            d.isScratching = true;
-            d.wasPlayingBeforeScratch = d.isPlaying;
-
-            if (d.isPlaying && d.sourceNode) {
-                try { d.sourceNode.stop(); } catch(err) {}
-                d.sourceNode.disconnect();
-                d.sourceNode = null;
-                d.isPlaying = false;
-            }
-
-            d.scratchAudioPos = angleToTime(a);
-            d.lastScratchAngle = a;
-            d.lastScratchTime = performance.now();
-            d.scratchVelocity = 0;
-
-            if (d.scratchLed) d.scratchLed.classList.add('active');
-            playNeedleDrop(k);
-        }
-        updateBadges(k);
-        renderTurntable(k);
-    });
-
-    window.addEventListener('mousemove', (e) => {
-        if (!d.dragTarget) return;
-
-        if (d.dragTarget === 'scratch') {
-            const { a } = getAngleAndRadius(e.clientX, e.clientY);
-            const now = performance.now();
-            const dt = Math.max(0.005, (now - d.lastScratchTime) / 1000.0);
-
-            const deltaA = Math.atan2(Math.sin(a - d.lastScratchAngle), Math.cos(a - d.lastScratchAngle));
-            d.rotationAngle += deltaA;
-
-            const secondsPerRev = 1.8;
-            const deltaAudio = (deltaA / (2 * Math.PI)) * secondsPerRev;
-            const rawVel = deltaAudio / dt;
-            d.scratchVelocity = 0.45 * d.scratchVelocity + 0.55 * rawVel;
-
-            d.scratchAudioPos = Math.max(0, Math.min(d.duration - 0.1, d.scratchAudioPos + deltaAudio));
-            d.inTime = d.scratchAudioPos;
-
-            playScratchGrain(k, d.scratchAudioPos, d.scratchVelocity);
-
-            d.lastScratchAngle = a;
-            d.lastScratchTime = now;
-            updateBadges(k);
-            renderTurntable(k);
-            renderLinearStrip(k);
-            return;
-        }
-
-        const { a } = getAngleAndRadius(e.clientX, e.clientY);
-        const t = angleToTime(a);
-        if (d.dragTarget === 'in') {
-            d.inTime = Math.max(0, Math.min(t, d.outTime - 0.1));
-        } else if (d.dragTarget === 'out') {
-            d.outTime = Math.min(d.duration, Math.max(t, d.inTime + 0.1));
-        }
-        updateBadges(k);
-        renderTurntable(k);
-    });
-
-    window.addEventListener('mouseup', () => {
-        if (d.dragTarget === 'scratch') {
-            d.isScratching = false;
-            if (d.scratchLed) d.scratchLed.classList.remove('active');
-            if (d.wasPlayingBeforeScratch) {
-                playDeckSlice(k, d.scratchAudioPos);
-            }
-        }
-        d.dragTarget = null;
-        renderTurntable(k);
-    });
-
-    // Drag-and-Drop & Local File Picker for Deck k
-    const stage = document.getElementById(`stage-${k}`);
-    const fileInput = document.getElementById(`file-input-${k}`);
-
-    if (fileInput) {
-        fileInput.onchange = (e) => {
-            if (e.target.files && e.target.files[0]) {
-                loadAudioFileIntoDeck(e.target.files[0], k);
-            }
-        };
-    }
-
-    if (stage) {
-        stage.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            stage.style.outline = (k === 'a') ? '2px dashed #ff4800' : '2px dashed #00ff9d';
-        });
-        stage.addEventListener('dragleave', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            stage.style.outline = 'none';
-        });
-        stage.addEventListener('drop', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            stage.style.outline = 'none';
-            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
-                loadAudioFileIntoDeck(e.dataTransfer.files[0], k);
-            }
-        });
-    }
-
-    // Touch support for scratching on touch screens & tablets
-    cv.addEventListener('touchstart', (e) => {
-        if (e.touches && e.touches[0]) {
-            e.preventDefault();
-            const t = e.touches[0];
-            cv.dispatchEvent(new MouseEvent('mousedown', { clientX: t.clientX, clientY: t.clientY }));
-        }
-    }, { passive: false });
-
-    window.addEventListener('touchmove', (e) => {
-        if (d.dragTarget && e.touches && e.touches[0]) {
-            e.preventDefault();
-            const t = e.touches[0];
-            window.dispatchEvent(new MouseEvent('mousemove', { clientX: t.clientX, clientY: t.clientY }));
-        }
-    }, { passive: false });
-
-    window.addEventListener('touchend', (e) => {
-        if (d.dragTarget) {
-            window.dispatchEvent(new MouseEvent('mouseup'));
-        }
-    });
-}
-
-// -------------------------------------------------------------------------
-// WEB AUDIO REGULAR PLAYBACK
-// -------------------------------------------------------------------------
+// 17. Web Audio Playback Engine
 function playDeckSlice(k, startOffset = null) {
     const d = decks[k];
-    if (!d.buffer) {
-        // If empty, auto synthesize clean workstation audio
-        synthesizeProceduralAudioForTrack(k, k === 'a' ? 'REMXR42 LEAD A' : 'REMXR42 BASS B', 'INIT', '');
-    }
     ensureAudioContext();
+    if (!d.buffer) {
+        synthesizeProceduralAudioForTrack(k, k === 'a' ? 'REMXR42 LEAD A' : 'REMXR42 BASS B');
+    }
     if (!d.eqLow) setupAudioGraph(k);
 
     if (d.sourceNode) {
@@ -2357,20 +1639,36 @@ function playDeckSlice(k, startOffset = null) {
         playBuf = d.reverseBuffer || d.buffer;
     }
 
-    d.sourceNode = actx.createBufferSource();
-    d.sourceNode.buffer = playBuf;
-    d.sourceNode.playbackRate.value = d.pitch;
-    d.sourceNode.loop = d.loop;
-    d.sourceNode.loopStart = d.inTime;
-    d.sourceNode.loopEnd = d.outTime;
+    const src = actx.createBufferSource();
+    src.buffer = playBuf;
+    src.playbackRate.value = d.pitch;
 
-    d.sourceNode.connect(d.eqLow);
+    const inT = d.inTime;
+    const outT = d.outTime;
+    const loopDur = Math.max(0.1, outT - inT);
 
-    const actualStart = (startOffset !== null) ? startOffset : d.inTime;
-    d.playStartTime = actx.currentTime - (actualStart - d.inTime) / d.pitch;
+    src.loop = d.isLooping;
+    if (d.isLooping) {
+        src.loopStart = inT;
+        src.loopEnd = outT;
+    }
+
+    src.connect(d.scratchGain || actx.destination);
+
+    let offset = (startOffset !== null) ? startOffset : d.playbackPosition;
+    if (offset < inT || offset >= outT) offset = inT;
+
+    src.start(0, offset);
+    d.sourceNode = src;
     d.isPlaying = true;
-    d.sourceNode.start(0, actualStart);
+    d.playbackPosition = offset;
+
+    const playBtn = document.getElementById(`btn-play-${k}`);
+    if (playBtn) playBtn.classList.add('active');
+
+    playNeedleDrop(k);
 }
+window.playDeckSlice = playDeckSlice;
 
 function stopDeckSlice(k) {
     const d = decks[k];
@@ -2380,624 +1678,318 @@ function stopDeckSlice(k) {
         d.sourceNode = null;
     }
     d.isPlaying = false;
-    d.isScratching = false;
-    renderTurntable(k);
+    const playBtn = document.getElementById(`btn-play-${k}`);
+    if (playBtn) playBtn.classList.remove('active');
+}
+window.stopDeckSlice = stopDeckSlice;
+
+// 18. Turntable Mouse & Touch Scratching
+function setupTurntableInteraction(k) {
+    const d = decks[k];
+    const cv = d.ttCanvas;
+    if (!cv) return;
+
+    let isDragging = false;
+    let lastAngle = 0;
+    let lastTime = 0;
+
+    function getAngle(e) {
+        const rect = cv.getBoundingClientRect();
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        const x = clientX - rect.left - cv.width / 2;
+        const y = clientY - rect.top - cv.height / 2;
+        return Math.atan2(y, x);
+    }
+
+    function onDown(e) {
+        ensureAudioContext();
+        isDragging = true;
+        d.isScratching = true;
+        lastAngle = getAngle(e);
+        lastTime = performance.now();
+        d.angularVelocity = 0;
+        const led = document.getElementById(`scratch-led-${k}`);
+        if (led) led.classList.add('active');
+    }
+
+    function onMove(e) {
+        if (!isDragging) return;
+        const angle = getAngle(e);
+        const now = performance.now();
+        const dt = Math.max(1, now - lastTime) / 1000;
+        let delta = angle - lastAngle;
+
+        while (delta > Math.PI) delta -= 2 * Math.PI;
+        while (delta < -Math.PI) delta += 2 * Math.PI;
+
+        d.rotationAngle += delta;
+        const velocity = delta / dt;
+        d.scratchVelocity = velocity;
+
+        if (d.duration > 0) {
+            d.playbackPosition = (d.playbackPosition + delta * 0.5 + d.duration) % d.duration;
+            playScratchGrain(k, d.playbackPosition, velocity);
+        }
+
+        lastAngle = angle;
+        lastTime = now;
+        renderTurntable(k);
+        renderLinearStrip(k);
+    }
+
+    function onUp() {
+        if (!isDragging) return;
+        isDragging = false;
+        d.isScratching = false;
+        const led = document.getElementById(`scratch-led-${k}`);
+        if (led) led.classList.remove('active');
+    }
+
+    cv.addEventListener('mousedown', onDown);
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+
+    cv.addEventListener('touchstart', onDown, { passive: false });
+    window.addEventListener('touchmove', onMove, { passive: false });
+    window.addEventListener('touchend', onUp);
 }
 
-// Setup Listeners for a Deck
+// 19. Linear Waveform Scrubbing
+function setupLinearInteraction(k) {
+    const d = decks[k];
+    const cv = d.linCanvas;
+    if (!cv) return;
+
+    let isScrubbing = false;
+
+    function scrub(e) {
+        const rect = cv.getBoundingClientRect();
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const norm = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+        d.playbackPosition = norm * d.duration;
+        if (d.isPlaying) {
+            playDeckSlice(k, d.playbackPosition);
+        }
+        renderLinearStrip(k);
+        renderTurntable(k);
+    }
+
+    cv.addEventListener('mousedown', e => {
+        ensureAudioContext();
+        isScrubbing = true;
+        scrub(e);
+    });
+    window.addEventListener('mousemove', e => {
+        if (isScrubbing) scrub(e);
+    });
+    window.addEventListener('mouseup', () => { isScrubbing = false; });
+}
+
+// 20. Deck Controls & Buttons
 function setupDeckControls(k) {
     const d = decks[k];
-    const bindClick = (id, fn) => {
-        const el = document.getElementById(id);
-        if (el) el.onclick = fn;
-    };
-    const bindInput = (id, fn) => {
-        const el = document.getElementById(id);
-        if (el) el.oninput = fn;
-    };
 
-    bindClick(`btn-play-${k}`, () => playDeckSlice(k));
-    bindClick(`btn-stop-${k}`, () => stopDeckSlice(k));
-    bindClick(`btn-cue-${k}`, () => {
-        if (d.isPlaying) stopDeckSlice(k);
-        playDeckSlice(k, d.inTime);
-    });
+    // PLAY
+    const btnPlay = document.getElementById(`btn-play-${k}`);
+    if (btnPlay) {
+        btnPlay.onclick = () => {
+            if (d.isPlaying) stopDeckSlice(k);
+            else playDeckSlice(k);
+        };
+    }
 
+    // STOP
+    const btnStop = document.getElementById(`btn-stop-${k}`);
+    if (btnStop) btnStop.onclick = () => stopDeckSlice(k);
+
+    // CUE
+    const btnCue = document.getElementById(`btn-cue-${k}`);
+    if (btnCue) {
+        btnCue.onclick = () => {
+            d.playbackPosition = d.inTime;
+            playDeckSlice(k, d.inTime);
+        };
+    }
+
+    // LOOP Toggle
     const btnLoop = document.getElementById(`btn-loop-${k}`);
-    if (btnLoop) btnLoop.onclick = function() {
-        d.loop = !d.loop;
-        this.classList.toggle('active', d.loop);
-        if (d.sourceNode) d.sourceNode.loop = d.loop;
-    };
+    if (btnLoop) {
+        btnLoop.onclick = () => {
+            d.isLooping = !d.isLooping;
+            btnLoop.classList.toggle('active', d.isLooping);
+            if (d.isPlaying) playDeckSlice(k, d.playbackPosition);
+        };
+    }
 
+    // REV Toggle
     const btnRev = document.getElementById(`btn-rev-${k}`);
-    if (btnRev) btnRev.onclick = function() {
-        d.reverse = !d.reverse;
-        this.classList.toggle('active', d.reverse);
-        if (d.isPlaying) playDeckSlice(k);
-    };
+    if (btnRev) {
+        btnRev.onclick = () => {
+            d.reverse = !d.reverse;
+            btnRev.classList.toggle('active', d.reverse);
+            if (d.isPlaying) playDeckSlice(k, d.playbackPosition);
+        };
+    }
 
-    bindClick(`btn-set-in-${k}`, () => {
-        if (d.isPlaying) {
-            const elapsed = (actx.currentTime - d.playStartTime) * d.pitch;
-            d.inTime = Math.min(d.inTime + (elapsed % (d.outTime - d.inTime)), d.outTime - 0.1);
-        }
-        updateBadges(k); renderTurntable(k);
-    });
-    bindClick(`btn-set-out-${k}`, () => {
-        if (d.isPlaying) {
-            const elapsed = (actx.currentTime - d.playStartTime) * d.pitch;
-            d.outTime = Math.max(d.inTime + (elapsed % (d.outTime - d.inTime)), d.inTime + 0.1);
-        }
-        updateBadges(k); renderTurntable(k);
-    });
-    bindClick(`btn-in-minus-${k}`, () => { d.inTime = Math.max(0, d.inTime - 0.1); updateBadges(k); renderTurntable(k); });
-    bindClick(`btn-in-plus-${k}`, () => { d.inTime = Math.min(d.outTime - 0.1, d.inTime + 0.1); updateBadges(k); renderTurntable(k); });
-    bindClick(`btn-out-minus-${k}`, () => { d.outTime = Math.max(d.inTime + 0.1, d.outTime - 0.1); updateBadges(k); renderTurntable(k); });
-    bindClick(`btn-out-plus-${k}`, () => { d.outTime = Math.min(d.duration, d.outTime + 0.1); updateBadges(k); renderTurntable(k); });
+    // IN / OUT Loop Points
+    const btnSetIn = document.getElementById(`btn-set-in-${k}`);
+    if (btnSetIn) {
+        btnSetIn.onclick = () => {
+            d.inTime = Math.min(d.outTime - 0.1, d.playbackPosition);
+            updateBadges(k);
+            renderLinearStrip(k);
+        };
+    }
+    const btnSetOut = document.getElementById(`btn-set-out-${k}`);
+    if (btnSetOut) {
+        btnSetOut.onclick = () => {
+            d.outTime = Math.max(d.inTime + 0.1, d.playbackPosition);
+            updateBadges(k);
+            renderLinearStrip(k);
+        };
+    }
 
-    const presets = { '05s': 0.5, '1s': 1.0, '2s': 2.0, '4s': 4.0 };
-    Object.keys(presets).forEach(pk => {
-        bindClick(`btn-snap-${pk}-${k}`, () => {
-            d.outTime = Math.min(d.duration, d.inTime + presets[pk]);
-            updateBadges(k); renderTurntable(k);
-        });
-    });
-    bindClick(`btn-snap-all-${k}`, () => {
-        d.inTime = 0; d.outTime = d.duration;
-        updateBadges(k); renderTurntable(k);
-    });
-
-    const setBtn = document.getElementById(`btn-setmode-${k}`);
-    if (setBtn) setBtn.onclick = function() {
-        d.setHotCueMode = !d.setHotCueMode;
-        this.classList.toggle('active', d.setHotCueMode);
-        this.innerText = d.setHotCueMode ? 'SET [ON]' : 'SET';
-    };
-
-    for (let c = 1; c <= 4; c++) {
-        const cueIdx = c - 1;
-        const btn = document.getElementById(`btn-hotcue-${c}-${k}`);
-        if (btn) btn.onclick = function() {
-            if (d.setHotCueMode) {
-                let cur = d.inTime;
-                if (d.isPlaying) {
-                    const elapsed = (actx.currentTime - d.playStartTime) * d.pitch;
-                    cur = d.inTime + (elapsed % (d.outTime - d.inTime));
+    // Loop Snapping (.5s, 1s, 2s, 4s, ALL)
+    ['05s', '1s', '2s', '4s', 'all'].forEach(snap => {
+        const btnSnap = document.getElementById(`btn-snap-${snap}-${k}`);
+        if (btnSnap) {
+            btnSnap.onclick = () => {
+                if (snap === 'all') {
+                    d.inTime = 0.0;
+                    d.outTime = d.duration;
+                } else {
+                    const dur = (snap === '05s') ? 0.5 : parseFloat(snap.replace('s', ''));
+                    d.inTime = Math.max(0, Math.min(d.duration - dur, d.playbackPosition));
+                    d.outTime = Math.min(d.duration, d.inTime + dur);
                 }
-                d.hotCues[cueIdx] = cur;
-                this.classList.add('active-cue');
-                this.innerText = `C${c}:${cur.toFixed(1)}s`;
-                d.setHotCueMode = false;
-                if (setBtn) {
-                    setBtn.classList.remove('active');
-                    setBtn.innerText = 'SET';
-                }
-                renderTurntable(k);
-            } else if (d.hotCues[cueIdx] !== null) {
-                d.inTime = d.hotCues[cueIdx];
-                if (d.outTime <= d.inTime) d.outTime = Math.min(d.duration, d.inTime + 2.0);
                 updateBadges(k);
-                playDeckSlice(k, d.hotCues[cueIdx]);
+                renderLinearStrip(k);
+                if (d.isPlaying) playDeckSlice(k, d.inTime);
+            };
+        }
+    });
+
+    // Pitch Range Slider
+    const pitchSlider = document.getElementById(`pitch-${k}`);
+    const pitchVal = document.getElementById(`pitch-val-${k}`);
+    if (pitchSlider) {
+        pitchSlider.oninput = () => {
+            d.pitch = parseFloat(pitchSlider.value);
+            if (pitchVal) pitchVal.innerText = `${d.pitch.toFixed(2)}x`;
+            if (d.sourceNode && d.sourceNode.playbackRate) {
+                d.sourceNode.playbackRate.value = d.pitch;
             }
         };
     }
 
-    bindInput(`pitch-${k}`, function() {
-        d.pitch = parseFloat(this.value);
-        const pVal = document.getElementById(`pitch-val-${k}`);
-        if (pVal) pVal.innerText = `${d.pitch.toFixed(2)}x`;
-        if (d.sourceNode) d.sourceNode.playbackRate.value = d.pitch;
-    });
+    // Local Audio File Picker
+    const fileIn = document.getElementById(`file-input-${k}`);
+    if (fileIn) {
+        fileIn.onchange = e => {
+            if (e.target.files && e.target.files[0]) {
+                loadAudioFileIntoDeck(e.target.files[0], k);
+            }
+        };
+    }
 
+    // 3-Band EQ Knobs
     ['low', 'mid', 'high'].forEach(band => {
-        bindInput(`eq-${band}-${k}`, function() {
-            const val = parseFloat(this.value);
-            const node = (band === 'low') ? d.eqLow : ((band === 'mid') ? d.eqMid : d.eqHigh);
-            if (node) node.gain.value = val;
-        });
+        const eqEl = document.getElementById(`eq-${band}-${k}`);
+        if (eqEl) {
+            eqEl.oninput = () => {
+                setupAudioGraph(k);
+            };
+        }
     });
-
-    bindClick(`btn-export-${k}`, async () => {
-        if (!d.buffer) return alert('Deck is empty!');
-        ensureAudioContext();
-        const sliceLen = Math.max(0.1, d.outTime - d.inTime);
-        const offlineCtx = new OfflineAudioContext(d.buffer.numberOfChannels, Math.floor(d.buffer.sampleRate * sliceLen), d.buffer.sampleRate);
-        const src = offlineCtx.createBufferSource();
-        src.buffer = d.buffer;
-        src.playbackRate.value = d.pitch;
-        src.connect(offlineCtx.destination);
-        src.start(0, d.inTime, sliceLen);
-        const rendered = await offlineCtx.startRendering();
-        downloadBufferAsWav(rendered, `turntable_deck_${k}_slice.wav`);
-    });
-
-    setupTurntableInteraction(k);
 }
 
-// -------------------------------------------------------------------------
-// MASTER MIXER
-// -------------------------------------------------------------------------
-const xfSlider = document.getElementById('master-crossfader') || document.getElementById('crossfader');
-if (xfSlider) {
-    xfSlider.oninput = function() {
-        masterCrossfader = parseFloat(this.value);
-        const xfVal = document.getElementById('xfade-val');
-        if (xfVal) xfVal.innerText = masterCrossfader.toFixed(2);
-        const gainA = Math.cos(masterCrossfader * Math.PI / 2);
-        const gainB = Math.sin(masterCrossfader * Math.PI / 2);
-        if (decks.a.gainNode) decks.a.gainNode.gain.value = gainA;
-        if (decks.b.gainNode) decks.b.gainNode.gain.value = gainB;
+// 21. Deck Initializer
+function initDeck(k) {
+    const d = decks[k];
+    d.ttCanvas = document.getElementById(`turntable-canvas-${k}`);
+    d.linCanvas = document.getElementById(`linear-canvas-${k}`);
+
+    setupDeckControls(k);
+    setupTurntableInteraction(k);
+    setupLinearInteraction(k);
+
+    // Synthesize clean starting audio
+    synthesizeProceduralAudioForTrack(k, k === 'a' ? 'REMXR42 LEAD A' : 'REMXR42 BASS B');
+}
+
+// 22. Crossfader & Mixer Master Controls
+const masterXfade = document.getElementById('master-crossfader');
+const xfadeVal = document.getElementById('xfade-val');
+if (masterXfade) {
+    masterXfade.oninput = () => {
+        masterCrossfader = parseFloat(masterXfade.value);
+        if (xfadeVal) xfadeVal.innerText = masterCrossfader.toFixed(2);
+        setupAudioGraph('a');
+        setupAudioGraph('b');
     };
 }
 
 const btnPlayBoth = document.getElementById('btn-play-both');
-if (btnPlayBoth) btnPlayBoth.onclick = () => { playDeckSlice('a'); playDeckSlice('b'); };
+if (btnPlayBoth) {
+    btnPlayBoth.onclick = () => {
+        playDeckSlice('a');
+        playDeckSlice('b');
+    };
+}
 
 const btnStopBoth = document.getElementById('btn-stop-both');
-if (btnStopBoth) btnStopBoth.onclick = () => { stopDeckSlice('a'); stopDeckSlice('b'); };
-
-const btnExportMix = document.getElementById('btn-export-mix');
-if (btnExportMix) btnExportMix.onclick = async () => {
-    if (!decks.a.buffer && !decks.b.buffer) return alert('Load tracks first!');
-    ensureAudioContext();
-    const exportDur = Math.max(decks.a.outTime - decks.a.inTime, decks.b.outTime - decks.b.inTime, 4.0);
-    const sr = 44100;
-    const offlineCtx = new OfflineAudioContext(2, Math.floor(sr * exportDur), sr);
-
-    if (decks.a.buffer) {
-        const srcA = offlineCtx.createBufferSource();
-        srcA.buffer = decks.a.buffer;
-        srcA.playbackRate.value = decks.a.pitch;
-        srcA.loop = true;
-        srcA.loopStart = decks.a.inTime;
-        srcA.loopEnd = decks.a.outTime;
-        const gainA = offlineCtx.createGain();
-        gainA.gain.value = Math.cos(masterCrossfader * Math.PI / 2);
-        srcA.connect(gainA);
-        gainA.connect(offlineCtx.destination);
-        srcA.start(0, decks.a.inTime);
-    }
-
-    if (decks.b.buffer) {
-        const srcB = offlineCtx.createBufferSource();
-        srcB.buffer = decks.b.buffer;
-        srcB.playbackRate.value = decks.b.pitch;
-        srcB.loop = true;
-        srcB.loopStart = decks.b.inTime;
-        srcB.loopEnd = decks.b.outTime;
-        const gainB = offlineCtx.createGain();
-        gainB.gain.value = Math.sin(masterCrossfader * Math.PI / 2);
-        srcB.connect(gainB);
-        gainB.connect(offlineCtx.destination);
-        srcB.start(0, decks.b.inTime);
-    }
-
-    const rendered = await offlineCtx.startRendering();
-    downloadBufferAsWav(rendered, 'turntable_dual_mix.wav');
-};
-
-function downloadBufferAsWav(abuffer, filename) {
-    const numOfChan = abuffer.numberOfChannels;
-    const length = abuffer.length * numOfChan * 2 + 44;
-    const out = new ArrayBuffer(length);
-    const view = new DataView(out);
-    let offset = 0, pos = 0;
-
-    function set16(d) { view.setUint16(pos, d, true); pos += 2; }
-    function set32(d) { view.setUint32(pos, d, true); pos += 4; }
-
-    set32(0x46464952); // "RIFF"
-    set32(length - 8);
-    set32(0x45564157); // "WAVE"
-    set32(0x20746d66); // "fmt "
-    set32(16);
-    set16(1); // PCM
-    set16(numOfChan);
-    set32(abuffer.sampleRate);
-    set32(abuffer.sampleRate * 2 * numOfChan);
-    set16(numOfChan * 2);
-    set16(16);
-    set32(0x61746164); // "data"
-    set32(length - pos - 4);
-
-    const channels = [];
-    for (let i = 0; i < numOfChan; i++) channels.push(abuffer.getChannelData(i));
-    while (pos < length) {
-        for (let i = 0; i < numOfChan; i++) {
-            let s = Math.max(-1, Math.min(1, channels[i][offset]));
-            s = (0.5 + s < 0 ? s * 32768 : s * 32767) | 0;
-            view.setInt16(pos, s, true);
-            pos += 2;
-        }
-        offset++;
-    }
-    const blob = new Blob([out], { type: 'audio/wav' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-}
-
-// -------------------------------------------------------------------------
-// AI HAND GESTURE TRACKING & WEBCAM NOTIFICATION ENGINE
-// -------------------------------------------------------------------------
-let gesturesActive = false;
-let cameraInstance = null;
-let handsDetector = null;
-const videoElem = document.getElementById('webcam-video');
-const hudCanvas = document.getElementById('hud-canvas');
-const hudCtx = hudCanvas.getContext('2d');
-const gestureToggleBtn = document.getElementById('btn-gesture-toggle');
-const gestureBannerStatus = document.getElementById('gesture-banner-status');
-
-const camModal = document.getElementById('cam-modal');
-const camModalClose = document.getElementById('cam-modal-close');
-const camModalCancel = document.getElementById('btn-modal-cancel');
-const camModalAllow = document.getElementById('btn-modal-allow');
-const camStatusText = document.getElementById('cam-status-text');
-
-// Show notification modal when user clicks Hand Gestures button
-if (gestureToggleBtn) {
-    gestureToggleBtn.onclick = () => {
-        if (!gesturesActive) {
-            if (camModal) camModal.style.display = 'flex';
-            if (camStatusText) camStatusText.innerText = 'STATUS: PLEASE CLICK "ALLOW CAMERA" TO GRANT WEBCAM ACCESS.';
-        } else {
-            stopGestures();
-        }
+if (btnStopBoth) {
+    btnStopBoth.onclick = () => {
+        stopDeckSlice('a');
+        stopDeckSlice('b');
     };
 }
 
-if (camModalClose) camModalClose.onclick = () => { if (camModal) camModal.style.display = 'none'; };
-if (camModalCancel) camModalCancel.onclick = () => { if (camModal) camModal.style.display = 'none'; };
+// 23. Real-Time 60 FPS Turntable & Waveform Animation Loop
+let lastTime = performance.now();
 
-if (camModalAllow) camModalAllow.onclick = async () => {
-    if (camStatusText) camStatusText.innerText = 'STATUS: REQUESTING BROWSER PERMISSION... PLEASE CONFIRM IN POPUP.';
-    try {
-        await startGestures();
-        if (camModal) camModal.style.display = 'none';
-    } catch(err) {
-        console.error('Webcam error:', err);
-        if (camStatusText) camStatusText.innerText = `ERROR: ${err.name || 'Access Denied'} - ${err.message || 'Check camera settings'}.`;
-    }
-};
-
-async function startGestures() {
-    ensureAudioContext();
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert('Webcam API is not supported in this browser.');
-        return;
-    }
-
-    // Request webcam stream with explicit user notification
-    const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 320, height: 240, facingMode: 'user' }
-    });
-    videoElem.srcObject = stream;
-    await videoElem.play();
-
-    // Initialize MediaPipe Hands
-    if (!handsDetector) {
-        handsDetector = new Hands({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
-        });
-        handsDetector.setOptions({
-            maxNumHands: 2,
-            modelComplexity: 1,
-            minDetectionConfidence: 0.55,
-            minTrackingConfidence: 0.55
-        });
-        handsDetector.onResults(onHandResults);
-    }
-
-    // Start Camera loop
-    cameraInstance = new Camera(videoElem, {
-        onFrame: async () => {
-            if (gesturesActive) {
-                await handsDetector.send({ image: videoElem });
-            }
-        },
-        width: 320,
-        height: 240
-    });
-    cameraInstance.start();
-
-    gesturesActive = true;
-    gestureToggleBtn.classList.add('active');
-    gestureToggleBtn.innerText = '✋ GESTURES: ON ●';
-    gestureBannerStatus.innerText = 'GESTURES ACTIVE: LEFT➔A | RIGHT➔B';
-    gestureBannerStatus.style.color = '#00ff66';
-}
-
-function stopGestures() {
-    gesturesActive = false;
-    if (cameraInstance) {
-        try { cameraInstance.stop(); } catch(e) {}
-    }
-    if (videoElem.srcObject) {
-        videoElem.srcObject.getTracks().forEach(t => t.stop());
-        videoElem.srcObject = null;
-    }
-    gestureToggleBtn.classList.remove('active');
-    gestureToggleBtn.innerText = '✋ GESTURES: OFF';
-    gestureBannerStatus.innerText = 'MOUSE / CUE MODE';
-    hudCtx.clearRect(0, 0, hudCanvas.width, hudCanvas.height);
-}
-
-// Hand Gestures State Memory
-const handState = {
-    a: { lastX: null, lastTime: 0, isPinching: false, wasPlaying: false, vel: 0 },
-    b: { lastX: null, lastTime: 0, isPinching: false, wasPlaying: false, vel: 0 }
-};
-
-// MediaPipe Landmark Connections
-const HAND_CONNECTIONS = [
-    [0,1],[1,2],[2,3],[3,4], // Thumb
-    [0,5],[5,6],[6,7],[7,8], // Index
-    [5,9],[9,10],[10,11],[11,12], // Middle
-    [9,13],[13,14],[14,15],[15,16], // Ring
-    [13,17],[17,18],[18,19],[19,20], // Pinky
-    [0,17] // Palm base
-];
-
-function onHandResults(results) {
-    if (!gesturesActive) return;
-
-    // Draw PiP HUD Video Frame
-    hudCtx.save();
-    hudCtx.clearRect(0, 0, hudCanvas.width, hudCanvas.height);
-    hudCtx.drawImage(results.image, 0, 0, hudCanvas.width, hudCanvas.height);
-
-    // Dark semi-transparent tint for high-contrast neon skeleton
-    hudCtx.fillStyle = 'rgba(10, 15, 20, 0.65)';
-    hudCtx.fillRect(0, 0, hudCanvas.width, hudCanvas.height);
-
-    // Center divider on HUD
-    hudCtx.strokeStyle = '#444';
-    hudCtx.setLineDash([2, 2]);
-    hudCtx.beginPath();
-    hudCtx.moveTo(hudCanvas.width / 2, 0);
-    hudCtx.lineTo(hudCanvas.width / 2, hudCanvas.height);
-    hudCtx.stroke();
-    hudCtx.setLineDash([]);
-
-    let detectedA = false;
-    let detectedB = false;
-
-    if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-        for (let i = 0; i < results.multiHandLandmarks.length; i++) {
-            const lm = results.multiHandLandmarks[i];
-
-            // Assign hand: Screen Left (x < 0.5) controls Deck A, Screen Right (x >= 0.5) controls Deck B
-            // In mirrored selfie camera, user's left hand appears on screen left
-            const wristX = lm[0].x;
-            const targetDeck = (wristX < 0.5) ? 'a' : 'b';
-            const deckColor = (targetDeck === 'a') ? '#00e5ff' : '#ff77aa';
-
-            if (targetDeck === 'a') detectedA = true;
-            if (targetDeck === 'b') detectedB = true;
-
-            // 1. Draw Skeleton on HUD
-            hudCtx.strokeStyle = deckColor;
-            hudCtx.lineWidth = 1.5;
-            for (const [p1, p2] of HAND_CONNECTIONS) {
-                const x1 = lm[p1].x * hudCanvas.width;
-                const y1 = lm[p1].y * hudCanvas.height;
-                const x2 = lm[p2].x * hudCanvas.width;
-                const y2 = lm[p2].y * hudCanvas.height;
-                hudCtx.beginPath();
-                hudCtx.moveTo(x1, y1);
-                hudCtx.lineTo(x2, y2);
-                hudCtx.stroke();
-            }
-
-            // 2. Compute Distances & Gestures
-            const thumbTip = lm[4];
-            const indexTip = lm[8];
-            const middleTip = lm[12];
-            const ringTip = lm[16];
-            const pinkyTip = lm[20];
-
-            const pinchDist = Math.hypot(thumbTip.x - indexTip.x, thumbTip.y - indexTip.y);
-            const isPinching = pinchDist < 0.085;
-
-            // Highlight Index & Thumb Tips
-            const ix = indexTip.x * hudCanvas.width;
-            const iy = indexTip.y * hudCanvas.height;
-            const tx = thumbTip.x * hudCanvas.width;
-            const ty = thumbTip.y * hudCanvas.height;
-
-            hudCtx.fillStyle = isPinching ? '#00ff66' : deckColor;
-            hudCtx.beginPath(); hudCtx.arc(ix, iy, isPinching ? 5 : 3, 0, 2 * Math.PI); hudCtx.fill();
-            hudCtx.beginPath(); hudCtx.arc(tx, ty, isPinching ? 5 : 3, 0, 2 * Math.PI); hudCtx.fill();
-
-            if (isPinching) {
-                hudCtx.strokeStyle = '#00ff66';
-                hudCtx.lineWidth = 2;
-                hudCtx.beginPath();
-                hudCtx.arc((ix + tx) / 2, (iy + ty) / 2, 10, 0, 2 * Math.PI);
-                hudCtx.stroke();
-            }
-
-            // Execute Deck Gestures
-            processDeckGestures(targetDeck, lm, isPinching);
-        }
-    }
-
-    // Handle hands moving out of view (auto-release)
-    if (!detectedA && handState.a.isPinching) releaseHandScratch('a');
-    if (!detectedB && handState.b.isPinching) releaseHandScratch('b');
-
-    hudCtx.restore();
-}
-
-// -------------------------------------------------------------------------
-// GESTURE ACTION MAPPING
-// -------------------------------------------------------------------------
-function processDeckGestures(k, lm, isPinching) {
-    const d = decks[k];
-    const hs = handState[k];
+function animationLoop() {
     const now = performance.now();
-    const hudStatus = document.getElementById(`hud-status-${k}`);
+    const dt = Math.max(1, now - lastTime) / 1000;
+    lastTime = now;
 
-    const indexTip = lm[8];
-    const indexPip = lm[6];
-    const middleTip = lm[12];
-    const ringTip = lm[16];
-    const pinkyTip = lm[20];
+    ['a', 'b'].forEach(k => {
+        const d = decks[k];
+        if (d.isPlaying && !d.isScratching) {
+            const rotSpeed = (33.33 / 60) * 2 * Math.PI * (d.reverse ? -1 : 1) * d.pitch;
+            d.rotationAngle += rotSpeed * dt;
+            d.playbackPosition += dt * (d.reverse ? -1 : 1) * d.pitch;
 
-    // GESTURE 1: PINCH TO SCRATCH (GRAB & SCRUB VINYL RECORD)
-    if (isPinching) {
-        if (!hs.isPinching) {
-            // Touch down on record
-            hs.isPinching = true;
-            hs.lastX = indexTip.x;
-            hs.lastTime = now;
-            hs.wasPlaying = d.isPlaying;
-
-            if (d.isPlaying && d.sourceNode) {
-                try { d.sourceNode.stop(); } catch(e) {}
-                d.sourceNode.disconnect();
-                d.sourceNode = null;
-                d.isPlaying = false;
+            if (d.playbackPosition > d.outTime) {
+                if (d.isLooping) d.playbackPosition = d.inTime;
+                else stopDeckSlice(k);
+            }
+            if (d.playbackPosition < d.inTime && d.reverse) {
+                if (d.isLooping) d.playbackPosition = d.outTime;
+                else stopDeckSlice(k);
             }
 
-            d.isScratching = true;
-            d.scratchAudioPos = d.inTime;
-            if (d.scratchLed) d.scratchLed.classList.add('active');
-            playNeedleDrop(k);
-        } else {
-            // Active hand scratching movement in air
-            const dt = Math.max(0.005, (now - hs.lastTime) / 1000.0);
-            const deltaX = (indexTip.x - hs.lastX) * (k === 'a' ? 2.2 : -2.2); // mirrored swipe
-
-            // Rotate vinyl
-            d.rotationAngle += deltaX * 8.0;
-
-            const secondsPerSweep = 1.6;
-            const deltaAudio = deltaX * secondsPerSweep;
-            const rawVel = deltaAudio / dt;
-            hs.vel = 0.45 * hs.vel + 0.55 * rawVel;
-
-            d.scratchAudioPos = Math.max(0, Math.min(d.duration - 0.1, d.scratchAudioPos + deltaAudio));
-            d.inTime = d.scratchAudioPos;
-
-            // Audio scratch grain
-            playScratchGrain(k, d.scratchAudioPos, hs.vel);
-
-            hs.lastX = indexTip.x;
-            hs.lastTime = now;
-            updateBadges(k);
-
-            if (hudStatus) hudStatus.innerText = `${k.toUpperCase()}: PINCH SCRATCH (${hs.vel > 0 ? '+' : ''}${hs.vel.toFixed(1)}x)`;
+            renderTurntable(k);
+            renderLinearStrip(k);
         }
-        return;
-    } else if (hs.isPinching) {
-        // Slipmat release
-        releaseHandScratch(k);
-    }
+    });
 
-    // GESTURE 2: POINT (INDEX EXTENDED, OTHERS CURLED) -> PLAY / CUE
-    const isPointing = (indexTip.y < indexPip.y) && (middleTip.y > lm[10].y) && (ringTip.y > lm[14].y) && (pinkyTip.y > lm[18].y);
-    if (isPointing) {
-        if (!d.isPlaying && (now - hs.lastTime > 800)) {
-            playDeckSlice(k);
-            hs.lastTime = now;
-            if (hudStatus) hudStatus.innerText = `${k.toUpperCase()}: ☝️ PLAY SLICE`;
-        }
-        return;
-    }
-
-    // GESTURE 3: CLOSED FIST (ALL FINGERS CURLED) -> STOP
-    const isFist = (indexTip.y > indexPip.y) && (middleTip.y > lm[10].y) && (ringTip.y > lm[14].y) && (pinkyTip.y > lm[18].y);
-    if (isFist) {
-        if (d.isPlaying && (now - hs.lastTime > 800)) {
-            stopDeckSlice(k);
-            hs.lastTime = now;
-            if (hudStatus) hudStatus.innerText = `${k.toUpperCase()}: ✊ STOP ALL`;
-        }
-        return;
-    }
-
-    // GESTURE 4: PEACE SIGN (V) -> TOGGLE LOOP
-    const isPeace = (indexTip.y < indexPip.y) && (middleTip.y < lm[10].y) && (ringTip.y > lm[14].y) && (pinkyTip.y > lm[18].y);
-    if (isPeace) {
-        if (now - hs.lastTime > 1200) {
-            d.loop = !d.loop;
-            const btnLoop = document.getElementById(`btn-loop-${k}`);
-            if (btnLoop) btnLoop.classList.toggle('active', d.loop);
-            if (d.sourceNode) d.sourceNode.loop = d.loop;
-            hs.lastTime = now;
-            if (hudStatus) hudStatus.innerText = `${k.toUpperCase()}: ✌️ LOOP ${d.loop ? 'ON' : 'OFF'}`;
-        }
-        return;
-    }
-
-    if (hudStatus) hudStatus.innerText = `${k.toUpperCase()}: READY (${d.isPlaying ? 'PLAYING' : 'IDLE'})`;
+    requestAnimationFrame(animationLoop);
 }
 
-function releaseHandScratch(k) {
-    const d = decks[k];
-    const hs = handState[k];
-    hs.isPinching = false;
-    d.isScratching = false;
-    if (d.scratchLed) d.scratchLed.classList.remove('active');
+// Initialize Workstation on DOM ready
+document.addEventListener('DOMContentLoaded', () => {
+    initDeck('a');
+    initDeck('b');
+    requestAnimationFrame(animationLoop);
+});
 
-    // Platter spin-up after hand leaves record
-    if (hs.wasPlaying) {
-        playDeckSlice(k, d.scratchAudioPos);
-    }
-}
-
-// -------------------------------------------------------------------------
-// VIEW MODE TOGGLING
-// -------------------------------------------------------------------------
-const viewBtn = document.getElementById('view-mode-btn');
-if (viewBtn) {
-    viewBtn.onclick = () => {
-        const stageA = document.getElementById('stage-a');
-        const stageB = document.getElementById('stage-b');
-        const linA = document.getElementById('linear-canvas-a');
-        const linB = document.getElementById('linear-canvas-b');
-
-        if (viewMode === 'hybrid') {
-            viewMode = 'turntables';
-            viewBtn.innerText = '💿 VIEW: PLATTERS ONLY';
-            if (stageA) stageA.style.display = 'flex';
-            if (stageB) stageB.style.display = 'flex';
-            if (linA) linA.style.display = 'none';
-            if (linB) linB.style.display = 'none';
-        } else if (viewMode === 'turntables') {
-            viewMode = 'linear';
-            viewBtn.innerText = '📊 VIEW: WAVEFORMS ONLY';
-            if (stageA) stageA.style.display = 'none';
-            if (stageB) stageB.style.display = 'none';
-            if (linA) linA.style.display = 'block';
-            if (linB) linB.style.display = 'block';
-        } else {
-            viewMode = 'hybrid';
-            viewBtn.innerText = '🎛️ VIEW: FULL (TURNTABLES + WAVEFORMS)';
-            if (stageA) stageA.style.display = 'flex';
-            if (stageB) stageB.style.display = 'flex';
-            if (linA) linA.style.display = 'block';
-            if (linB) linB.style.display = 'block';
-        }
-        renderTurntable('a'); renderTurntable('b');
-        renderLinearStrip('a'); renderLinearStrip('b');
-    };
-}
-
-// Initialize Decks
-setupDeckControls('a');
-setupDeckControls('b');
-setupLinearInteraction('a');
-setupLinearInteraction('b');
+// Also trigger immediately for inline scripts
 initDeck('a');
 initDeck('b');
+requestAnimationFrame(animationLoop);
+
 </script>
 </body>
 </html>
